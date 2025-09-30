@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VZ Dolci - Doces artesanais de luxo com panna cotta, pão de mel e muito mais">
+    <title>VZ Dolci - Doces Artesanais de Luxo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">VZ Dolci</div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link active">Home</a></li>
+                <li><a href="#produtos" class="nav-link">Produtos</a></li>
+                <li><a href="#sobre" class="nav-link">Sobre Nós</a></li>
+                <li><a href="#faq" class="nav-link">FAQ</a></li>
+                <li><a href="#contato" class="nav-link">Contato</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">VZ Dolci</h1>
+            <p class="hero-subtitle">Doces Artesanais de Luxo</p>
+            <p class="hero-description">Experiências únicas em cada mordida</p>
+            <a href="#produtos" class="btn btn-primary">Conheça Nossos Doces</a>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="produtos" class="products">
+        <div class="container">
+            <h2 class="section-title">Nossos Doces</h2>
+            <p class="section-subtitle">Criações artesanais com ingredientes premium</p>
+            
+            <div class="products-grid">
+                <!-- Panna Cotta -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="product-placeholder">🍮</div>
+                    </div>
+                    <h3 class="product-name">Panna Cotta</h3>
+                    <p class="product-description">Delicada sobremesa italiana com textura sedosa e sabores refinados</p>
+                    <div class="product-details">
+                        <p class="product-ingredients"><strong>Ingredientes:</strong> Creme de leite fresco, baunilha Madagascar, açúcar, gelatina</p>
+                        <p class="product-story">Inspirada nas tradições italianas, nossa panna cotta é uma obra-prima de delicadeza e sabor</p>
+                    </div>
+                    <p class="product-price">R$ 18,00</p>
+                    <button class="btn btn-secondary" onclick="addToCart('Panna Cotta', 18)">Adicionar ao Pedido</button>
+                </div>
+
+                <!-- Pão de Mel -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="product-placeholder">🍯</div>
+                    </div>
+                    <h3 class="product-name">Pão de Mel</h3>
+                    <p class="product-description">Tradicional doce brasileiro com cobertura de chocolate premium</p>
+                    <div class="product-details">
+                        <p class="product-ingredients"><strong>Ingredientes:</strong> Mel puro, chocolate belga, especiarias selecionadas, farinha especial</p>
+                        <p class="product-story">Uma releitura sofisticada do clássico brasileiro, com mel artesanal e chocolate importado</p>
+                    </div>
+                    <p class="product-price">R$ 12,00</p>
+                    <button class="btn btn-secondary" onclick="addToCart('Pão de Mel', 12)">Adicionar ao Pedido</button>
+                </div>
+
+                <!-- Crema Cotta -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="product-placeholder">🍨</div>
+                    </div>
+                    <h3 class="product-name">Crema Cotta</h3>
+                    <p class="product-description">Sobremesa cremosa com camadas de sabor intenso</p>
+                    <div class="product-details">
+                        <p class="product-ingredients"><strong>Ingredientes:</strong> Creme fresco, gemas orgânicas, açúcar mascavo, essências naturais</p>
+                        <p class="product-story">Uma criação exclusiva VZ Dolci que combina técnicas tradicionais com inovação</p>
+                    </div>
+                    <p class="product-price">R$ 20,00</p>
+                    <button class="btn btn-secondary" onclick="addToCart('Crema Cotta', 20)">Adicionar ao Pedido</button>
+                </div>
+
+                <!-- Brownie Premium -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="product-placeholder">🍫</div>
+                    </div>
+                    <h3 class="product-name">Brownie Premium</h3>
+                    <p class="product-description">Brownie intenso com chocolate 70% cacau</p>
+                    <div class="product-details">
+                        <p class="product-ingredients"><strong>Ingredientes:</strong> Chocolate 70% cacau, manteiga francesa, nozes pecã, ovos caipiras</p>
+                        <p class="product-story">Para os verdadeiros amantes de chocolate, uma experiência intensa e inesquecível</p>
+                    </div>
+                    <p class="product-price">R$ 15,00</p>
+                    <button class="btn btn-secondary" onclick="addToCart('Brownie Premium', 15)">Adicionar ao Pedido</button>
+                </div>
+
+                <!-- Torta de Limão -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="product-placeholder">🍋</div>
+                    </div>
+                    <h3 class="product-name">Torta de Limão Siciliano</h3>
+                    <p class="product-description">Equilíbrio perfeito entre azedo e doce</p>
+                    <div class="product-details">
+                        <p class="product-ingredients"><strong>Ingredientes:</strong> Limão siciliano, merengue italiano, massa amanteigada, creme fresco</p>
+                        <p class="product-story">Receita secreta que encanta gerações com seu sabor refrescante e sofisticado</p>
+                    </div>
+                    <p class="product-price">R$ 22,00</p>
+                    <button class="btn btn-secondary" onclick="addToCart('Torta de Limão Siciliano', 22)">Adicionar ao Pedido</button>
+                </div>
+
+                <!-- Macarons -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="product-placeholder">🧁</div>
+                    </div>
+                    <h3 class="product-name">Macarons Sortidos</h3>
+                    <p class="product-description">Delicados macarons franceses em sabores exclusivos</p>
+                    <div class="product-details">
+                        <p class="product-ingredients"><strong>Ingredientes:</strong> Amêndoas importadas, merengue francês, recheios artesanais variados</p>
+                        <p class="product-story">Arte francesa em forma de doce, com sabores que vão de pistache a frutas vermelhas</p>
+                    </div>
+                    <p class="product-price">R$ 8,00 unid</p>
+                    <button class="btn btn-secondary" onclick="addToCart('Macarons Sortidos', 8)">Adicionar ao Pedido</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="sobre" class="about">
+        <div class="container">
+            <h2 class="section-title">Sobre a VZ Dolci</h2>
+            
+            <div class="about-content">
+                <div class="about-item">
+                    <h3>Nossa História</h3>
+                    <p>A VZ Dolci nasceu do sonho de transformar momentos especiais em memórias inesquecíveis através de doces artesanais de altíssima qualidade. Fundada por mestres confeiteiros apaixonados, nossa doceria combina tradição e inovação para criar experiências gastronômicas únicas.</p>
+                    <p>Cada receita é cuidadosamente desenvolvida e testada para garantir não apenas sabor, mas uma verdadeira jornada sensorial. Utilizamos apenas ingredientes premium, muitos importados diretamente de suas regiões de origem.</p>
+                </div>
+                
+                <div class="about-item">
+                    <h3>Nossa Missão</h3>
+                    <p>Proporcionar momentos de felicidade e sofisticação através de doces artesanais excepcionais, elaborados com ingredientes de primeira qualidade e muito amor.</p>
+                    <p>Acreditamos que cada doce conta uma história, e nossa missão é fazer parte das histórias mais doces de nossos clientes.</p>
+                </div>
+                
+                <div class="about-item">
+                    <h3>Nossos Valores</h3>
+                    <ul class="values-list">
+                        <li><strong>Qualidade Premium:</strong> Ingredientes selecionados e processos artesanais</li>
+                        <li><strong>Inovação:</strong> Constantemente criando novos sabores e experiências</li>
+                        <li><strong>Tradição:</strong> Respeitando receitas clássicas com técnicas modernas</li>
+                        <li><strong>Excelência:</strong> Comprometimento com a perfeição em cada detalhe</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="faq">
+        <div class="container">
+            <h2 class="section-title">Perguntas Frequentes</h2>
+            
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Como faço para fazer um pedido?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Você pode fazer seu pedido diretamente pelo nosso site clicando em "Adicionar ao Pedido" nos produtos desejados, ou entrar em contato conosco via WhatsApp ou telefone.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Qual o prazo de entrega?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>O prazo de entrega varia de acordo com sua localização e o produto escolhido. Geralmente, trabalhamos com 24 a 48 horas de antecedência para garantir a qualidade e frescor dos doces.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Vocês fazem encomendas para festas?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Sim! Atendemos encomendas especiais para festas, casamentos, eventos corporativos e outras ocasiões. Entre em contato conosco para discutir suas necessidades específicas.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Os doces contêm conservantes?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Não! Todos os nossos doces são 100% artesanais e livres de conservantes artificiais. Utilizamos apenas ingredientes naturais e de alta qualidade.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Vocês têm opções sem glúten ou veganas?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Sim, temos opções especiais para diferentes necessidades alimentares. Entre em contato conosco para conhecer nosso menu especial sem glúten e vegano.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Qual é a validade dos produtos?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>A validade varia de acordo com o produto. Todos os nossos doces são frescos e a validade é informada na embalagem. Em geral, recomendamos consumir em até 3-5 dias quando refrigerados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contato" class="contact">
+        <div class="container">
+            <h2 class="section-title">Entre em Contato</h2>
+            <p class="section-subtitle">Estamos prontos para atender você</p>
+            
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <div class="contact-icon">📱</div>
+                    <h3>WhatsApp</h3>
+                    <p>Fale conosco pelo WhatsApp</p>
+                    <a href="https://wa.me/5511999999999" class="btn btn-contact" target="_blank">Chamar no WhatsApp</a>
+                </div>
+
+                <div class="contact-card">
+                    <div class="contact-icon">📞</div>
+                    <h3>Telefone</h3>
+                    <p>Ligue para fazer seu pedido</p>
+                    <a href="tel:+5511999999999" class="btn btn-contact">(11) 99999-9999</a>
+                </div>
+
+                <div class="contact-card">
+                    <div class="contact-icon">📍</div>
+                    <h3>Loja Física</h3>
+                    <p>Visite nossa loja</p>
+                    <p class="contact-address">Em breve informações sobre nossa localização</p>
+                </div>
+            </div>
+
+            <div class="cart-summary" id="cart-summary" style="display: none;">
+                <h3>Seu Pedido</h3>
+                <div id="cart-items"></div>
+                <p class="cart-total">Total: R$ <span id="cart-total">0,00</span></p>
+                <button class="btn btn-primary" onclick="finalizeOrder()">Finalizar Pedido via WhatsApp</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 VZ Dolci - Doces Artesanais de Luxo. Todos os direitos reservados.</p>
+            <p>Feito com amor e dedicação ❤️</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
