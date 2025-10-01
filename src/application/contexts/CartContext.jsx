@@ -15,11 +15,13 @@ export function CartProvider({ children }) {
       const existingItem = currentCart.find(item => item.product.id === product.id);
       
       if (existingItem) {
-        return currentCart.map(item =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+        return currentCart.map(item => {
+          if (item.product.id === product.id) {
+            const newItem = new CartItem(item.product, item.quantity + 1);
+            return newItem;
+          }
+          return item;
+        });
       }
       
       return [...currentCart, new CartItem(product)];
@@ -36,11 +38,13 @@ export function CartProvider({ children }) {
     if (quantity < 1) return;
     
     setCart((currentCart) =>
-      currentCart.map(item =>
-        item.product.id === productId
-          ? { ...item, quantity }
-          : item
-      )
+      currentCart.map(item => {
+        if (item.product.id === productId) {
+          const newItem = new CartItem(item.product, quantity);
+          return newItem;
+        }
+        return item;
+      })
     );
   }, []);
 

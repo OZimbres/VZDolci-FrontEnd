@@ -4,6 +4,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import { CartProvider } from './application/contexts/CartContext';
 import { Header } from './presentation/components/common/Header';
 import { Footer } from './presentation/components/common/Footer';
+import { SideCart } from './presentation/components/common/SideCart';
 import { HomePage } from './presentation/pages/HomePage';
 import { ProductsPage } from './presentation/pages/ProductsPage';
 import { AboutPage } from './presentation/pages/AboutPage';
@@ -28,6 +29,7 @@ function App() {
           <Route path="/contato" element={<ContactPage />} />
         </Routes>
         <Footer />
+        <SideCart />
         <Analytics />
         <SpeedInsights />
       </Router>
