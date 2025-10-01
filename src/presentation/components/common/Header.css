@@ -14,11 +14,11 @@
 }
 
 .logo {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 2.5rem;
+  font-weight: 400;
   color: var(--secondary-color);
-  letter-spacing: 2px;
-  font-family: 'Cormorant Garamond', serif;
+  letter-spacing: 1px;
+  font-family: 'Allura', cursive;
   text-decoration: none;
 }
 
