@@ -122,6 +122,61 @@ npm run lint
 
 A aplicação estará disponível em `http://localhost:5173`
 
+## Deploy
+
+### Deploy na Vercel
+
+O projeto está configurado para deploy na Vercel e inclui o arquivo `vercel.json` para garantir que o roteamento client-side funcione corretamente.
+
+#### Problema de Roteamento em SPAs
+Single Page Applications (SPAs) como esta usam client-side routing. Quando você acessa uma rota como `/produtos` diretamente ou atualiza a página (F5), o servidor precisa ser configurado para sempre retornar o arquivo `index.html`, permitindo que o React Router gerencie a navegação.
+
+#### Solução Implementada
+O arquivo `vercel.json` configura a Vercel para reescrever todas as rotas para `/index.html`:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+Isso resolve o erro 404 que ocorria ao:
+- Acessar uma rota diretamente (ex: `https://seusite.com/produtos`)
+- Atualizar a página (F5) em qualquer rota diferente da home
+
+### Deploy em Outras Plataformas
+
+Para outras plataformas de hospedagem, você precisará configurar rewrites/redirects similares:
+
+**Netlify**: Crie um arquivo `_redirects` na pasta `public`:
+```
+/*    /index.html   200
+```
+
+**Apache**: Adicione ao `.htaccess`:
+```apache
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+```
+
+**Nginx**: Configure no arquivo de configuração:
+```nginx
+location / {
+  try_files $uri $uri/ /index.html;
+}
+```
+
 ## Estrutura de Dados
 
 ### Product Entity
