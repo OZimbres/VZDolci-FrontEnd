@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import { useCart } from '../../../application/contexts/CartContext';
 import './SideCart.css';
 
@@ -6,13 +6,18 @@ import './SideCart.css';
  * Side Cart Component
  * Retractable cart sidebar visible on all pages
  */
-export function SideCart() {
+export const SideCart = forwardRef((props, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const { cart, updateQuantity, removeFromCart, getTotal } = useCart();
 
   const toggleCart = () => {
     setIsOpen(!isOpen);
   };
+
+  // Expose toggleCart to parent via ref
+  useImperativeHandle(ref, () => ({
+    toggleCart
+  }));
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity >= 1) {
@@ -45,18 +50,6 @@ export function SideCart() {
 
   return (
     <>
-      {/* Toggle Button */}
-      <button 
-        className={`cart-toggle ${isOpen ? 'open' : ''}`}
-        onClick={toggleCart}
-        aria-label="Toggle Cart"
-      >
-        🛒
-        {cart.length > 0 && (
-          <span className="cart-toggle-badge">{cart.reduce((count, item) => count + item.quantity, 0)}</span>
-        )}
-      </button>
-
       {/* Overlay */}
       {isOpen && <div className="cart-overlay" onClick={toggleCart}></div>}
 
@@ -140,4 +133,4 @@ export function SideCart() {
       </div>
     </>
   );
-}
+});

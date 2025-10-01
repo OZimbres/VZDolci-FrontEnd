@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -17,10 +18,18 @@ import './presentation/styles/global.css';
  * Root component with routing and context providers
  */
 function App() {
+  const sideCartRef = useRef(null);
+
+  const handleCartClick = () => {
+    if (sideCartRef.current) {
+      sideCartRef.current.toggleCart();
+    }
+  };
+
   return (
     <CartProvider>
       <Router>
-        <Header />
+        <Header onCartClick={handleCartClick} />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/produtos" element={<ProductsPage />} />
@@ -29,7 +38,7 @@ function App() {
           <Route path="/contato" element={<ContactPage />} />
         </Routes>
         <Footer />
-        <SideCart />
+        <SideCart ref={sideCartRef} />
         <Analytics />
         <SpeedInsights />
       </Router>
