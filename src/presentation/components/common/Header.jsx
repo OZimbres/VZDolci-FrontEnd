@@ -7,7 +7,7 @@ import './Header.css';
  * Header Component
  * Displays the navigation bar
  */
-export function Header() {
+export function Header({ onCartClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getItemCount } = useCart();
 
@@ -17,6 +17,13 @@ export function Header() {
 
   const closeMenu = () => {
     setIsMenuOpen(false);
+  };
+
+  const handleCartClick = () => {
+    closeMenu();
+    if (onCartClick) {
+      onCartClick();
+    }
   };
 
   return (
@@ -54,10 +61,23 @@ export function Header() {
           </li>
         </ul>
 
-        <div className="cart-icon" onClick={closeMenu}>
-          <Link to="/contato" className="nav-link">
-            🛒 {getItemCount() > 0 && <span className="cart-badge">{getItemCount()}</span>}
-          </Link>
+        <div className="header-icons">
+          <button 
+            className="header-icon-btn cart-icon" 
+            onClick={handleCartClick}
+            aria-label="Abrir carrinho"
+          >
+            🛒
+            {getItemCount() > 0 && <span className="cart-badge">{getItemCount()}</span>}
+          </button>
+          
+          <button 
+            className="header-icon-btn account-icon" 
+            onClick={closeMenu}
+            aria-label="Conta do usuário"
+          >
+            👤
+          </button>
         </div>
 
         <div className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
