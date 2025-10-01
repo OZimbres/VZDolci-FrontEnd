@@ -19,6 +19,8 @@ Desenvolvido com **React** seguindo princípios de **Clean Architecture**, **SOL
 - 📞 Informações de contato (WhatsApp, telefone, loja física)
 - 📱 Design totalmente responsivo para mobile, tablet e desktop
 - 🚀 SPA (Single Page Application) com React Router
+- 📊 Integração com Vercel Web Analytics para análise de visitantes
+- ⚡ Vercel Speed Insights para monitoramento de performance
 
 ## Tecnologias Utilizadas
 
@@ -27,6 +29,8 @@ Desenvolvido com **React** seguindo princípios de **Clean Architecture**, **SOL
 - **Vite** - Build tool moderna e rápida
 - **CSS3** - Estilização com variáveis CSS
 - **ESLint** - Linting e qualidade de código
+- **Vercel Analytics** - Web analytics para rastreamento de visitantes
+- **Vercel Speed Insights** - Monitoramento de performance em tempo real
 
 ## Arquitetura do Projeto
 

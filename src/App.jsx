@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { CartProvider } from './application/contexts/CartContext';
 import { Header } from './presentation/components/common/Header';
@@ -27,6 +28,7 @@ function App() {
           <Route path="/contato" element={<ContactPage />} />
         </Routes>
         <Footer />
+        <Analytics />
         <SpeedInsights />
       </Router>
     </CartProvider>
