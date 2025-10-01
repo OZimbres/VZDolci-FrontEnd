@@ -109,6 +109,7 @@ export function SideCart() {
                         className="remove-btn"
                         onClick={() => handleRemove(item.product.id)}
                         title="Remover item"
+                        aria-label="Remover item"
                       >
                         🗑️
                       </button>
