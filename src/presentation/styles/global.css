@@ -22,7 +22,7 @@ html {
 }
 
 body {
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   line-height: 1.6;
   color: var(--text-dark);
   background-color: var(--light-bg);
@@ -42,9 +42,10 @@ body {
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   color: var(--primary-color);
   margin-bottom: 1rem;
+  font-weight: 600;
 }
 
 /* Buttons */
@@ -57,8 +58,9 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 1rem;
   transition: all 0.3s;
   border-radius: 50px;
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .btn-primary {

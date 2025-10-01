@@ -15,10 +15,10 @@
 
 .logo {
   font-size: 2rem;
-  font-weight: bold;
+  font-weight: 600;
   color: var(--secondary-color);
   letter-spacing: 2px;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cormorant Garamond', serif;
   text-decoration: none;
 }
 
