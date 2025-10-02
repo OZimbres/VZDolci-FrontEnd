@@ -59,6 +59,11 @@ export function Header({ onCartClick }) {
               Contato
             </Link>
           </li>
+          <li>
+            <Link to="/checkout" className="nav-link" onClick={closeMenu}>
+              Pagamento
+            </Link>
+          </li>
         </ul>
 
         <div className="header-icons">
