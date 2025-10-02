@@ -206,7 +206,7 @@ O site utiliza uma paleta luxuosa e sofisticada definida em CSS Variables:
 - **--primary-color**: #5A2A83 (Roxo Elegante - sofisticação e luxo)
 - **--secondary-color**: #D4AF37 (Dourado - luxo e prestígio)
 - **--accent-color**: #B2AC83 (Khaki Suave - elegância e requinte)
-- **--dark-bg**: #020202 (Preto - contraste e sofisticação)
+- **--dark-bg**: #2C1B2E (Roxo Escuro - rico e sofisticado)
 - **--light-bg**: #FFFCEC (Creme Claro - suavidade e leveza)
 
 ## Customização

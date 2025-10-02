@@ -70,14 +70,6 @@ export function Header({ onCartClick }) {
             🛒
             {getItemCount() > 0 && <span className="cart-badge">{getItemCount()}</span>}
           </button>
-          
-          <button 
-            className="header-icon-btn account-icon" 
-            onClick={closeMenu}
-            aria-label="Conta do usuário"
-          >
-            👤
-          </button>
         </div>
 
         <div className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
