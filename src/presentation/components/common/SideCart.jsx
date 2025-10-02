@@ -33,7 +33,7 @@ export const SideCart = forwardRef((props, ref) => {
 
   const handleCheckout = () => {
     setIsOpen(false); // Close the cart
-    navigate('/pagamento'); // Navigate to payment page
+    navigate('/checkout'); // Navigate to checkout page
   };
 
   return (

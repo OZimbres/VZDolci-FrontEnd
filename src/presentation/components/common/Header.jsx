@@ -60,7 +60,7 @@ export function Header({ onCartClick }) {
             </Link>
           </li>
           <li>
-            <Link to="/pagamento" className="nav-link" onClick={closeMenu}>
+            <Link to="/checkout" className="nav-link" onClick={closeMenu}>
               Pagamento
             </Link>
           </li>
