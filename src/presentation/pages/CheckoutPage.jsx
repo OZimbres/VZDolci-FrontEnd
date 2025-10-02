@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import './CheckoutPage.css';
 
 // Environment variables
@@ -14,7 +16,8 @@ export function CheckoutPage() {
   const { cart, updateQuantity, removeFromCart, getTotal } = useCart();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState(null); // 'whatsapp' or 'pix'
-  const [contactInfo, setContactInfo] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [showPixForm, setShowPixForm] = useState(false);
   const [pixQrCode, setPixQrCode] = useState(null);
 
@@ -38,8 +41,14 @@ export function CheckoutPage() {
     const total = getTotal();
     message += `%0A*Total: R$ ${total.toFixed(2)}*`;
 
-    if (includeContactInfo && contactInfo) {
-      message += `%0A%0A*Forma de Pagamento:* PIX%0A*Contato:* ${contactInfo}`;
+    if (includeContactInfo && (email || phone)) {
+      message += `%0A%0A*Forma de Pagamento:* PIX`;
+      if (email) {
+        message += `%0A*Email:* ${email}`;
+      }
+      if (phone) {
+        message += `%0A*Telefone:* ${phone}`;
+      }
     }
     
     return message;
@@ -67,8 +76,24 @@ export function CheckoutPage() {
   };
 
   const handlePixPaymentConfirm = () => {
-    if (!contactInfo.trim()) {
-      alert('Por favor, informe seu WhatsApp ou Email para contato!');
+    // Validate that at least one contact method is provided
+    if (!email.trim() && !phone) {
+      alert('Por favor, informe pelo menos um método de contato (email ou telefone)!');
+      return;
+    }
+
+    // Email validation if provided
+    if (email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('Por favor, informe um email válido!');
+        return;
+      }
+    }
+
+    // Phone validation if provided
+    if (phone && phone.length < 10) {
+      alert('Por favor, informe um telefone válido!');
       return;
     }
 
@@ -202,35 +227,49 @@ export function CheckoutPage() {
               ) : (
                 <div className="pix-payment-section">
                   {!pixQrCode ? (
-                    <div className="pix-form">
+                    <form className="pix-form" onSubmit={(e) => {
+                      e.preventDefault();
+                      handlePixPaymentConfirm();
+                    }}>
                       <h4>Informações de Contato</h4>
-                      <p>Para acompanhar seu pedido, informe seu WhatsApp ou Email:</p>
+                      <p>Informe pelo menos um método de contato (email ou telefone):</p>
                       <input
-                        type="text"
+                        type="email"
                         className="contact-input"
-                        placeholder="WhatsApp ou Email"
-                        value={contactInfo}
-                        onChange={(e) => setContactInfo(e.target.value)}
+                        placeholder="Email (exemplo@dominio.com)"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        autoComplete="email"
+                      />
+                      <PhoneInput
+                        international
+                        defaultCountry="BR"
+                        className="phone-input-container"
+                        placeholder="Telefone"
+                        value={phone}
+                        onChange={setPhone}
                       />
                       <div className="pix-form-actions">
                         <button 
+                          type="button"
                           className="btn btn-secondary"
                           onClick={() => {
                             setShowPixForm(false);
                             setPaymentMethod(null);
-                            setContactInfo('');
+                            setEmail('');
+                            setPhone('');
                           }}
                         >
                           Voltar
                         </button>
                         <button 
+                          type="submit"
                           className="btn btn-primary"
-                          onClick={handlePixPaymentConfirm}
                         >
                           Gerar QR Code PIX
                         </button>
                       </div>
-                    </div>
+                    </form>
                   ) : (
                     <div className="pix-qrcode-section">
                       <h4>QR Code PIX</h4>
@@ -269,7 +308,9 @@ export function CheckoutPage() {
                           <li>Confirme o pagamento de R$ {getTotal().toFixed(2)}</li>
                         </ol>
                         <p className="contact-confirmation">
-                          ✅ Você receberá confirmação em <strong>{contactInfo}</strong> quando seu pedido estiver pronto!
+                          ✅ Você receberá confirmação quando seu pedido estiver pronto!
+                          <br /><strong>Email:</strong> {email}
+                          <br /><strong>Telefone:</strong> {phone}
                         </p>
                       </div>
                     </div>
