@@ -1,5 +1,3 @@
-import { useCart } from '../../application/contexts/CartContext';
-
 // Environment variables
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
 const PHONE_DISPLAY = import.meta.env.VITE_PHONE_DISPLAY || '(11) 99999-9999';
@@ -7,29 +5,9 @@ const STORE_ADDRESS = import.meta.env.VITE_STORE_ADDRESS || 'Em breve informaç�
 
 /**
  * Contact Page
- * Displays contact information and shopping cart
+ * Displays contact information
  */
 export function ContactPage() {
-  const { cart, getTotal } = useCart();
-
-  const generateWhatsAppMessage = () => {
-    if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
-      return;
-    }
-
-    let message = '*Pedido VZ Dolci*%0A%0A';
-    
-    cart.forEach(item => {
-      message += `${item.product.name} x${item.quantity} - R$ ${item.getTotal().toFixed(2)}%0A`;
-    });
-    
-    const total = getTotal();
-    message += `%0A*Total: R$ ${total.toFixed(2)}*`;
-    
-    const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    window.open(whatsappLink, '_blank');
-  };
 
   return (
     <main>
@@ -121,58 +99,6 @@ export function ContactPage() {
               </p>
             </div>
           </div>
-
-          {cart.length > 0 && (
-            <div style={{
-              background: 'linear-gradient(135deg, #6B1B5E, #8B4789)',
-              color: 'var(--text-light)',
-              padding: '2rem',
-              borderRadius: '15px',
-              marginTop: '3rem',
-              maxWidth: '600px',
-              marginLeft: 'auto',
-              marginRight: 'auto'
-            }}>
-              <h3 style={{ 
-                color: 'var(--secondary-color)', 
-                marginBottom: '1.5rem',
-                textAlign: 'center',
-                fontFamily: 'Palatino, Times New Roman, serif'
-              }}>
-                Seu Pedido
-              </h3>
-              <div style={{ marginBottom: '1.5rem' }}>
-                {cart.map((item, index) => (
-                  <div key={index} style={{
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    padding: '1rem',
-                    marginBottom: '0.5rem',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <span>{item.product.name} x{item.quantity}</span>
-                    <span>R$ {item.getTotal().toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-              <p style={{
-                fontSize: '1.5rem',
-                textAlign: 'center',
-                marginBottom: '1.5rem',
-                color: 'var(--secondary-color)',
-                fontWeight: 'bold'
-              }}>
-                Total: R$ {getTotal().toFixed(2)}
-              </p>
-              <div style={{ textAlign: 'center' }}>
-                <button className="btn btn-primary" onClick={generateWhatsAppMessage}>
-                  Finalizar Pedido via WhatsApp
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </section>
     </main>

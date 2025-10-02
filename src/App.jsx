@@ -11,6 +11,7 @@ import { ProductsPage } from './presentation/pages/ProductsPage';
 import { AboutPage } from './presentation/pages/AboutPage';
 import { FAQPage } from './presentation/pages/FAQPage';
 import { ContactPage } from './presentation/pages/ContactPage';
+import { CheckoutPage } from './presentation/pages/CheckoutPage';
 import './presentation/styles/global.css';
 
 /**
@@ -36,6 +37,7 @@ function App() {
           <Route path="/sobre" element={<AboutPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/contato" element={<ContactPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
         </Routes>
         <Footer />
         <SideCart ref={sideCartRef} />

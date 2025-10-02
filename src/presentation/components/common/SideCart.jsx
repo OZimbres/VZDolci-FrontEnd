@@ -1,9 +1,7 @@
 import { useState, forwardRef, useImperativeHandle } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../application/contexts/CartContext';
 import './SideCart.css';
-
-// Environment variables
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
 
 /**
  * Side Cart Component
@@ -12,6 +10,7 @@ const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
 export const SideCart = forwardRef((props, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const { cart, updateQuantity, removeFromCart, getTotal } = useCart();
+  const navigate = useNavigate();
 
   const toggleCart = () => {
     setIsOpen(!isOpen);
@@ -32,23 +31,9 @@ export const SideCart = forwardRef((props, ref) => {
     removeFromCart(productId);
   };
 
-  const generateWhatsAppMessage = () => {
-    if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
-      return;
-    }
-
-    let message = '*Pedido VZ Dolci*%0A%0A';
-    
-    cart.forEach(item => {
-      message += `${item.product.name} x${item.quantity} - R$ ${item.getTotal().toFixed(2)}%0A`;
-    });
-    
-    const total = getTotal();
-    message += `%0A*Total: R$ ${total.toFixed(2)}*`;
-    
-    const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    window.open(whatsappLink, '_blank');
+  const handleCheckout = () => {
+    setIsOpen(false); // Close the cart
+    navigate('/checkout'); // Navigate to checkout page
   };
 
   return (
@@ -125,9 +110,9 @@ export const SideCart = forwardRef((props, ref) => {
                 </div>
                 <button 
                   className="checkout-btn"
-                  onClick={generateWhatsAppMessage}
+                  onClick={handleCheckout}
                 >
-                  Finalizar Pedido via WhatsApp
+                  Finalizar Compra
                 </button>
               </div>
             </>
