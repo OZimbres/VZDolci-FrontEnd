@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import './CheckoutPage.css';
 
 // Environment variables
@@ -74,9 +76,24 @@ export function CheckoutPage() {
   };
 
   const handlePixPaymentConfirm = () => {
-    // Additional phone validation for minimum digits
-    if (phone.replace(/\D/g, '').length < 10) {
-      alert('Por favor, informe um telefone válido (mínimo 10 dígitos)!');
+    // Validate that at least one contact method is provided
+    if (!email.trim() && !phone) {
+      alert('Por favor, informe pelo menos um método de contato (email ou telefone)!');
+      return;
+    }
+
+    // Email validation if provided
+    if (email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('Por favor, informe um email válido!');
+        return;
+      }
+    }
+
+    // Phone validation if provided
+    if (phone && phone.length < 10) {
+      alert('Por favor, informe um telefone válido!');
       return;
     }
 
@@ -215,27 +232,22 @@ export function CheckoutPage() {
                       handlePixPaymentConfirm();
                     }}>
                       <h4>Informações de Contato</h4>
-                      <p>Para acompanhar seu pedido, informe seus dados:</p>
+                      <p>Informe pelo menos um método de contato (email ou telefone):</p>
                       <input
                         type="email"
                         className="contact-input"
                         placeholder="Email (exemplo@dominio.com)"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        required
                         autoComplete="email"
                       />
-                      <input
-                        type="tel"
-                        className="contact-input"
-                        placeholder="Telefone (ex: +55 11 99999-9999)"
+                      <PhoneInput
+                        international
+                        defaultCountry="BR"
+                        className="phone-input-container"
+                        placeholder="Telefone"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        required
-                        minLength={10}
-                        inputMode="tel"
-                        autoComplete="tel"
-                        title="Digite um número de telefone válido (mínimo 10 caracteres)"
+                        onChange={setPhone}
                       />
                       <div className="pix-form-actions">
                         <button 
