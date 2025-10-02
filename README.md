@@ -107,6 +107,10 @@ src/
 # Instalar dependências
 npm install
 
+# Configurar variáveis de ambiente
+# Copie o arquivo .env.example para .env e preencha com seus dados
+cp .env.example .env
+
 # Executar em modo de desenvolvimento
 npm run dev
 
@@ -121,6 +125,32 @@ npm run lint
 ```
 
 A aplicação estará disponível em `http://localhost:5173`
+
+### Configuração de Variáveis de Ambiente
+
+O projeto utiliza variáveis de ambiente para armazenar informações sensíveis como números de telefone e WhatsApp. 
+
+1. Copie o arquivo `.env.example` para `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edite o arquivo `.env` e preencha com suas informações reais:
+   ```env
+   VITE_WHATSAPP_NUMBER=5511999999999
+   VITE_PHONE_DISPLAY=(11) 99999-9999
+   VITE_STORE_ADDRESS=Rua Exemplo, 123 - São Paulo, SP
+   ```
+
+3. **Importante**: O arquivo `.env` não deve ser commitado no Git. Apenas o `.env.example` deve estar no repositório.
+
+4. Para deploy na Vercel, configure as variáveis de ambiente no painel de configurações do projeto.
+
+#### Variáveis Disponíveis
+
+- `VITE_WHATSAPP_NUMBER`: Número do WhatsApp no formato internacional (ex: 5511999999999)
+- `VITE_PHONE_DISPLAY`: Número de telefone formatado para exibição (ex: (11) 99999-9999)
+- `VITE_STORE_ADDRESS`: Endereço da loja física (opcional)
 
 ## Deploy
 
@@ -215,8 +245,12 @@ O site utiliza uma paleta luxuosa e sofisticada definida em CSS Variables:
 Edite `src/infrastructure/repositories/ProductsRepository.js` e adicione novos produtos ao array.
 
 ### Atualizar Contatos
-Atualize os números de telefone e WhatsApp em:
-- `src/presentation/pages/ContactPage.jsx`
+Atualize os números de telefone e WhatsApp editando o arquivo `.env`:
+```env
+VITE_WHATSAPP_NUMBER=5511999999999
+VITE_PHONE_DISPLAY=(11) 99999-9999
+VITE_STORE_ADDRESS=Seu endereço aqui
+```
 
 ### Modificar Cores
 Ajuste as variáveis CSS em `src/presentation/styles/global.css`

@@ -2,6 +2,9 @@ import { useState, forwardRef, useImperativeHandle } from 'react';
 import { useCart } from '../../../application/contexts/CartContext';
 import './SideCart.css';
 
+// Environment variables
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
+
 /**
  * Side Cart Component
  * Retractable cart sidebar visible on all pages
@@ -44,7 +47,7 @@ export const SideCart = forwardRef((props, ref) => {
     const total = getTotal();
     message += `%0A*Total: R$ ${total.toFixed(2)}*`;
     
-    const whatsappLink = `https://wa.me/5511999999999?text=${message}`;
+    const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     window.open(whatsappLink, '_blank');
   };
 

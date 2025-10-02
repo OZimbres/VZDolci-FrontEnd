@@ -1,5 +1,10 @@
 import { useCart } from '../../application/contexts/CartContext';
 
+// Environment variables
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
+const PHONE_DISPLAY = import.meta.env.VITE_PHONE_DISPLAY || '(11) 99999-9999';
+const STORE_ADDRESS = import.meta.env.VITE_STORE_ADDRESS || 'Em breve informações sobre nossa localização';
+
 /**
  * Contact Page
  * Displays contact information and shopping cart
@@ -22,7 +27,7 @@ export function ContactPage() {
     const total = getTotal();
     message += `%0A*Total: R$ ${total.toFixed(2)}*`;
     
-    const whatsappLink = `https://wa.me/5511999999999?text=${message}`;
+    const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     window.open(whatsappLink, '_blank');
   };
 
@@ -56,7 +61,7 @@ export function ContactPage() {
               </h3>
               <p style={{ marginBottom: '1.5rem' }}>Fale conosco pelo WhatsApp</p>
               <a 
-                href="https://wa.me/5511999999999" 
+                href={`https://wa.me/${WHATSAPP_NUMBER}`}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn"
@@ -85,14 +90,14 @@ export function ContactPage() {
               </h3>
               <p style={{ marginBottom: '1.5rem' }}>Ligue para fazer seu pedido</p>
               <a 
-                href="tel:+5511999999999"
+                href={`tel:+${WHATSAPP_NUMBER}`}
                 className="btn"
                 style={{
                   background: 'var(--secondary-color)',
                   color: 'var(--dark-bg)'
                 }}
               >
-                (11) 99999-9999
+                {PHONE_DISPLAY}
               </a>
             </div>
 
@@ -112,7 +117,7 @@ export function ContactPage() {
               </h3>
               <p style={{ marginBottom: '1.5rem' }}>Visite nossa loja</p>
               <p style={{ color: 'var(--accent-color)', fontStyle: 'italic' }}>
-                Em breve informações sobre nossa localização
+                {STORE_ADDRESS}
               </p>
             </div>
           </div>
