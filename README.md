@@ -202,12 +202,12 @@ location / {
 
 ## Paleta de Cores
 
-O site utiliza uma paleta luxuosa inspirada em confeitarias italianas, definida em CSS Variables:
-- **--primary-color**: #D4739B (Rosa Suave - doce, acolhedor, remete a sobremesas)
-- **--secondary-color**: #D4AF37 (Dourado - luxo e sofisticação)
-- **--accent-color**: #8B6F47 (Marrom Quente - chocolate, premium)
-- **--dark-bg**: #3E2723 (Marrom Escuro - rico e sofisticado)
-- **--light-bg**: #FFF8F0 (Creme Quente - suave e acolhedor)
+O site utiliza uma paleta luxuosa e sofisticada definida em CSS Variables:
+- **--primary-color**: #5A2A83 (Roxo Elegante - sofisticação e luxo)
+- **--secondary-color**: #D4AF37 (Dourado - luxo e prestígio)
+- **--accent-color**: #B2AC83 (Khaki Suave - elegância e requinte)
+- **--dark-bg**: #020202 (Preto - contraste e sofisticação)
+- **--light-bg**: #FFFCEC (Creme Claro - suavidade e leveza)
 
 ## Customização
 
