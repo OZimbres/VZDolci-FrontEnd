@@ -7,13 +7,13 @@ const CART_STORAGE_KEY = 'vz-dolci-cart';
 
 /**
  * Cart Context Provider
- * Manages the shopping cart state and operations with session persistence
+ * Manages the shopping cart state and operations with local storage persistence
  */
 export function CartProvider({ children }) {
-  // Initialize cart from sessionStorage
+  // Initialize cart from localStorage
   const [cart, setCart] = useState(() => {
     try {
-      const storedCart = sessionStorage.getItem(CART_STORAGE_KEY);
+      const storedCart = localStorage.getItem(CART_STORAGE_KEY);
       if (storedCart) {
         const parsedCart = JSON.parse(storedCart);
         // Reconstruct CartItem and Product instances from plain objects
@@ -25,17 +25,17 @@ export function CartProvider({ children }) {
         );
       }
     } catch (error) {
-      console.error('Error loading cart from sessionStorage:', error);
+      console.error('Error loading cart from localStorage:', error);
     }
     return [];
   });
 
-  // Save cart to sessionStorage whenever it changes
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
     try {
-      sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     } catch (error) {
-      console.error('Error saving cart to sessionStorage:', error);
+      console.error('Error saving cart to localStorage:', error);
     }
   }, [cart]);
 
