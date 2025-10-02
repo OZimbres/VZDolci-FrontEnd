@@ -74,24 +74,8 @@ export function CheckoutPage() {
   };
 
   const handlePixPaymentConfirm = () => {
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      alert('Por favor, informe seu email para contato!');
-      return;
-    }
-    if (!emailRegex.test(email)) {
-      alert('Por favor, informe um email válido!');
-      return;
-    }
-
-    // Phone validation
-    const phoneRegex = /^[\d\s+\-()]+$/;
-    if (!phone.trim()) {
-      alert('Por favor, informe seu telefone para contato!');
-      return;
-    }
-    if (!phoneRegex.test(phone) || phone.replace(/\D/g, '').length < 10) {
+    // Additional phone validation for minimum digits
+    if (phone.replace(/\D/g, '').length < 10) {
       alert('Por favor, informe um telefone válido (mínimo 10 dígitos)!');
       return;
     }
@@ -226,7 +210,10 @@ export function CheckoutPage() {
               ) : (
                 <div className="pix-payment-section">
                   {!pixQrCode ? (
-                    <div className="pix-form">
+                    <form className="pix-form" onSubmit={(e) => {
+                      e.preventDefault();
+                      handlePixPaymentConfirm();
+                    }}>
                       <h4>Informações de Contato</h4>
                       <p>Para acompanhar seu pedido, informe seus dados:</p>
                       <input
@@ -235,6 +222,8 @@ export function CheckoutPage() {
                         placeholder="Email (exemplo@dominio.com)"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
+                        autoComplete="email"
                       />
                       <input
                         type="tel"
@@ -242,9 +231,15 @@ export function CheckoutPage() {
                         placeholder="Telefone (ex: +55 11 99999-9999)"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
+                        required
+                        minLength={10}
+                        inputMode="tel"
+                        autoComplete="tel"
+                        title="Digite um número de telefone válido (mínimo 10 caracteres)"
                       />
                       <div className="pix-form-actions">
                         <button 
+                          type="button"
                           className="btn btn-secondary"
                           onClick={() => {
                             setShowPixForm(false);
@@ -256,13 +251,13 @@ export function CheckoutPage() {
                           Voltar
                         </button>
                         <button 
+                          type="submit"
                           className="btn btn-primary"
-                          onClick={handlePixPaymentConfirm}
                         >
                           Gerar QR Code PIX
                         </button>
                       </div>
-                    </div>
+                    </form>
                   ) : (
                     <div className="pix-qrcode-section">
                       <h4>QR Code PIX</h4>
