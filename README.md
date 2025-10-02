@@ -203,11 +203,11 @@ location / {
 ## Paleta de Cores
 
 O site utiliza uma paleta luxuosa e sofisticada definida em CSS Variables:
-- **--primary-color**: #6B1B5E (Roxo Profundo)
-- **--secondary-color**: #D4AF37 (Dourado)
-- **--accent-color**: #8B4789 (Roxo Médio)
-- **--dark-bg**: #2C1B2E (Fundo Escuro)
-- **--light-bg**: #F5F0ED (Creme)
+- **--primary-color**: #5A2A83 (Roxo Elegante - sofisticação e luxo)
+- **--secondary-color**: #D4AF37 (Dourado - luxo e prestígio)
+- **--accent-color**: #B2AC83 (Khaki Suave - elegância e requinte)
+- **--dark-bg**: #2C1B2E (Roxo Escuro - rico e sofisticado)
+- **--light-bg**: #FFFCEC (Creme Claro - suavidade e leveza)
 
 ## Customização
 

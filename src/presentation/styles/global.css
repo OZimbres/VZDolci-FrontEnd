@@ -1,13 +1,13 @@
 /* VZ Dolci - Global Styles */
 :root {
   /* Luxurious Color Palette */
-  --primary-color: #6B1B5E;
+  --primary-color: #5A2A83;
   --secondary-color: #D4AF37;
-  --accent-color: #8B4789;
+  --accent-color: #B2AC83;
   --dark-bg: #2C1B2E;
-  --light-bg: #F5F0ED;
+  --light-bg: #FFFCEC;
   --text-dark: #2C1B2E;
-  --text-light: #F5F0ED;
+  --text-light: #FFFCEC;
   --white: #FFFFFF;
 }
 
