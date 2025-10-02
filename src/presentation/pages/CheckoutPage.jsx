@@ -14,7 +14,8 @@ export function CheckoutPage() {
   const { cart, updateQuantity, removeFromCart, getTotal } = useCart();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState(null); // 'whatsapp' or 'pix'
-  const [contactInfo, setContactInfo] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [showPixForm, setShowPixForm] = useState(false);
   const [pixQrCode, setPixQrCode] = useState(null);
 
@@ -38,8 +39,14 @@ export function CheckoutPage() {
     const total = getTotal();
     message += `%0A*Total: R$ ${total.toFixed(2)}*`;
 
-    if (includeContactInfo && contactInfo) {
-      message += `%0A%0A*Forma de Pagamento:* PIX%0A*Contato:* ${contactInfo}`;
+    if (includeContactInfo && (email || phone)) {
+      message += `%0A%0A*Forma de Pagamento:* PIX`;
+      if (email) {
+        message += `%0A*Email:* ${email}`;
+      }
+      if (phone) {
+        message += `%0A*Telefone:* ${phone}`;
+      }
     }
     
     return message;
@@ -67,8 +74,25 @@ export function CheckoutPage() {
   };
 
   const handlePixPaymentConfirm = () => {
-    if (!contactInfo.trim()) {
-      alert('Por favor, informe seu WhatsApp ou Email para contato!');
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      alert('Por favor, informe seu email para contato!');
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      alert('Por favor, informe um email válido!');
+      return;
+    }
+
+    // Phone validation
+    const phoneRegex = /^[\d\s+\-()]+$/;
+    if (!phone.trim()) {
+      alert('Por favor, informe seu telefone para contato!');
+      return;
+    }
+    if (!phoneRegex.test(phone) || phone.replace(/\D/g, '').length < 10) {
+      alert('Por favor, informe um telefone válido (mínimo 10 dígitos)!');
       return;
     }
 
@@ -204,13 +228,20 @@ export function CheckoutPage() {
                   {!pixQrCode ? (
                     <div className="pix-form">
                       <h4>Informações de Contato</h4>
-                      <p>Para acompanhar seu pedido, informe seu WhatsApp ou Email:</p>
+                      <p>Para acompanhar seu pedido, informe seus dados:</p>
                       <input
-                        type="text"
+                        type="email"
                         className="contact-input"
-                        placeholder="WhatsApp ou Email"
-                        value={contactInfo}
-                        onChange={(e) => setContactInfo(e.target.value)}
+                        placeholder="Email (exemplo@dominio.com)"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                      <input
+                        type="tel"
+                        className="contact-input"
+                        placeholder="Telefone (ex: +55 11 99999-9999)"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
                       />
                       <div className="pix-form-actions">
                         <button 
@@ -218,7 +249,8 @@ export function CheckoutPage() {
                           onClick={() => {
                             setShowPixForm(false);
                             setPaymentMethod(null);
-                            setContactInfo('');
+                            setEmail('');
+                            setPhone('');
                           }}
                         >
                           Voltar
@@ -269,7 +301,9 @@ export function CheckoutPage() {
                           <li>Confirme o pagamento de R$ {getTotal().toFixed(2)}</li>
                         </ol>
                         <p className="contact-confirmation">
-                          ✅ Você receberá confirmação em <strong>{contactInfo}</strong> quando seu pedido estiver pronto!
+                          ✅ Você receberá confirmação quando seu pedido estiver pronto!
+                          <br /><strong>Email:</strong> {email}
+                          <br /><strong>Telefone:</strong> {phone}
                         </p>
                       </div>
                     </div>
