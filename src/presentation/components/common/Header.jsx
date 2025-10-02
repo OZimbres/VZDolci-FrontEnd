@@ -60,8 +60,8 @@ export function Header({ onCartClick }) {
             </Link>
           </li>
           <li>
-            <Link to="/checkout" className="nav-link" onClick={closeMenu}>
-              Finalizar Compra
+            <Link to="/pagamento" className="nav-link" onClick={closeMenu}>
+              Pagamento
             </Link>
           </li>
         </ul>

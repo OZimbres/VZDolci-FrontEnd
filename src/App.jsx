@@ -37,7 +37,7 @@ function App() {
           <Route path="/sobre" element={<AboutPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/contato" element={<ContactPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/pagamento" element={<CheckoutPage />} />
         </Routes>
         <Footer />
         <SideCart ref={sideCartRef} />
