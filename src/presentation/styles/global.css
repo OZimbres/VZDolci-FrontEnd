@@ -1,13 +1,13 @@
 /* VZ Dolci - Global Styles */
 :root {
-  /* Luxurious Color Palette */
-  --primary-color: #6B1B5E;
+  /* Luxurious Italian Bakery Color Palette */
+  --primary-color: #D4739B;
   --secondary-color: #D4AF37;
-  --accent-color: #8B4789;
-  --dark-bg: #2C1B2E;
-  --light-bg: #F5F0ED;
-  --text-dark: #2C1B2E;
-  --text-light: #F5F0ED;
+  --accent-color: #8B6F47;
+  --dark-bg: #3E2723;
+  --light-bg: #FFF8F0;
+  --text-dark: #3E2723;
+  --text-light: #FFF8F0;
   --white: #FFFFFF;
 }
 
