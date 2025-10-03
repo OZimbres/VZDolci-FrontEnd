@@ -13,21 +13,25 @@ const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
  * Handles order finalization with WhatsApp or PIX payment options
  */
 export function CheckoutPage() {
-  const { cart, updateQuantity, removeFromCart, getTotal } = useCart();
+  const { cart, updateQuantity, removeFromCart, getTotal, clearCart } = useCart();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState(null); // 'whatsapp' or 'pix'
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [showPixForm, setShowPixForm] = useState(false);
   const [pixQrCode, setPixQrCode] = useState(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const handleQuantityChange = (productId, newQuantity) => {
+    if (isProcessingPayment) return; // Prevent changes during payment
     if (newQuantity >= 1) {
       updateQuantity(productId, newQuantity);
     }
   };
 
   const handleRemove = (productId) => {
+    if (isProcessingPayment) return; // Prevent changes during payment
     removeFromCart(productId);
   };
 
@@ -60,9 +64,15 @@ export function CheckoutPage() {
       return;
     }
 
+    setIsProcessingPayment(true);
+    setPaymentMethod('whatsapp');
+
     const message = generateWhatsAppMessage(false);
     const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     window.open(whatsappLink, '_blank');
+    
+    // Show confirmation modal
+    setShowConfirmationModal(true);
   };
 
   const handlePixCheckout = () => {
@@ -71,19 +81,26 @@ export function CheckoutPage() {
       return;
     }
 
+    setIsProcessingPayment(true);
     setPaymentMethod('pix');
     setShowPixForm(true);
   };
 
   const handlePixPaymentConfirm = () => {
     // Validate that at least one contact method is provided
-    if (!email.trim() && !phone) {
+    const hasEmail = email.trim().length > 0;
+    const phoneDigits = phone ? phone.replace(/\D/g, '') : '';
+    // Phone is valid if it has 10+ digits (br number is usually 11 digits with area code)
+    // Consider phone entered if there are more digits than just the country code
+    const hasPhone = phoneDigits.length >= 10;
+    
+    if (!hasEmail && !hasPhone) {
       alert('Por favor, informe pelo menos um método de contato (email ou telefone)!');
       return;
     }
 
     // Email validation if provided
-    if (email.trim()) {
+    if (hasEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         alert('Por favor, informe um email válido!');
@@ -91,8 +108,9 @@ export function CheckoutPage() {
       }
     }
 
-    // Phone validation if provided
-    if (phone && phone.length < 10) {
+    // Phone validation: if user started entering phone but incomplete
+    // Only validate if there are digits beyond 2 (country code like "55")
+    if (phoneDigits.length > 2 && phoneDigits.length < 10) {
       alert('Por favor, informe um telefone válido!');
       return;
     }
@@ -112,6 +130,31 @@ export function CheckoutPage() {
         hiddenWindow.close();
       }
     }, 1000);
+    
+    // Show confirmation modal
+    setShowConfirmationModal(true);
+  };
+
+  const handlePaymentConfirmation = (completed) => {
+    if (completed) {
+      // Payment completed - clear cart and reset state, but STAY on checkout page
+      clearCart();
+      setIsProcessingPayment(false);
+      setShowPixForm(false);
+      setPixQrCode(null);
+      setPaymentMethod(null);
+      setEmail('');
+      setPhone('');
+    } else {
+      // Payment not completed - reset state
+      setIsProcessingPayment(false);
+      setShowPixForm(false);
+      setPixQrCode(null);
+      setPaymentMethod(null);
+      setEmail('');
+      setPhone('');
+    }
+    setShowConfirmationModal(false);
   };
 
   if (cart.length === 0) {
@@ -144,51 +187,54 @@ export function CheckoutPage() {
             {/* Cart Items */}
             <div className="checkout-items">
               <h3>Itens do Pedido</h3>
-              {cart.map((item) => (
-                <div key={item.product.id} className="checkout-item">
-                  <div className="checkout-item-info">
+              <div className="checkout-items-list">
+                {cart.map((item) => (
+                  <div key={item.product.id} className="checkout-item">
                     <span className="checkout-item-emoji">{item.product.emoji}</span>
+                    
                     <div className="checkout-item-details">
                       <h4>{item.product.name}</h4>
                       <p className="checkout-item-description">{item.product.description}</p>
                       <p className="checkout-item-price">R$ {item.product.price.toFixed(2)} (unidade)</p>
                     </div>
-                  </div>
-                  
-                  <div className="checkout-item-actions">
-                    <div className="quantity-controls">
+                    
+                    <div className="checkout-item-actions">
+                      <div className="quantity-controls">
+                        <button 
+                          className="qty-btn"
+                          onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1 || isProcessingPayment}
+                          aria-label="Diminuir quantidade"
+                        >
+                          -
+                        </button>
+                        <span className="quantity">{item.quantity}</span>
+                        <button 
+                          className="qty-btn"
+                          onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                          disabled={isProcessingPayment}
+                          aria-label="Aumentar quantidade"
+                        >
+                          +
+                        </button>
+                      </div>
                       <button 
-                        className="qty-btn"
-                        onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                        aria-label="Diminuir quantidade"
+                        className="remove-btn"
+                        onClick={() => handleRemove(item.product.id)}
+                        disabled={isProcessingPayment}
+                        title="Remover item"
+                        aria-label="Remover item"
                       >
-                        -
-                      </button>
-                      <span className="quantity">{item.quantity}</span>
-                      <button 
-                        className="qty-btn"
-                        onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
-                        aria-label="Aumentar quantidade"
-                      >
-                        +
+                        🗑️
                       </button>
                     </div>
-                    <button 
-                      className="remove-btn"
-                      onClick={() => handleRemove(item.product.id)}
-                      title="Remover item"
-                      aria-label="Remover item"
-                    >
-                      🗑️
-                    </button>
+                    
+                    <div className="checkout-item-total">
+                      Subtotal: R$ {item.getTotal().toFixed(2)}
+                    </div>
                   </div>
-                  
-                  <div className="checkout-item-total">
-                    Subtotal: R$ {item.getTotal().toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
               <div className="checkout-total">
                 <strong>Total do Pedido:</strong>
@@ -205,6 +251,7 @@ export function CheckoutPage() {
                   <button 
                     className="payment-option whatsapp-option"
                     onClick={handleWhatsAppCheckout}
+                    disabled={isProcessingPayment}
                   >
                     <span className="payment-icon">💬</span>
                     <div className="payment-option-content">
@@ -216,6 +263,7 @@ export function CheckoutPage() {
                   <button 
                     className="payment-option pix-option"
                     onClick={handlePixCheckout}
+                    disabled={isProcessingPayment}
                   >
                     <span className="payment-icon">💳</span>
                     <div className="payment-option-content">
@@ -320,6 +368,38 @@ export function CheckoutPage() {
           </div>
         </div>
       </section>
+
+      {/* Confirmation Modal */}
+      {showConfirmationModal && (
+        <div className="modal-overlay" onClick={(e) => {
+          if (e.target.className === 'modal-overlay') {
+            // Prevent closing modal by clicking outside
+          }
+        }}>
+          <div className="modal-content">
+            <h3>Confirmação de Pagamento</h3>
+            <p>
+              {paymentMethod === 'whatsapp' 
+                ? 'Você finalizou a compra via WhatsApp?' 
+                : 'Você concluiu o pagamento via PIX?'}
+            </p>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => handlePaymentConfirmation(false)}
+              >
+                Não, cancelar
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => handlePaymentConfirmation(true)}
+              >
+                Sim, concluí
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
