@@ -153,3 +153,33 @@ h3 {
   color: var(--accent-color);
   font-style: italic;
 }
+
+/* Animated Background */
+.animated-background {
+  position: relative;
+  overflow: hidden;
+  background: var(--light-bg);
+}
+
+.animated-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="%23D4AF37" opacity="0.3"/></svg>');
+  animation: floatUp 20s infinite linear;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.animated-background > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-100px); }
+}

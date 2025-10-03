@@ -7,7 +7,7 @@ import { ProductList } from '../components/features/Products/ProductList';
 export function ProductsPage() {
   return (
     <main>
-      <section className="section" style={{ background: 'var(--white)' }}>
+      <section className="section animated-background">
         <div className="container">
           <h2 className="section-title">Nossos Doces</h2>
           <p className="section-subtitle">Criações artesanais com ingredientes premium</p>
