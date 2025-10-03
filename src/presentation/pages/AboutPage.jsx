@@ -5,7 +5,7 @@
 export function AboutPage() {
   return (
     <main>
-      <section className="section" style={{ background: 'var(--light-bg)' }}>
+      <section className="section animated-background">
         <div className="container">
           <h2 className="section-title">Sobre a VZ Dolci</h2>
           

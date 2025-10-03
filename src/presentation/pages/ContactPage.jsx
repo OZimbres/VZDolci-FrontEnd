@@ -11,7 +11,7 @@ export function ContactPage() {
 
   return (
     <main>
-      <section className="section" style={{ background: 'var(--light-bg)' }}>
+      <section className="section animated-background">
         <div className="container">
           <h2 className="section-title">Entre em Contato</h2>
           <p className="section-subtitle">Estamos prontos para atender você</p>

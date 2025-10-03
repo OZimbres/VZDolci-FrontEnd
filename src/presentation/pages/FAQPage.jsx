@@ -34,7 +34,7 @@ export function FAQPage() {
 
   return (
     <main>
-      <section className="section" style={{ background: 'var(--white)' }}>
+      <section className="section animated-background">
         <div className="container">
           <h2 className="section-title">Perguntas Frequentes</h2>
           
