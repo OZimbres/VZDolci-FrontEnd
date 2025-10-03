@@ -137,9 +137,14 @@ export function CheckoutPage() {
 
   const handlePaymentConfirmation = (completed) => {
     if (completed) {
-      // Payment completed - clear cart and redirect
+      // Payment completed - clear cart and reset state, but STAY on checkout page
       clearCart();
-      navigate('/');
+      setIsProcessingPayment(false);
+      setShowPixForm(false);
+      setPixQrCode(null);
+      setPaymentMethod(null);
+      setEmail('');
+      setPhone('');
     } else {
       // Payment not completed - reset state
       setIsProcessingPayment(false);
@@ -182,53 +187,54 @@ export function CheckoutPage() {
             {/* Cart Items */}
             <div className="checkout-items">
               <h3>Itens do Pedido</h3>
-              {cart.map((item) => (
-                <div key={item.product.id} className="checkout-item">
-                  <div className="checkout-item-info">
+              <div className="checkout-items-list">
+                {cart.map((item) => (
+                  <div key={item.product.id} className="checkout-item">
                     <span className="checkout-item-emoji">{item.product.emoji}</span>
+                    
                     <div className="checkout-item-details">
                       <h4>{item.product.name}</h4>
                       <p className="checkout-item-description">{item.product.description}</p>
                       <p className="checkout-item-price">R$ {item.product.price.toFixed(2)} (unidade)</p>
                     </div>
-                  </div>
-                  
-                  <div className="checkout-item-actions">
-                    <div className="quantity-controls">
+                    
+                    <div className="checkout-item-actions">
+                      <div className="quantity-controls">
+                        <button 
+                          className="qty-btn"
+                          onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1 || isProcessingPayment}
+                          aria-label="Diminuir quantidade"
+                        >
+                          -
+                        </button>
+                        <span className="quantity">{item.quantity}</span>
+                        <button 
+                          className="qty-btn"
+                          onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                          disabled={isProcessingPayment}
+                          aria-label="Aumentar quantidade"
+                        >
+                          +
+                        </button>
+                      </div>
                       <button 
-                        className="qty-btn"
-                        onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1 || isProcessingPayment}
-                        aria-label="Diminuir quantidade"
-                      >
-                        -
-                      </button>
-                      <span className="quantity">{item.quantity}</span>
-                      <button 
-                        className="qty-btn"
-                        onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                        className="remove-btn"
+                        onClick={() => handleRemove(item.product.id)}
                         disabled={isProcessingPayment}
-                        aria-label="Aumentar quantidade"
+                        title="Remover item"
+                        aria-label="Remover item"
                       >
-                        +
+                        🗑️
                       </button>
                     </div>
-                    <button 
-                      className="remove-btn"
-                      onClick={() => handleRemove(item.product.id)}
-                      disabled={isProcessingPayment}
-                      title="Remover item"
-                      aria-label="Remover item"
-                    >
-                      🗑️
-                    </button>
+                    
+                    <div className="checkout-item-total">
+                      Subtotal: R$ {item.getTotal().toFixed(2)}
+                    </div>
                   </div>
-                  
-                  <div className="checkout-item-total">
-                    Subtotal: R$ {item.getTotal().toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
               <div className="checkout-total">
                 <strong>Total do Pedido:</strong>

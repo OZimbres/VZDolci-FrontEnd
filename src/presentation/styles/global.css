@@ -153,14 +153,3 @@ h3 {
   color: var(--accent-color);
   font-style: italic;
 }
-
-/* Checkout specific title styling */
-.checkout-section .section-title {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.checkout-section .section-subtitle {
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-}
