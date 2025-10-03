@@ -385,16 +385,16 @@ export function CheckoutPage() {
             </p>
             <div className="modal-actions">
               <button 
-                className="btn btn-primary"
-                onClick={() => handlePaymentConfirmation(true)}
-              >
-                Sim, concluí
-              </button>
-              <button 
                 className="btn btn-secondary"
                 onClick={() => handlePaymentConfirmation(false)}
               >
                 Não, cancelar
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => handlePaymentConfirmation(true)}
+              >
+                Sim, concluí
               </button>
             </div>
           </div>
