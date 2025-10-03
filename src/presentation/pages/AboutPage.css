@@ -1,0 +1,45 @@
+/* About Page Styles */
+
+.about-card {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 15px;
+  border-left: 4px solid var(--secondary-color);
+  box-shadow: 0 8px 24px rgba(90, 42, 131, 0.12);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.about-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(90, 42, 131, 0.18);
+}
+
+.about-card h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  font-family: 'Palatino, Times New Roman, serif';
+}
+
+.about-card p {
+  margin-bottom: 1rem;
+  line-height: 1.8;
+}
+
+.about-card ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.about-card li {
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--light-bg);
+}
+
+.about-card li:last-child {
+  border-bottom: none;
+}
+
+.about-card strong {
+  color: var(--primary-color);
+}

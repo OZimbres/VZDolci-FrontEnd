@@ -1,3 +1,5 @@
+import './ContactPage.css';
+
 // Environment variables
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
 const PHONE_DISPLAY = import.meta.env.VITE_PHONE_DISPLAY || '(11) 99999-9999';
@@ -22,22 +24,12 @@ export function ContactPage() {
             gap: '2rem', 
             marginTop: '3rem' 
           }}>
-            <div style={{
-              background: 'var(--white)',
-              padding: '2rem',
-              borderRadius: '15px',
-              textAlign: 'center',
-              transition: 'transform 0.3s'
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📱</div>
-              <h3 style={{ 
-                color: 'var(--primary-color)', 
-                marginBottom: '0.5rem',
-                fontFamily: 'Palatino, Times New Roman, serif'
-              }}>
+            <div className="contact-card">
+              <div className="contact-emoji">📱</div>
+              <h3>
                 WhatsApp
               </h3>
-              <p style={{ marginBottom: '1.5rem' }}>Fale conosco pelo WhatsApp</p>
+              <p className="contact-description">Fale conosco pelo WhatsApp</p>
               <a 
                 href={`https://wa.me/${WHATSAPP_NUMBER}`}
                 target="_blank" 
@@ -52,21 +44,12 @@ export function ContactPage() {
               </a>
             </div>
 
-            <div style={{
-              background: 'var(--white)',
-              padding: '2rem',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📞</div>
-              <h3 style={{ 
-                color: 'var(--primary-color)', 
-                marginBottom: '0.5rem',
-                fontFamily: 'Palatino, Times New Roman, serif'
-              }}>
+            <div className="contact-card">
+              <div className="contact-emoji">📞</div>
+              <h3>
                 Telefone
               </h3>
-              <p style={{ marginBottom: '1.5rem' }}>Ligue para fazer seu pedido</p>
+              <p className="contact-description">Ligue para fazer seu pedido</p>
               <a 
                 href={`tel:+${WHATSAPP_NUMBER}`}
                 className="btn"
@@ -79,22 +62,13 @@ export function ContactPage() {
               </a>
             </div>
 
-            <div style={{
-              background: 'var(--white)',
-              padding: '2rem',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📍</div>
-              <h3 style={{ 
-                color: 'var(--primary-color)', 
-                marginBottom: '0.5rem',
-                fontFamily: 'Palatino, Times New Roman, serif'
-              }}>
+            <div className="contact-card">
+              <div className="contact-emoji">📍</div>
+              <h3>
                 Loja Física
               </h3>
-              <p style={{ marginBottom: '1.5rem' }}>Visite nossa loja</p>
-              <p style={{ color: 'var(--accent-color)', fontStyle: 'italic' }}>
+              <p className="contact-description">Visite nossa loja</p>
+              <p className="contact-info">
                 {STORE_ADDRESS}
               </p>
             </div>

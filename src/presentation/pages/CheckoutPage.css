@@ -37,7 +37,7 @@
   padding: 4rem 2rem;
   background: var(--white);
   border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 24px rgba(90, 42, 131, 0.12);
 }
 
 .empty-icon {
@@ -57,7 +57,7 @@
   background: var(--white);
   padding: 2rem;
   border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 24px rgba(90, 42, 131, 0.12);
 }
 
 .checkout-items h3 {
@@ -72,13 +72,13 @@
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s;
+  box-shadow: 0 4px 12px rgba(90, 42, 131, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .checkout-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(90, 42, 131, 0.12);
 }
 
 .checkout-item-info {
@@ -221,7 +221,7 @@
   background: var(--white);
   padding: 2rem;
   border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 24px rgba(90, 42, 131, 0.12);
   height: fit-content;
   position: sticky;
   top: calc(100px + 2rem);
