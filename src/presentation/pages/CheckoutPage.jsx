@@ -88,13 +88,19 @@ export function CheckoutPage() {
 
   const handlePixPaymentConfirm = () => {
     // Validate that at least one contact method is provided
-    if (!email.trim() && !phone) {
+    const hasEmail = email.trim().length > 0;
+    const phoneDigits = phone ? phone.replace(/\D/g, '') : '';
+    // Phone is valid if it has 10+ digits (br number is usually 11 digits with area code)
+    // Consider phone entered if there are more digits than just the country code
+    const hasPhone = phoneDigits.length >= 10;
+    
+    if (!hasEmail && !hasPhone) {
       alert('Por favor, informe pelo menos um método de contato (email ou telefone)!');
       return;
     }
 
     // Email validation if provided
-    if (email.trim()) {
+    if (hasEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         alert('Por favor, informe um email válido!');
@@ -102,8 +108,9 @@ export function CheckoutPage() {
       }
     }
 
-    // Phone validation if provided
-    if (phone && phone.length < 10) {
+    // Phone validation: if user started entering phone but incomplete
+    // Only validate if there are digits beyond 2 (country code like "55")
+    if (phoneDigits.length > 2 && phoneDigits.length < 10) {
       alert('Por favor, informe um telefone válido!');
       return;
     }
