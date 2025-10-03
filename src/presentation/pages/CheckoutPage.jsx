@@ -13,21 +13,25 @@ const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
  * Handles order finalization with WhatsApp or PIX payment options
  */
 export function CheckoutPage() {
-  const { cart, updateQuantity, removeFromCart, getTotal } = useCart();
+  const { cart, updateQuantity, removeFromCart, getTotal, clearCart } = useCart();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState(null); // 'whatsapp' or 'pix'
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [showPixForm, setShowPixForm] = useState(false);
   const [pixQrCode, setPixQrCode] = useState(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const handleQuantityChange = (productId, newQuantity) => {
+    if (isProcessingPayment) return; // Prevent changes during payment
     if (newQuantity >= 1) {
       updateQuantity(productId, newQuantity);
     }
   };
 
   const handleRemove = (productId) => {
+    if (isProcessingPayment) return; // Prevent changes during payment
     removeFromCart(productId);
   };
 
@@ -60,9 +64,15 @@ export function CheckoutPage() {
       return;
     }
 
+    setIsProcessingPayment(true);
+    setPaymentMethod('whatsapp');
+
     const message = generateWhatsAppMessage(false);
     const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     window.open(whatsappLink, '_blank');
+    
+    // Show confirmation modal
+    setShowConfirmationModal(true);
   };
 
   const handlePixCheckout = () => {
@@ -71,6 +81,7 @@ export function CheckoutPage() {
       return;
     }
 
+    setIsProcessingPayment(true);
     setPaymentMethod('pix');
     setShowPixForm(true);
   };
@@ -112,6 +123,26 @@ export function CheckoutPage() {
         hiddenWindow.close();
       }
     }, 1000);
+    
+    // Show confirmation modal
+    setShowConfirmationModal(true);
+  };
+
+  const handlePaymentConfirmation = (completed) => {
+    if (completed) {
+      // Payment completed - clear cart and redirect
+      clearCart();
+      navigate('/');
+    } else {
+      // Payment not completed - reset state
+      setIsProcessingPayment(false);
+      setShowPixForm(false);
+      setPixQrCode(null);
+      setPaymentMethod(null);
+      setEmail('');
+      setPhone('');
+    }
+    setShowConfirmationModal(false);
   };
 
   if (cart.length === 0) {
@@ -160,7 +191,7 @@ export function CheckoutPage() {
                       <button 
                         className="qty-btn"
                         onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
+                        disabled={item.quantity <= 1 || isProcessingPayment}
                         aria-label="Diminuir quantidade"
                       >
                         -
@@ -169,6 +200,7 @@ export function CheckoutPage() {
                       <button 
                         className="qty-btn"
                         onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                        disabled={isProcessingPayment}
                         aria-label="Aumentar quantidade"
                       >
                         +
@@ -177,6 +209,7 @@ export function CheckoutPage() {
                     <button 
                       className="remove-btn"
                       onClick={() => handleRemove(item.product.id)}
+                      disabled={isProcessingPayment}
                       title="Remover item"
                       aria-label="Remover item"
                     >
@@ -205,6 +238,7 @@ export function CheckoutPage() {
                   <button 
                     className="payment-option whatsapp-option"
                     onClick={handleWhatsAppCheckout}
+                    disabled={isProcessingPayment}
                   >
                     <span className="payment-icon">💬</span>
                     <div className="payment-option-content">
@@ -216,6 +250,7 @@ export function CheckoutPage() {
                   <button 
                     className="payment-option pix-option"
                     onClick={handlePixCheckout}
+                    disabled={isProcessingPayment}
                   >
                     <span className="payment-icon">💳</span>
                     <div className="payment-option-content">
@@ -320,6 +355,38 @@ export function CheckoutPage() {
           </div>
         </div>
       </section>
+
+      {/* Confirmation Modal */}
+      {showConfirmationModal && (
+        <div className="modal-overlay" onClick={(e) => {
+          if (e.target.className === 'modal-overlay') {
+            // Prevent closing modal by clicking outside
+          }
+        }}>
+          <div className="modal-content">
+            <h3>Confirmação de Pagamento</h3>
+            <p>
+              {paymentMethod === 'whatsapp' 
+                ? 'Você finalizou a compra via WhatsApp?' 
+                : 'Você concluiu o pagamento via PIX?'}
+            </p>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-primary"
+                onClick={() => handlePaymentConfirmation(true)}
+              >
+                Sim, concluí
+              </button>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => handlePaymentConfirmation(false)}
+              >
+                Não, cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
