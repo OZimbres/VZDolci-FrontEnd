@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
-import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
 import './CheckoutPage.css';
 
 // Environment variables
@@ -242,12 +242,11 @@ export function CheckoutPage() {
                         autoComplete="email"
                       />
                       <PhoneInput
-                        international
-                        defaultCountry="BR"
+                        defaultCountry="br"
                         className="phone-input-container"
                         placeholder="Telefone"
                         value={phone}
-                        onChange={setPhone}
+                        onChange={(phone) => setPhone(phone)}
                       />
                       <div className="pix-form-actions">
                         <button 

@@ -307,7 +307,7 @@
   margin-bottom: 1.5rem;
 }
 
-.phone-input-container .PhoneInputInput {
+.phone-input-container input {
   width: 100%;
   padding: 1rem;
   border: 2px solid var(--light-bg);
@@ -317,12 +317,12 @@
   transition: border-color 0.3s;
 }
 
-.phone-input-container .PhoneInputInput:focus {
+.phone-input-container input:focus {
   outline: none;
   border-color: var(--secondary-color);
 }
 
-.phone-input-container .PhoneInputCountrySelect {
+.phone-input-container button {
   border: 2px solid var(--light-bg);
   border-radius: 10px;
   padding: 0.5rem;
@@ -333,12 +333,12 @@
   cursor: pointer;
 }
 
-.phone-input-container .PhoneInputCountrySelect:focus {
+.phone-input-container button:focus {
   outline: none;
   border-color: var(--secondary-color);
 }
 
-.phone-input-container .PhoneInputCountryIcon {
+.phone-input-container .react-international-phone-country-selector-button__flag-emoji {
   width: 1.5rem;
   height: 1.5rem;
 }
