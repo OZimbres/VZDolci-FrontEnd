@@ -14,7 +14,8 @@
 
 .faq-question {
   width: 100%;
-  background: var(--light-bg);
+  background: #FFFCEC;
+  background-color: #FFFCEC;
   border: none;
   padding: 1.5rem;
   text-align: left;
@@ -27,10 +28,12 @@
   color: var(--text-dark);
   font-family: 'Raleway', sans-serif;
   font-weight: 600;
+  opacity: 1;
 }
 
 .faq-question:hover {
-  background: var(--white);
+  background: #FFFFFF;
+  background-color: #FFFFFF;
 }
 
 .faq-icon {
@@ -47,7 +50,9 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease-out;
-  background: var(--white);
+  background: #FFFFFF;
+  background-color: #FFFFFF;
+  opacity: 1;
 }
 
 .faq-item.active .faq-answer {
