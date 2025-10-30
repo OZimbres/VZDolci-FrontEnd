@@ -107,10 +107,6 @@ export function CartProvider({ children }) {
     return cart.reduce((count, item) => count + item.quantity, 0);
   }, [cart]);
 
-  const getTotal = useCallback(() => total, [total]);
-
-  const getItemCount = useCallback(() => itemCount, [itemCount]);
-
   return (
     <CartContext.Provider
       value={{
@@ -119,8 +115,8 @@ export function CartProvider({ children }) {
         removeFromCart,
         updateQuantity,
         clearCart,
-        getTotal,
-        getItemCount
+        total,
+        itemCount
       }}
     >
       {children}

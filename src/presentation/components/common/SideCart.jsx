@@ -9,7 +9,7 @@ import './SideCart.css';
  */
 export const SideCart = forwardRef(function SideCart(props, ref) {
   const [isOpen, setIsOpen] = useState(false);
-  const { cart, updateQuantity, removeFromCart, getTotal } = useCart();
+  const { cart, updateQuantity, removeFromCart, total } = useCart();
   const navigate = useNavigate();
 
   const toggleCart = () => {
@@ -106,7 +106,7 @@ export const SideCart = forwardRef(function SideCart(props, ref) {
               <div className="cart-footer">
                 <div className="cart-total">
                   <strong>Total:</strong>
-                  <strong className="total-amount">R$ {getTotal().toFixed(2)}</strong>
+                  <strong className="total-amount">R$ {total.toFixed(2)}</strong>
                 </div>
                 <button 
                   className="checkout-btn"

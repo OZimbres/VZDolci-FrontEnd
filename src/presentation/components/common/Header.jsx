@@ -9,8 +9,7 @@ import './Header.css';
  */
 export const Header = memo(function Header({ onCartClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { getItemCount } = useCart();
-  const itemCount = getItemCount();
+  const { itemCount } = useCart();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
