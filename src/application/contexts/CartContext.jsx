@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { CartItem } from '../../domain/entities/CartItem';
 import { Product } from '../../domain/entities/Product';
 
@@ -81,11 +81,12 @@ export function CartProvider({ children }) {
     setCart([]);
   }, []);
 
-  const getTotal = useCallback(() => {
-    return cart.reduce((total, item) => total + item.getTotal(), 0);
+  // Memoize expensive calculations to avoid recomputing on every render
+  const total = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.getTotal(), 0);
   }, [cart]);
 
-  const getItemCount = useCallback(() => {
+  const itemCount = useMemo(() => {
     return cart.reduce((count, item) => count + item.quantity, 0);
   }, [cart]);
 
@@ -97,8 +98,8 @@ export function CartProvider({ children }) {
         removeFromCart,
         updateQuantity,
         clearCart,
-        getTotal,
-        getItemCount
+        total,
+        itemCount
       }}
     >
       {children}

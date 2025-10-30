@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import './FAQItem.css';
 
 /**
  * FAQ Item Component
  * Displays a single FAQ question with collapsible answer
+ * Memoized to prevent unnecessary re-renders in lists
  */
-export function FAQItem({ question, answer }) {
+export const FAQItem = memo(function FAQItem({ question, answer }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggle = () => {
@@ -23,4 +24,4 @@ export function FAQItem({ question, answer }) {
       </div>
     </div>
   );
-}
+});

@@ -9,7 +9,7 @@ import './Header.css';
  */
 export function Header({ onCartClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { getItemCount } = useCart();
+  const { itemCount } = useCart();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -73,7 +73,7 @@ export function Header({ onCartClick }) {
             aria-label="Abrir carrinho"
           >
             🛒
-            {getItemCount() > 0 && <span className="cart-badge">{getItemCount()}</span>}
+            {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
           </button>
         </div>
 

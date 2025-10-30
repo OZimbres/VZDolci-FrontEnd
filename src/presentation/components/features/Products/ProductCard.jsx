@@ -1,11 +1,13 @@
+import { memo } from 'react';
 import { useCart } from '../../../../application/contexts/CartContext';
 import './ProductCard.css';
 
 /**
  * Product Card Component
  * Displays a single product with add to cart functionality
+ * Memoized to prevent unnecessary re-renders
  */
-export function ProductCard({ product }) {
+export const ProductCard = memo(function ProductCard({ product }) {
   const { addToCart } = useCart();
 
   const handleAddToCart = () => {
@@ -31,4 +33,4 @@ export function ProductCard({ product }) {
       </button>
     </div>
   );
-}
+});
