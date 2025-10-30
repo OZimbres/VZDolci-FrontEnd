@@ -7,7 +7,7 @@ import './SideCart.css';
  * Side Cart Component
  * Retractable cart sidebar visible on all pages
  */
-export const SideCart = forwardRef((props, ref) => {
+export const SideCart = forwardRef(function SideCart(props, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const { cart, updateQuantity, removeFromCart, getTotal } = useCart();
   const navigate = useNavigate();
