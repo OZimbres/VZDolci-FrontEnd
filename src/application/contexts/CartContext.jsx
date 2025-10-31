@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { CartItem } from '../../domain/entities/CartItem';
 import { Product } from '../../domain/entities/Product';
 
@@ -30,13 +30,30 @@ export function CartProvider({ children }) {
     return [];
   });
 
-  // Save cart to localStorage whenever it changes
+  // Debounce localStorage writes to reduce I/O operations
+  const saveTimeoutRef = useRef(null);
+  
   useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-    } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+    
+    // Schedule a save after 500ms of inactivity
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      } catch (error) {
+        console.error('Error saving cart to localStorage:', error);
+      }
+    }, 500);
+    
+    // Cleanup on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [cart]);
 
   const addToCart = useCallback((product) => {
@@ -81,11 +98,12 @@ export function CartProvider({ children }) {
     setCart([]);
   }, []);
 
-  const getTotal = useCallback(() => {
+  // Memoize total and item count to avoid recalculation on every render
+  const total = useMemo(() => {
     return cart.reduce((total, item) => total + item.getTotal(), 0);
   }, [cart]);
 
-  const getItemCount = useCallback(() => {
+  const itemCount = useMemo(() => {
     return cart.reduce((count, item) => count + item.quantity, 0);
   }, [cart]);
 
@@ -97,8 +115,8 @@ export function CartProvider({ children }) {
         removeFromCart,
         updateQuantity,
         clearCart,
-        getTotal,
-        getItemCount
+        total,
+        itemCount
       }}
     >
       {children}

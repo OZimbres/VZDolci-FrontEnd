@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../../application/contexts/CartContext';
 import './Header.css';
@@ -7,9 +7,9 @@ import './Header.css';
  * Header Component
  * Displays the navigation bar
  */
-export function Header({ onCartClick }) {
+export const Header = memo(function Header({ onCartClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { getItemCount } = useCart();
+  const { itemCount } = useCart();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -73,7 +73,7 @@ export function Header({ onCartClick }) {
             aria-label="Abrir carrinho"
           >
             🛒
-            {getItemCount() > 0 && <span className="cart-badge">{getItemCount()}</span>}
+            {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
           </button>
         </div>
 
@@ -85,4 +85,4 @@ export function Header({ onCartClick }) {
       </div>
     </nav>
   );
-}
+});
