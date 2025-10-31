@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useProducts } from '../../../../application/hooks/useProducts';
 import { ProductCard } from './ProductCard';
 import './ProductList.css';
@@ -5,8 +6,9 @@ import './ProductList.css';
 /**
  * Product List Component
  * Displays all available products
+ * Memoized for better performance
  */
-export function ProductList() {
+export const ProductList = memo(function ProductList() {
   const { products, loading } = useProducts();
 
   if (loading) {
@@ -20,4 +22,4 @@ export function ProductList() {
       ))}
     </div>
   );
-}
+});

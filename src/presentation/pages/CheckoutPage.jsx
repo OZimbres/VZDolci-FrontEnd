@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
 import { PhoneInput } from 'react-international-phone';
@@ -23,19 +23,21 @@ export function CheckoutPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
-  const handleQuantityChange = (productId, newQuantity) => {
+  // Memoize event handlers to prevent recreation on every render
+  const handleQuantityChange = useCallback((productId, newQuantity) => {
     if (isProcessingPayment) return; // Prevent changes during payment
     if (newQuantity >= 1) {
       updateQuantity(productId, newQuantity);
     }
-  };
+  }, [isProcessingPayment, updateQuantity]);
 
-  const handleRemove = (productId) => {
+  const handleRemove = useCallback((productId) => {
     if (isProcessingPayment) return; // Prevent changes during payment
     removeFromCart(productId);
-  };
+  }, [isProcessingPayment, removeFromCart]);
 
-  const generateWhatsAppMessage = (includeContactInfo = false) => {
+  // Memoize message generation to avoid recreation on every render
+  const generateWhatsAppMessage = useCallback((includeContactInfo = false) => {
     let message = '*Pedido VZ Dolci*%0A%0A';
     let total = 0;
     
@@ -59,7 +61,7 @@ export function CheckoutPage() {
     }
     
     return message;
-  };
+  }, [cart, total, email, phone]);
 
   const handleWhatsAppCheckout = () => {
     if (cart.length === 0) {

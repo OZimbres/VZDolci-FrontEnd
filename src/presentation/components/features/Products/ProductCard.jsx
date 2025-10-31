@@ -5,6 +5,7 @@ import './ProductCard.css';
 /**
  * Product Card Component
  * Displays a single product with add to cart functionality
+ * Memoized to prevent unnecessary re-renders
  */
 export const ProductCard = memo(function ProductCard({ product }) {
   const { addToCart } = useCart();

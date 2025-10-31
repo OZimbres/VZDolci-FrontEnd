@@ -3,8 +3,9 @@ import { Product } from '../../domain/entities/Product';
 /**
  * Products Repository
  * Handles data access for products
+ * Implements singleton pattern to avoid creating multiple instances
  */
-export class ProductsRepository {
+class ProductsRepositoryClass {
   constructor() {
     this.products = [
       new Product({
@@ -72,3 +73,6 @@ export class ProductsRepository {
     return this.products.find(product => product.id === id);
   }
 }
+
+// Export singleton instance
+export const ProductsRepository = new ProductsRepositoryClass();

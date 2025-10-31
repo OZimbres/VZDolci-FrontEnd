@@ -107,6 +107,17 @@ export function CartProvider({ children }) {
     return cart.reduce((count, item) => count + item.quantity, 0);
   }, [cart]);
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    total,
+    itemCount
+  }), [cart, addToCart, removeFromCart, updateQuantity, clearCart, total, itemCount]);
+
   return (
     <CartContext.Provider
       value={{

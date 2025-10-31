@@ -3,6 +3,7 @@ import { ProductsRepository } from '../../infrastructure/repositories/ProductsRe
 
 /**
  * Custom hook to fetch and manage products
+ * Uses singleton repository instance for better performance
  */
 export function useProducts() {
   const [products, setProducts] = useState([]);
