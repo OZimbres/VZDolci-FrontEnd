@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../../application/contexts/CartContext';
 import './Header.css';
@@ -7,7 +7,7 @@ import './Header.css';
  * Header Component
  * Displays the navigation bar
  */
-export function Header({ onCartClick }) {
+export const Header = memo(function Header({ onCartClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { itemCount } = useCart();
 
@@ -85,4 +85,4 @@ export function Header({ onCartClick }) {
       </div>
     </nav>
   );
-}
+});

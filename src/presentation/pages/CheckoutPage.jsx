@@ -39,9 +39,13 @@ export function CheckoutPage() {
   // Memoize message generation to avoid recreation on every render
   const generateWhatsAppMessage = useCallback((includeContactInfo = false) => {
     let message = '*Pedido VZ Dolci*%0A%0A';
+    let total = 0;
     
+    // Single iteration to build message and calculate total
     cart.forEach(item => {
-      message += `${item.product.name} x${item.quantity} - R$ ${item.getTotal().toFixed(2)}%0A`;
+      const itemTotal = item.getTotal();
+      total += itemTotal;
+      message += `${item.product.name} x${item.quantity} - R$ ${itemTotal.toFixed(2)}%0A`;
     });
     
     message += `%0A*Total: R$ ${total.toFixed(2)}*`;

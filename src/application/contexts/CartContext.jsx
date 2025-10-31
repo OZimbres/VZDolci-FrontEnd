@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { CartItem } from '../../domain/entities/CartItem';
 import { Product } from '../../domain/entities/Product';
 
@@ -30,13 +30,30 @@ export function CartProvider({ children }) {
     return [];
   });
 
-  // Save cart to localStorage whenever it changes
+  // Debounce localStorage writes to reduce I/O operations
+  const saveTimeoutRef = useRef(null);
+  
   useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-    } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+    
+    // Schedule a save after 500ms of inactivity
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      } catch (error) {
+        console.error('Error saving cart to localStorage:', error);
+      }
+    }, 500);
+    
+    // Cleanup on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [cart]);
 
   const addToCart = useCallback((product) => {
@@ -81,9 +98,9 @@ export function CartProvider({ children }) {
     setCart([]);
   }, []);
 
-  // Memoize expensive calculations to avoid recomputing on every render
+  // Memoize total and item count to avoid recalculation on every render
   const total = useMemo(() => {
-    return cart.reduce((sum, item) => sum + item.getTotal(), 0);
+    return cart.reduce((total, item) => total + item.getTotal(), 0);
   }, [cart]);
 
   const itemCount = useMemo(() => {
@@ -102,7 +119,17 @@ export function CartProvider({ children }) {
   }), [cart, addToCart, removeFromCart, updateQuantity, clearCart, total, itemCount]);
 
   return (
-    <CartContext.Provider value={contextValue}>
+    <CartContext.Provider
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        total,
+        itemCount
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
