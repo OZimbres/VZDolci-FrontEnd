@@ -10,7 +10,7 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
   
   // Memoize repository instance to avoid creating new instance on each render
-  const repository = useMemo(() => new ProductsRepository(), []);
+  const repository = useMemo(() => ProductsRepository, []);
 
   useEffect(() => {
     const allProducts = repository.getAllProducts();
