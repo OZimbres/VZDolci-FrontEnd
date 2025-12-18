@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { ProductsRepository } from '../../infrastructure/repositories/ProductsRepository';
 
 /**
@@ -9,8 +9,8 @@ export function useProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Memoize repository instance to avoid creating new instance on each render
-  const repository = useMemo(() => new ProductsRepository(), []);
+  // Reference to singleton repository instance
+  const repository = ProductsRepository;
 
   useEffect(() => {
     const allProducts = repository.getAllProducts();
