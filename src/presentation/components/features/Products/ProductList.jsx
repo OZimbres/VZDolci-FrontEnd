@@ -12,28 +12,29 @@ export const ProductList = memo(function ProductList() {
   const { products, loading } = useProducts();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const searchableProducts = useMemo(() => products.map(product => {
-    const ingredientsValue = Array.isArray(product?.ingredients)
-      ? product.ingredients.join(' ')
-      : (product?.ingredients ?? '');
-
-    const searchText = [
-      product?.name ?? '',
-      product?.description ?? '',
-      ingredientsValue
-    ].join(' ').toLowerCase();
-
-    return { product, searchText };
-  }), [products]);
-
   const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+
     const term = searchTerm.trim().toLowerCase();
     if (!term) return products;
 
-    return searchableProducts
-      .filter(item => item.searchText.includes(term))
-      .map(item => item.product);
-  }, [products, searchTerm, searchableProducts]);
+    return products.reduce((result, product) => {
+      const ingredientsValue = Array.isArray(product?.ingredients)
+        ? product.ingredients.join(' ')
+        : (product?.ingredients ?? '');
+
+      const searchText = [
+        product?.name ?? '',
+        product?.description ?? '',
+        ingredientsValue
+      ].join(' ').toLowerCase();
+
+      if (searchText.includes(term)) {
+        result.push(product);
+      }
+      return result;
+    }, []);
+  }, [products, searchTerm]);
 
   if (loading) {
     return <div className="loading">Carregando produtos...</div>;
