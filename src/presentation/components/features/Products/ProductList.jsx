@@ -36,7 +36,7 @@ export const ProductList = memo(function ProductList() {
         <input
           id="product-search"
           type="search"
-          placeholder="Pesquisar por nome ou ingrediente..."
+          placeholder="Pesquisar por nome, descrição ou ingrediente..."
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           className="product-search__input"
