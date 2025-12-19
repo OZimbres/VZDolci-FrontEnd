@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useProducts } from '../../../../application/hooks/useProducts';
 import { ProductCard } from './ProductCard';
 import './ProductList.css';
@@ -10,16 +10,60 @@ import './ProductList.css';
  */
 export const ProductList = memo(function ProductList() {
   const { products, loading } = useProducts();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return products;
+
+    return products.filter(product => {
+      const ingredientsValue = Array.isArray(product?.ingredients)
+        ? product.ingredients.join(' ')
+        : (product?.ingredients ?? '');
+
+      const searchText = [
+        product?.name ?? '',
+        product?.description ?? '',
+        ingredientsValue
+      ].join(' ').toLowerCase();
+
+      return searchText.includes(term);
+    });
+  }, [products, searchTerm]);
 
   if (loading) {
     return <div className="loading">Carregando produtos...</div>;
   }
 
   return (
-    <div className="products-grid">
-      {products.map(product => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
+    <>
+      <div className="product-search">
+        <label htmlFor="product-search" className="product-search__label">
+          Busque pelos seus doces favoritos
+        </label>
+        <input
+          id="product-search"
+          type="search"
+          placeholder="Pesquisar por nome, descrição ou ingrediente..."
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          className="product-search__input"
+        />
+      </div>
+
+      {filteredProducts.length > 0 ? (
+        <div className="products-grid">
+          {filteredProducts.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <p className="no-results">Nenhum produto disponível no momento.</p>
+      ) : (
+        <p className="no-results">Nenhum produto encontrado para a busca.</p>
+      )}
+    </>
   );
 });
