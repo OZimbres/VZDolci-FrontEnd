@@ -35,6 +35,11 @@ body {
   flex-direction: column;
 }
 
+.home-page {
+  flex: 1;
+  display: flex;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;

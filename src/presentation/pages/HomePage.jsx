@@ -6,7 +6,7 @@ import { HeroSection } from '../components/features/Home/HeroSection';
  */
 export function HomePage() {
   return (
-    <main>
+    <main className="home-page">
       <HeroSection />
     </main>
   );
