@@ -55,23 +55,3 @@
     grid-template-columns: 1fr;
   }
 }
-
-@media (min-width: 768px) {
-  .product-search {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    text-align: left;
-    max-width: 900px;
-  }
-
-  .product-search__label {
-    margin: 0;
-    min-width: max-content;
-  }
-
-  .product-search__input {
-    flex: 1;
-  }
-}
