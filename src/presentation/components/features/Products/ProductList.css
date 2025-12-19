@@ -5,6 +5,44 @@
   margin-top: 3rem;
 }
 
+.product-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  text-align: center;
+}
+
+.product-search__label {
+  font-size: 1rem;
+  color: var(--primary-color);
+  letter-spacing: 0.5px;
+}
+
+.product-search__input {
+  padding: 0.9rem 1.1rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  font-size: 1rem;
+  background: var(--white);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-search__input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 10px 35px rgba(90, 42, 131, 0.12);
+}
+
+.no-results {
+  text-align: center;
+  color: var(--accent-color);
+  font-size: 1.05rem;
+  margin-top: 2rem;
+}
+
 .loading {
   text-align: center;
   padding: 3rem;
