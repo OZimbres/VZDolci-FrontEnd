@@ -1,4 +1,5 @@
 import { ProductList } from '../components/features/Products/ProductList';
+import './ProductsPage.css';
 
 /**
  * Products Page
@@ -7,7 +8,7 @@ import { ProductList } from '../components/features/Products/ProductList';
 export function ProductsPage() {
   return (
     <main>
-      <section className="section animated-background">
+      <section className="section animated-background products-section">
         <div className="container">
           <h2 className="section-title">Nossos Doces</h2>
           <p className="section-subtitle">Criações artesanais com ingredientes premium</p>
