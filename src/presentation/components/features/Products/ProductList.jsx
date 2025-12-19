@@ -18,7 +18,7 @@ export const ProductList = memo(function ProductList() {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return products;
 
-    return products.reduce((result, product) => {
+    return products.filter(product => {
       const ingredientsValue = Array.isArray(product?.ingredients)
         ? product.ingredients.join(' ')
         : (product?.ingredients ?? '');
@@ -29,11 +29,8 @@ export const ProductList = memo(function ProductList() {
         ingredientsValue
       ].join(' ').toLowerCase();
 
-      if (searchText.includes(term)) {
-        result.push(product);
-      }
-      return result;
-    }, []);
+      return searchText.includes(term);
+    });
   }, [products, searchTerm]);
 
   if (loading) {

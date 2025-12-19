@@ -9,6 +9,9 @@ import './ProductCard.css';
  */
 export const ProductCard = memo(function ProductCard({ product }) {
   const { addToCart } = useCart();
+  const ingredientsText = Array.isArray(product.ingredients)
+    ? product.ingredients.join(', ')
+    : product.ingredients;
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -23,7 +26,7 @@ export const ProductCard = memo(function ProductCard({ product }) {
       <p className="product-description">{product.description}</p>
       <div className="product-details">
         <p className="product-ingredients">
-          <strong>Ingredientes:</strong> {product.ingredients}
+          <strong>Ingredientes:</strong> {ingredientsText}
         </p>
         <p className="product-story">{product.story}</p>
       </div>
