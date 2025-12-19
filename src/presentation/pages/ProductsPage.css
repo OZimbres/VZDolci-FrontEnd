@@ -1,0 +1,12 @@
+.products-section {
+  padding: 3.5rem 0 4rem;
+}
+
+.products-section .section-title {
+  margin-bottom: 0.35rem;
+}
+
+.products-section .section-subtitle {
+  margin-bottom: 1.4rem;
+  font-size: 1.05rem;
+}
