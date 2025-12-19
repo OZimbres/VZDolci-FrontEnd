@@ -10,57 +10,39 @@ class ProductsRepositoryClass {
     this.products = [
       new Product({
         id: 1,
-        name: 'Panna Cotta',
-        description: 'Delicada sobremesa italiana com textura sedosa e sabores refinados',
-        price: 18.00,
-        ingredients: 'Creme de leite fresco, baunilha Madagascar, açúcar, gelatina',
-        story: 'Inspirada nas tradições italianas, nossa panna cotta é uma obra-prima de delicadeza e sabor',
-        emoji: '🍮'
+        name: 'Crema Cotta de Abacaxi',
+        description: 'Crema Cotta é inspirada no doce italiano Panna Cotta. É um doce à base de leite com uma geléia artesanal de abacaxi por cima.',
+        price: 14.00,
+        ingredients: 'Creme à base de leite, geléia artesanal de abacaxi',
+        story: 'A clássica Crema Cotta com o frescor tropical do abacaxi em geléia artesanal',
+        emoji: '🍍'
       }),
       new Product({
         id: 2,
-        name: 'Pão de Mel',
-        description: 'Tradicional doce brasileiro com cobertura de chocolate premium',
-        price: 12.00,
-        ingredients: 'Mel puro, chocolate belga, especiarias selecionadas, farinha especial',
-        story: 'Uma releitura sofisticada do clássico brasileiro, com mel artesanal e chocolate importado',
-        emoji: '🍯'
+        name: 'Crema Cotta de Morango',
+        description: 'Crema Cotta é inspirada no doce italiano Panna Cotta. É um doce à base de leite com uma geléia artesanal de morango por cima.',
+        price: 14.00,
+        ingredients: 'Creme à base de leite, geléia artesanal de morango',
+        story: 'Camadas suaves de creme de leite com cobertura de morango feito artesanalmente',
+        emoji: '🍓'
       }),
       new Product({
         id: 3,
-        name: 'Crema Cotta',
-        description: 'Sobremesa cremosa com camadas de sabor intenso',
-        price: 20.00,
-        ingredients: 'Creme fresco, gemas orgânicas, açúcar mascavo, essências naturais',
-        story: 'Uma criação exclusiva VZ Dolci que combina técnicas tradicionais com inovação',
-        emoji: '🍨'
+        name: 'Crema Cotta de Maracujá',
+        description: 'Crema Cotta é inspirada no doce italiano Panna Cotta. É um doce à base de leite com uma geléia artesanal de maracujá por cima.',
+        price: 14.00,
+        ingredients: 'Creme à base de leite, geléia artesanal de maracujá',
+        story: 'O equilíbrio perfeito do creme de leite com a acidez do maracujá em geléia artesanal',
+        emoji: '🥭'
       }),
       new Product({
         id: 4,
-        name: 'Brownie Premium',
-        description: 'Brownie intenso com chocolate 70% cacau',
-        price: 15.00,
-        ingredients: 'Chocolate 70% cacau, manteiga francesa, nozes pecã, ovos caipiras',
-        story: 'Para os verdadeiros amantes de chocolate, uma experiência intensa e inesquecível',
-        emoji: '🍫'
-      }),
-      new Product({
-        id: 5,
-        name: 'Torta de Limão Siciliano',
-        description: 'Equilíbrio perfeito entre azedo e doce',
-        price: 22.00,
-        ingredients: 'Limão siciliano, merengue italiano, massa amanteigada, creme fresco',
-        story: 'Receita secreta que encanta gerações com seu sabor refrescante e sofisticado',
-        emoji: '🍋'
-      }),
-      new Product({
-        id: 6,
-        name: 'Macarons Sortidos',
-        description: 'Delicados macarons franceses em sabores exclusivos',
-        price: 8.00,
-        ingredients: 'Amêndoas importadas, merengue francês, recheios artesanais variados',
-        story: 'Arte francesa em forma de doce, com sabores que vão de pistache a frutas vermelhas',
-        emoji: '🧁'
+        name: 'Strati di Moca',
+        description: 'Doce inspirado na bebida de café Mocaccino. Três camadas: creme aveludado de café, creme branco à base de leite e redução de coco.',
+        price: 14.00,
+        ingredients: 'Creme de café, creme branco à base de leite, redução de coco',
+        story: 'Um doce trifásico que combina café aveludado, creme de leite e coco reduzido',
+        emoji: '☕'
       })
     ];
   }
