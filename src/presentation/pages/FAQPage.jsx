@@ -19,10 +19,6 @@ const FAQ_DATA = [
     answer: 'Não! Todos os nossos doces são 100% artesanais e livres de conservantes artificiais. Utilizamos apenas ingredientes naturais e de alta qualidade.'
   },
   {
-    question: 'Vocês têm opções sem glúten ou veganas?',
-    answer: 'Sim, temos opções especiais para diferentes necessidades alimentares. Entre em contato conosco para conhecer nosso menu especial sem glúten e vegano.'
-  },
-  {
     question: 'Qual é a validade dos produtos?',
     answer: 'A validade varia de acordo com o produto. Todos os nossos doces são frescos e a validade é informada na embalagem. Em geral, recomendamos consumir em até 3-5 dias quando refrigerados.'
   }
