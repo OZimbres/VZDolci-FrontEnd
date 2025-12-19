@@ -17,9 +17,9 @@ export const ProductList = memo(function ProductList() {
     if (!term) return products;
 
     return products.filter(product => (
-      product.name.toLowerCase().includes(term) ||
-      product.description.toLowerCase().includes(term) ||
-      product.ingredients.toLowerCase().includes(term)
+      (product?.name ?? '').toLowerCase().includes(term) ||
+      (product?.description ?? '').toLowerCase().includes(term) ||
+      (product?.ingredients ?? '').toLowerCase().includes(term)
     ));
   }, [products, searchTerm]);
 
@@ -49,6 +49,8 @@ export const ProductList = memo(function ProductList() {
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+      ) : products.length === 0 ? (
+        <p className="no-results">Nenhum produto disponível no momento.</p>
       ) : (
         <p className="no-results">Nenhum produto encontrado para a busca.</p>
       )}
