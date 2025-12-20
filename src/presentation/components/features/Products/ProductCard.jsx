@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { useCart } from '../../../../application/contexts/CartContext';
+import { OptimizedImage } from '../../common/OptimizedImage';
 import './ProductCard.css';
 
 /**
@@ -20,7 +21,11 @@ export const ProductCard = memo(function ProductCard({ product }) {
   return (
     <div className="product-card">
       <div className="product-image">
-        <div className="product-placeholder">{product.emoji}</div>
+        <OptimizedImage
+          src={product.getImageUrl()}
+          alt={product.imageAlt}
+          className="product-image-media"
+        />
       </div>
       <h3 className="product-name">{product.name}</h3>
       <p className="product-description">{product.description}</p>

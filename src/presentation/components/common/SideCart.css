@@ -125,8 +125,10 @@
   margin-bottom: 0.75rem;
 }
 
-.cart-item-emoji {
-  font-size: 2.5rem;
+.cart-item-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 

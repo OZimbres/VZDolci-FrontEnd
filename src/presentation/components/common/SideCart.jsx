@@ -1,6 +1,7 @@
 import { useState, forwardRef, useImperativeHandle } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../application/contexts/CartContext';
+import { OptimizedImage } from './OptimizedImage';
 import './SideCart.css';
 
 /**
@@ -62,7 +63,11 @@ export const SideCart = forwardRef(function SideCart(props, ref) {
                 {cart.map((item) => (
                   <div key={item.product.id} className="cart-item">
                     <div className="cart-item-info">
-                      <span className="cart-item-emoji">{item.product.emoji}</span>
+                      <OptimizedImage
+                        src={item.product.getImageUrl()}
+                        alt={item.product.imageAlt}
+                        className="cart-item-thumb"
+                      />
                       <div className="cart-item-details">
                         <h4>{item.product.name}</h4>
                         <p className="cart-item-price">R$ {item.product.price.toFixed(2)}</p>
