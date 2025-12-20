@@ -27,7 +27,7 @@ export const Header = memo(function Header({ onCartClick }) {
   };
 
   return (
-    <nav className="navbar">
+    <nav className="navbar" aria-label="Navegação principal">
       <div className="container navbar-container">
         <Link to="/" className="logo" onClick={closeMenu}>
           VZ Dolci
@@ -70,14 +70,27 @@ export const Header = memo(function Header({ onCartClick }) {
           <button 
             className="header-icon-btn cart-icon" 
             onClick={handleCartClick}
-            aria-label="Abrir carrinho"
+            aria-label={`Carrinho de compras, ${itemCount} ${itemCount === 1 ? 'item' : 'itens'}`}
           >
             🛒
             {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
           </button>
         </div>
 
-        <div className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
+        <div 
+          className={`hamburger ${isMenuOpen ? 'active' : ''}`} 
+          onClick={toggleMenu}
+          role="button"
+          tabIndex={0}
+          aria-label={isMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+          aria-expanded={isMenuOpen}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              toggleMenu();
+            }
+          }}
+        >
           <span></span>
           <span></span>
           <span></span>

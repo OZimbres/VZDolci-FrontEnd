@@ -13,7 +13,7 @@ export function AboutPage() {
         description="A VZ Dolci nasceu do sonho de transformar momentos especiais em memórias inesquecíveis através de doces artesanais de altíssima qualidade."
         canonical="https://vz-dolci.vercel.app/sobre"
       />
-      <main>
+      <main id="main-content" tabIndex="-1">
         <section className="section animated-background">
           <div className="container">
             <h2 className="section-title">Sobre a VZ Dolci</h2>

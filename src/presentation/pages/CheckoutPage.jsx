@@ -174,7 +174,7 @@ export function CheckoutPage() {
     <>
       <SEO {...checkoutSeoProps} />
       {cart.length === 0 ? (
-        <main>
+        <main id="main-content" tabIndex="-1">
           <section className="section checkout-section">
             <div className="container">
               <h2 className="section-title">Finalizar Compra</h2>
@@ -189,7 +189,7 @@ export function CheckoutPage() {
           </section>
         </main>
       ) : (
-        <main>
+        <main id="main-content" tabIndex="-1">
           <section className="section checkout-section">
             <div className="container">
               <h2 className="section-title">Finalizar Compra</h2>
@@ -296,7 +296,10 @@ export function CheckoutPage() {
                           handlePixPaymentConfirm();
                         }}>
                           <h4>Informações de Contato</h4>
-                          <p>Informe pelo menos um método de contato (email ou telefone):</p>
+                          <p id="contact-instructions">Informe pelo menos um método de contato (email ou telefone):</p>
+                          <label htmlFor="pix-email">
+                            Email
+                          </label>
                           <input
                             type="email"
                             className="contact-input"
@@ -304,13 +307,24 @@ export function CheckoutPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             autoComplete="email"
+                            id="pix-email"
+                            name="email"
+                            aria-describedby="contact-instructions"
                           />
+                          <label htmlFor="pix-phone">
+                            Telefone
+                          </label>
                           <PhoneInput
                             defaultCountry="br"
                             className="phone-input-container"
                             placeholder="Telefone"
                             value={phone}
                             onChange={(phone) => setPhone(phone)}
+                            inputProps={{
+                              id: 'pix-phone',
+                              name: 'phone',
+                              'aria-describedby': 'contact-instructions'
+                            }}
                           />
                           <div className="pix-form-actions">
                             <button 

@@ -13,7 +13,7 @@ export function HomePage() {
         description="Descubra os melhores doces artesanais. Panna cotta, pão de mel e criações exclusivas. Qualidade premium e sabor inesquecível."
         canonical="https://vz-dolci.vercel.app"
       />
-      <main className="home-page">
+      <main id="main-content" className="home-page" tabIndex="-1">
         <HeroSection />
       </main>
     </>

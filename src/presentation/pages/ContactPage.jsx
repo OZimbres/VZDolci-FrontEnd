@@ -19,7 +19,7 @@ export function ContactPage() {
         description="Entre em contato com a VZ Dolci. Atendemos pelo WhatsApp, telefone e email. Pronto para adoçar seu dia!"
         canonical="https://vz-dolci.vercel.app/contato"
       />
-      <main>
+      <main id="main-content" tabIndex="-1">
         <section className="section animated-background">
           <div className="container">
             <h2 className="section-title">Entre em Contato</h2>
