@@ -40,9 +40,9 @@ export function ProductImage({
    */
   const generateSrcSet = (filename, format) => {
     return `
+      ${BASE_PATH}/${filename}@mobile.${format} 400w,
       ${BASE_PATH}/${filename}.${format} 800w,
-      ${BASE_PATH}/${filename}@2x.${format} 1600w,
-      ${BASE_PATH}/${filename}@mobile.${format} 400w
+      ${BASE_PATH}/${filename}@2x.${format} 1600w
     `.trim();
   };
 
@@ -65,16 +65,25 @@ export function ProductImage({
   useEffect(() => {
     if (priority || !imgRef.current) return;
 
+    const img = imgRef.current;
+
+    const loadImage = () => {
+      if (img.dataset.src && !img.src) {
+        img.src = img.dataset.src;
+      }
+    };
+
+    if (!('IntersectionObserver' in window)) {
+      loadImage();
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Imagem está visível, forçar carregamento
-            const img = entry.target;
-            if (img.dataset.src) {
-              img.src = img.dataset.src;
-            }
-            observer.unobserve(img);
+            loadImage();
+            observer.unobserve(entry.target);
           }
         });
       },
@@ -83,10 +92,12 @@ export function ProductImage({
       }
     );
 
-    observer.observe(imgRef.current);
+    observer.observe(img);
 
     return () => observer.disconnect();
-  }, [priority]);
+  }, [priority, src]);
+
+  const defaultSrc = `${BASE_PATH}/${src}.jpg`;
 
   return (
     <div
@@ -120,7 +131,8 @@ export function ProductImage({
           {/* Imagem padrão */}
           <img
             ref={imgRef}
-            src={`${BASE_PATH}/${src}.jpg`}
+            src={priority ? defaultSrc : undefined}
+            data-src={priority ? undefined : defaultSrc}
             alt={alt}
             loading={priority ? 'eager' : 'lazy'}
             decoding="async"
