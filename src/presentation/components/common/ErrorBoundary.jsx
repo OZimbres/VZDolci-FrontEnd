@@ -9,7 +9,7 @@ import './ErrorBoundary.css';
 export class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error:  null };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error) {
