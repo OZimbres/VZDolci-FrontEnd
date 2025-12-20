@@ -1,0 +1,7 @@
+# Robots.txt para VZ Dolci
+User-agent: *
+Allow: /
+Disallow: /checkout
+
+# Sitemap
+Sitemap: https://vz-dolci.vercel.app/sitemap.xml

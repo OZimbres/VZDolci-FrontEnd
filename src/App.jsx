@@ -6,6 +6,7 @@ import { CartProvider } from './application/contexts/CartContext';
 import { Header } from './presentation/components/common/Header';
 import { Footer } from './presentation/components/common/Footer';
 import { SideCart } from './presentation/components/common/SideCart';
+import { StructuredData } from './presentation/components/common/StructuredData';
 import { HomePage } from './presentation/pages/HomePage';
 import { ProductsPage } from './presentation/pages/ProductsPage';
 import { AboutPage } from './presentation/pages/AboutPage';
@@ -30,6 +31,7 @@ function App() {
   return (
     <CartProvider>
       <Router>
+        <StructuredData />
         <Header onCartClick={handleCartClick} />
         <Routes>
           <Route path="/" element={<HomePage />} />
