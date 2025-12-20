@@ -18,8 +18,7 @@ const organizationData = {
     '@type': 'PostalAddress',
     addressCountry: 'BR',
     addressLocality: 'Brasil'
-  },
-  sameAs: []
+  }
 };
 
 const websiteData = {
