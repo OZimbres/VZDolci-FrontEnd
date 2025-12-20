@@ -1,0 +1,10 @@
+# Robots.txt para VZ Dolci
+User-agent: *
+Allow: /
+Disallow: /checkout
+
+# Sitemap
+Sitemap: https://vz-dolci.vercel.app/sitemap.xml
+
+# Crawl-delay (opcional, evita sobrecarga)
+Crawl-delay: 10

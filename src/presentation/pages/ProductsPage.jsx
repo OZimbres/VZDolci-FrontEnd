@@ -1,4 +1,5 @@
 import { ProductList } from '../components/features/Products/ProductList';
+import { SEO } from '../components/common/SEO';
 import './ProductsPage.css';
 
 /**
@@ -7,14 +8,21 @@ import './ProductsPage.css';
  */
 export function ProductsPage() {
   return (
-    <main>
-      <section className="section animated-background products-section">
-        <div className="container">
-          <h2 className="section-title">Nossos Doces</h2>
-          <p className="section-subtitle">Criações artesanais com ingredientes premium</p>
-          <ProductList />
-        </div>
-      </section>
-    </main>
+    <>
+      <SEO 
+        title="Nossos Produtos"
+        description="Conheça nossa linha completa de doces artesanais de luxo. Panna cotta, brigadeiros gourmet, pão de mel e muito mais."
+        canonical="https://vz-dolci.vercel.app/produtos"
+      />
+      <main>
+        <section className="section animated-background products-section">
+          <div className="container">
+            <h2 className="section-title">Nossos Doces</h2>
+            <p className="section-subtitle">Criações artesanais com ingredientes premium</p>
+            <ProductList />
+          </div>
+        </section>
+      </main>
+    </>
   );
 }

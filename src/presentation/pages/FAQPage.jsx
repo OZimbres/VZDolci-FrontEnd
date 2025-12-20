@@ -1,4 +1,5 @@
 import { FAQItem } from '../components/features/FAQ/FAQItem';
+import { SEO } from '../components/common/SEO';
 
 // Static FAQ data - defined outside component to avoid recreation on every render
 const FAQ_DATA = [
@@ -30,18 +31,25 @@ const FAQ_DATA = [
  */
 export function FAQPage() {
   return (
-    <main>
-      <section className="section animated-background">
-        <div className="container">
-          <h2 className="section-title">Perguntas Frequentes</h2>
-          
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            {FAQ_DATA.map((faq, index) => (
-              <FAQItem key={index} question={faq.question} answer={faq.answer} />
-            ))}
+    <>
+      <SEO 
+        title="Perguntas Frequentes"
+        description="Tire suas dúvidas sobre nossos produtos, prazos de entrega, ingredientes e muito mais."
+        canonical="https://vz-dolci.vercel.app/faq"
+      />
+      <main>
+        <section className="section animated-background">
+          <div className="container">
+            <h2 className="section-title">Perguntas Frequentes</h2>
+            
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+              {FAQ_DATA.map((faq, index) => (
+                <FAQItem key={index} question={faq.question} answer={faq.answer} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

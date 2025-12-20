@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
 import { PhoneInput } from 'react-international-phone';
 import { OptimizedImage } from '../components/common/OptimizedImage';
+import { SEO } from '../components/common/SEO';
 import 'react-international-phone/style.css';
 import './CheckoutPage.css';
 
@@ -165,99 +166,114 @@ export function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <main>
-        <section className="section checkout-section">
-          <div className="container">
-            <h2 className="section-title">Finalizar Compra</h2>
-            <div className="empty-checkout">
-              <span className="empty-icon">🛒</span>
-              <p>Seu carrinho está vazio!</p>
-              <button className="btn btn-primary" onClick={() => navigate('/produtos')}>
-                Ver Produtos
-              </button>
+      <>
+        <SEO 
+          title="Finalizar Pedido"
+          description="Finalize seu pedido de doces artesanais premium da VZ Dolci."
+          canonical="https://vz-dolci.vercel.app/checkout"
+          robots="noindex, follow"
+        />
+        <main>
+          <section className="section checkout-section">
+            <div className="container">
+              <h2 className="section-title">Finalizar Compra</h2>
+              <div className="empty-checkout">
+                <span className="empty-icon">🛒</span>
+                <p>Seu carrinho está vazio!</p>
+                <button className="btn btn-primary" onClick={() => navigate('/produtos')}>
+                  Ver Produtos
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      </>
     );
   }
 
   return (
-    <main>
-      <section className="section checkout-section">
-        <div className="container">
-          <h2 className="section-title">Finalizar Compra</h2>
-          <p className="section-subtitle">Revise seu pedido e escolha a forma de pagamento</p>
+    <>
+      <SEO 
+        title="Finalizar Pedido"
+        description="Finalize seu pedido de doces artesanais premium da VZ Dolci."
+        canonical="https://vz-dolci.vercel.app/checkout"
+        robots="noindex, follow"
+      />
+      <main>
+        <section className="section checkout-section">
+          <div className="container">
+            <h2 className="section-title">Finalizar Compra</h2>
+            <p className="section-subtitle">Revise seu pedido e escolha a forma de pagamento</p>
 
-          <div className="checkout-container">
-            {/* Cart Items */}
-            <div className="checkout-items">
-              <h3>Itens do Pedido</h3>
-              <div className="checkout-items-list">
-                {cart.map((item) => (
-                  <div key={item.product.id} className="checkout-item">
-                    <OptimizedImage
-                      src={item.product.getImageUrl()}
-                      alt={item.product.imageAlt}
-                      className="checkout-item-image"
-                    />
-                    
-                    <div className="checkout-item-details">
-                      <h4>{item.product.name}</h4>
-                      <p className="checkout-item-description">{item.product.description}</p>
-                      <p className="checkout-item-price">R$ {item.product.price.toFixed(2)} (unidade)</p>
-                    </div>
-                    
-                    <div className="checkout-item-actions">
-                      <div className="quantity-controls">
+            <div className="checkout-container">
+              {/* Cart Items */}
+              <div className="checkout-items">
+                <h3>Itens do Pedido</h3>
+                <div className="checkout-items-list">
+                  {cart.map((item) => (
+                    <div key={item.product.id} className="checkout-item">
+                      <OptimizedImage
+                        src={item.product.getImageUrl()}
+                        alt={item.product.imageAlt}
+                        className="checkout-item-image"
+                      />
+                      
+                      <div className="checkout-item-details">
+                        <h4>{item.product.name}</h4>
+                        <p className="checkout-item-description">{item.product.description}</p>
+                        <p className="checkout-item-price">R$ {item.product.price.toFixed(2)} (unidade)</p>
+                      </div>
+                      
+                      <div className="checkout-item-actions">
+                        <div className="quantity-controls">
+                          <button 
+                            className="qty-btn"
+                            onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                            disabled={item.quantity <= 1 || isProcessingPayment}
+                            aria-label="Diminuir quantidade"
+                          >
+                            -
+                          </button>
+                          <span className="quantity">{item.quantity}</span>
+                          <button 
+                            className="qty-btn"
+                            onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                            disabled={isProcessingPayment}
+                            aria-label="Aumentar quantidade"
+                          >
+                            +
+                          </button>
+                        </div>
                         <button 
-                          className="qty-btn"
-                          onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1 || isProcessingPayment}
-                          aria-label="Diminuir quantidade"
-                        >
-                          -
-                        </button>
-                        <span className="quantity">{item.quantity}</span>
-                        <button 
-                          className="qty-btn"
-                          onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                          className="remove-btn"
+                          onClick={() => handleRemove(item.product.id)}
                           disabled={isProcessingPayment}
-                          aria-label="Aumentar quantidade"
+                          title="Remover item"
+                          aria-label="Remover item"
                         >
-                          +
+                          🗑️
                         </button>
                       </div>
-                      <button 
-                        className="remove-btn"
-                        onClick={() => handleRemove(item.product.id)}
-                        disabled={isProcessingPayment}
-                        title="Remover item"
-                        aria-label="Remover item"
-                      >
-                        🗑️
-                      </button>
+                      
+                      <div className="checkout-item-total">
+                        Subtotal: R$ {item.getTotal().toFixed(2)}
+                      </div>
                     </div>
-                    
-                    <div className="checkout-item-total">
-                      Subtotal: R$ {item.getTotal().toFixed(2)}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                <div className="checkout-total">
+                  <strong>Total do Pedido:</strong>
+                  <strong className="total-amount">R$ {total.toFixed(2)}</strong>
+                </div>
               </div>
 
-              <div className="checkout-total">
-                <strong>Total do Pedido:</strong>
-                <strong className="total-amount">R$ {total.toFixed(2)}</strong>
-              </div>
-            </div>
-
-            {/* Payment Options */}
-            <div className="checkout-payment">
-              <h3>Forma de Pagamento</h3>
-              
-              {!showPixForm ? (
-                <div className="payment-options">
+              {/* Payment Options */}
+              <div className="checkout-payment">
+                <h3>Forma de Pagamento</h3>
+                
+                {!showPixForm ? (
+                  <div className="payment-options">
                   <button 
                     className="payment-option whatsapp-option"
                     onClick={handleWhatsAppCheckout}
@@ -411,5 +427,6 @@ export function CheckoutPage() {
         </div>
       )}
     </main>
+    </>
   );
 }
