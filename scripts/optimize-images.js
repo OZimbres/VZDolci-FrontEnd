@@ -1,7 +1,8 @@
-import imagemin from 'imagemin';
-import imageminMozjpeg from 'imagemin-mozjpeg';
 import sharp from 'sharp';
 import fs from 'fs/promises';
+import imagemin from 'imagemin';
+import imageminMozjpeg from 'imagemin-mozjpeg';
+import path from 'node:path';
 
 const INPUT_DIR = process.env.IMAGE_INPUT_DIR || './raw-images';
 const OUTPUT_DIR = process.env.IMAGE_OUTPUT_DIR || './public/images/products';
@@ -48,14 +49,33 @@ async function processImage(inputPath, outputName, type) {
     throw new Error(`Invalid image type: ${type}. Missing size or quality configuration.`);
   }
 
-  const optimizedSource = await imagemin.buffer(await fs.readFile(inputPath), {
-    plugins: [
-      imageminMozjpeg({
-        quality: quality.jpeg,
-        progressive: true
-      })
-    ]
-  });
+  let sourceBuffer;
+  try {
+    sourceBuffer = await fs.readFile(inputPath);
+  } catch (error) {
+    error.stage = 'read';
+    throw error;
+  }
+
+  const ext = path.extname(inputPath).toLowerCase();
+  const isJpeg = ext === '.jpg' || ext === '.jpeg';
+
+  let optimizedSource = sourceBuffer;
+  if (isJpeg) {
+    try {
+      optimizedSource = await imagemin.buffer(sourceBuffer, {
+        plugins: [
+          imageminMozjpeg({
+            quality: quality.jpeg,
+            progressive: true
+          })
+        ]
+      });
+    } catch (error) {
+      error.stage = 'preoptimize';
+      throw error;
+    }
+  }
 
   for (const size of sizes) {
     const jpegPath = getOutputPath(outputName, size.suffix, 'jpg');
@@ -130,7 +150,13 @@ async function optimizeAllImages() {
     try {
       await processImage(img.input, img.output, img.type);
     } catch (error) {
-      console.error(`❌ Error processing ${img.input}:`, error.message);
+      if (error?.stage === 'read') {
+        console.error(`❌ Error reading input file "${img.input}":`, error);
+      } else if (error?.stage === 'preoptimize') {
+        console.error(`❌ Error optimizing source "${img.input}" before resizing:`, error);
+      } else {
+        console.error(`❌ Error processing image "${img.input}" during optimization or resizing:`, error);
+      }
     }
   }
 

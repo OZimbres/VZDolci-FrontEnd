@@ -32,7 +32,6 @@
     "globals": "^16.4.0",
     "imagemin": "^9.0.0",
     "imagemin-mozjpeg": "^10.0.0",
-    "imagemin-webp": "^8.0.0",
     "sharp": "^0.34.5",
     "terser": "^5.44.1",
     "vite": "^5.0.8",
