@@ -15,7 +15,8 @@ class ProductsRepositoryClass {
         price: 14.00,
         ingredients: 'Creme à base de leite, geléia artesanal de abacaxi',
         story: 'A clássica Crema Cotta com o frescor tropical do abacaxi em geléia artesanal',
-        emoji: '🍍'
+        emoji: '🍍',
+        image: '/img/products/crema-cotta-abacaxi/Crema%20Cotta%20Abacaxi_cru.jpeg'
       }),
       new Product({
         id: 2,
@@ -24,7 +25,8 @@ class ProductsRepositoryClass {
         price: 14.00,
         ingredients: 'Creme à base de leite, geléia artesanal de morango',
         story: 'Camadas suaves de creme de leite com cobertura de morango feito artesanalmente',
-        emoji: '🍓'
+        emoji: '🍓',
+        image: '/img/products/crema-cotta-morango/Crema%20Cotta%20Morango_cru.jpeg'
       }),
       new Product({
         id: 3,
@@ -33,7 +35,8 @@ class ProductsRepositoryClass {
         price: 14.00,
         ingredients: 'Creme à base de leite, geléia artesanal de maracujá',
         story: 'O equilíbrio perfeito do creme de leite com a acidez do maracujá em geléia artesanal',
-        emoji: '🥭'
+        emoji: '🥭',
+        image: '/img/products/crema-cotta-maracuja/Crema%20Cotta%20Maracuja_cru.jpeg'
       }),
       new Product({
         id: 4,
@@ -42,7 +45,8 @@ class ProductsRepositoryClass {
         price: 14.00,
         ingredients: 'Creme de café, creme branco à base de leite, redução de coco',
         story: 'Um doce trifásico que combina café aveludado, creme de leite e coco reduzido',
-        emoji: '☕'
+        emoji: '☕',
+        image: '/img/products/strati-di-moca/Strati%20di%20Moca_cru.jpeg'
       })
     ];
   }

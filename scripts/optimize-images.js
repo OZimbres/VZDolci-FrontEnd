@@ -2,8 +2,8 @@ import fs from 'fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 
-const INPUT_DIR = process.env.IMAGE_INPUT_DIR || './raw-images';
-const OUTPUT_DIR = process.env.IMAGE_OUTPUT_DIR || './public/images/products';
+const INPUT_DIR = process.env.IMAGE_INPUT_DIR || './public/img/products';
+const OUTPUT_DIR = process.env.IMAGE_OUTPUT_DIR || './public/img/products/optimized';
 
 /**
  * Quality settings by image type
@@ -59,7 +59,7 @@ async function processImage(inputPath, outputName, type) {
   const quality = QUALITY_SETTINGS[type];
 
   if (!sizes || !quality) {
-    throw new Error(`Invalid image type: ${type}. Missing size or quality configuration.`);
+    throw stageError('validation', new Error(`Invalid image type: ${type}. Missing size or quality configuration.`));
   }
 
   let sourceBuffer;
@@ -69,15 +69,15 @@ async function processImage(inputPath, outputName, type) {
     throw stageError('read', error);
   }
 
-  const optimizedSource = sourceBuffer;
-
   for (const size of sizes) {
     const jpegPath = getOutputPath(outputName, size.suffix, 'jpg');
     const webpPath = getOutputPath(outputName, size.suffix, 'webp');
+    const baseImage = sharp(sourceBuffer);
 
     try {
       // Generate optimized JPEG
-      await sharp(optimizedSource)
+      await baseImage
+        .clone()
         .resize(size.width, null, {
           withoutEnlargement: true,
           fit: 'inside'
@@ -93,9 +93,10 @@ async function processImage(inputPath, outputName, type) {
     }
 
     try {
-      // Generate WebP
-      // Sharp handles WebP encoding directly; no imagemin step needed.
-      await sharp(optimizedSource)
+      // Use Sharp's built-in WebP encoder to keep the pipeline in a single tool
+      // and avoid extra dependencies or I/O hops between steps.
+      await baseImage
+        .clone()
         .resize(size.width, null, {
           withoutEnlargement: true,
           fit: 'inside'
@@ -132,7 +133,12 @@ async function discoverImages() {
       }
     }
 
-    if (!detectedType) continue;
+    if (!detectedType) {
+      console.warn(
+        `⚠️ Image "${entry.name}" does not match expected suffixes (${Object.keys(SUFFIX_TO_TYPE).join(', ')}); defaulting to detail variant.`
+      );
+      detectedType = 'detail';
+    }
 
     images.push({
       input: path.join(INPUT_DIR, entry.name),
@@ -164,14 +170,17 @@ async function optimizeAllImages() {
     try {
       await processImage(img.input, img.output, img.type);
     } catch (error) {
+      const msg = error?.message || String(error);
       if (error?.stage === 'read') {
-        console.error(`❌ Error reading input file "${img.input}":`, error);
+        console.error(`❌ Error reading input file "${img.input}": ${msg}`);
+      } else if (error?.stage === 'validation') {
+        console.error(`❌ Error validating image "${img.input}": ${msg}`);
       } else if (error?.stage === 'jpeg-encode') {
-        console.error(`❌ Error encoding JPEG for "${img.input}":`, error);
+        console.error(`❌ Error encoding JPEG for "${img.input}": ${msg}`);
       } else if (error?.stage === 'webp-encode') {
-        console.error(`❌ Error encoding WebP for "${img.input}":`, error);
+        console.error(`❌ Error encoding WebP for "${img.input}": ${msg}`);
       } else {
-        console.error(`❌ Error processing image "${img.input}" during optimization or resizing:`, error);
+        console.error(`❌ Error processing image "${img.input}" during validation, optimization, or resizing: ${msg}`);
       }
     }
   }
@@ -186,6 +195,6 @@ async function optimizeAllImages() {
 
 // Run
 optimizeAllImages().catch((err) => {
-  console.error('❌ Error during image optimization:', err);
+  console.error('❌ Error during image optimization:', err?.message || String(err));
   process.exitCode = 1;
 });
