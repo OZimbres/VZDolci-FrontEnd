@@ -202,4 +202,7 @@ async function optimizeAllImages() {
 }
 
 // Run
-optimizeAllImages();
+optimizeAllImages().catch((err) => {
+  console.error('❌ Error during image optimization:', err);
+  process.exitCode = 1;
+});
