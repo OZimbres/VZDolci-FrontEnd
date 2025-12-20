@@ -59,6 +59,7 @@
   margin-top: 1rem;
   overflow-x: auto;
   color: #c7254e;
+  white-space: pre-wrap;
 }
 
 .error-actions {

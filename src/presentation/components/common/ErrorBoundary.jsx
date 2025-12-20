@@ -9,8 +9,13 @@ import './ErrorBoundary.css';
 export class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
+
+  navigate = (path) => {
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
@@ -19,31 +24,41 @@ export class ErrorBoundary extends Component {
   componentDidCatch(error, errorInfo) {
     // Log para serviço de monitoramento (ex: Sentry)
     console.error('Error caught by boundary:', error, errorInfo);
-    
+    this.setState({ errorInfo });
+
     // TODO: Enviar para Sentry/LogRocket na Fase 4
     // Sentry.captureException(error);
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null });
-    window.location.href = '/';
+    this.setState({ hasError: false, error: null, errorInfo: null });
+    if (this.props.onReset) {
+      this.props.onReset();
+    } else {
+      this.navigate('/');
+    }
   };
 
   render() {
-    if (this.state.hasError) {
+    const { error, errorInfo, hasError } = this.state;
+
+    if (hasError) {
       return (
         <div className="error-boundary">
           <div className="error-container">
             <span className="error-emoji">😢</span>
             <h1>Ops! Algo deu errado</h1>
             <p>
-              Pedimos desculpas pelo inconveniente. Nossa equipe já foi notificada. 
+              Pedimos desculpas pelo inconveniente. Estamos trabalhando para resolver o problema. 
             </p>
             
             {import.meta.env.MODE === 'development' && (
               <details className="error-details">
                 <summary>Detalhes técnicos</summary>
-                <pre>{this.state.error?.toString()}</pre>
+                <pre>
+                  {error?.stack || error?.toString()}
+                  {errorInfo?.componentStack && `\n\nComponente:\n${errorInfo.componentStack}`}
+                </pre>
               </details>
             )}
             
@@ -51,9 +66,19 @@ export class ErrorBoundary extends Component {
               <button onClick={this.handleReset} className="btn btn-primary">
                 Voltar para o início
               </button>
-              <a href="/contato" className="btn btn-secondary">
+              <button
+                type="button"
+                onClick={() => {
+                  if (this.props.onReport) {
+                    this.props.onReport();
+                  } else {
+                    this.navigate('/contato');
+                  }
+                }}
+                className="btn btn-secondary"
+              >
                 Reportar problema
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -66,4 +91,6 @@ export class ErrorBoundary extends Component {
 
 ErrorBoundary.propTypes = {
   children: PropTypes.node,
+  onReset: PropTypes.func,
+  onReport: PropTypes.func,
 };
