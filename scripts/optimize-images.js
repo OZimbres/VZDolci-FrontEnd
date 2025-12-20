@@ -1,8 +1,6 @@
-import imagemin from 'imagemin';
-import imageminMozjpeg from 'imagemin-mozjpeg';
+import fs from 'fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import fs from 'fs/promises';
 
 const INPUT_DIR = process.env.IMAGE_INPUT_DIR || './raw-images';
 const OUTPUT_DIR = process.env.IMAGE_OUTPUT_DIR || './public/images/products';
@@ -23,6 +21,13 @@ const SUFFIX_TO_TYPE = {
   '-detail': 'detail',
   '-thumb': 'thumbnail'
 };
+
+function stageError(stage, cause) {
+  const err = new Error(cause?.message || String(cause));
+  err.stage = stage;
+  err.cause = cause;
+  return err;
+}
 
 /**
  * Responsive dimensions for each image type
@@ -61,29 +66,10 @@ async function processImage(inputPath, outputName, type) {
   try {
     sourceBuffer = await fs.readFile(inputPath);
   } catch (error) {
-    error.stage = 'read';
-    throw error;
+    throw stageError('read', error);
   }
 
-  const ext = path.extname(inputPath).toLowerCase();
-  const isJpeg = JPEG_EXTENSIONS.has(ext);
-
-  let optimizedSource = sourceBuffer;
-  if (isJpeg) {
-    try {
-      optimizedSource = await imagemin.buffer(sourceBuffer, {
-        plugins: [
-          imageminMozjpeg({
-            quality: quality.jpeg,
-            progressive: true
-          })
-        ]
-      });
-    } catch (error) {
-      error.stage = 'preoptimize';
-      throw error;
-    }
-  }
+  const optimizedSource = sourceBuffer;
 
   for (const size of sizes) {
     const jpegPath = getOutputPath(outputName, size.suffix, 'jpg');
@@ -103,12 +89,12 @@ async function processImage(inputPath, outputName, type) {
         })
         .toFile(jpegPath);
     } catch (error) {
-      error.stage = 'jpeg-encode';
-      throw error;
+      throw stageError('jpeg-encode', error);
     }
 
     try {
       // Generate WebP
+      // Sharp handles WebP encoding directly; no imagemin step needed.
       await sharp(optimizedSource)
         .resize(size.width, null, {
           withoutEnlargement: true,
@@ -120,8 +106,7 @@ async function processImage(inputPath, outputName, type) {
         })
         .toFile(webpPath);
     } catch (error) {
-      error.stage = 'webp-encode';
-      throw error;
+      throw stageError('webp-encode', error);
     }
 
     console.log(`✅ Processed: ${outputName}${size.suffix}`);
@@ -181,8 +166,6 @@ async function optimizeAllImages() {
     } catch (error) {
       if (error?.stage === 'read') {
         console.error(`❌ Error reading input file "${img.input}":`, error);
-      } else if (error?.stage === 'preoptimize') {
-        console.error(`❌ Error optimizing source "${img.input}" before resizing:`, error);
       } else if (error?.stage === 'jpeg-encode') {
         console.error(`❌ Error encoding JPEG for "${img.input}":`, error);
       } else if (error?.stage === 'webp-encode') {
