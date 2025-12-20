@@ -20,6 +20,12 @@
   letter-spacing: 1px;
   font-family: 'Allura', cursive;
   text-decoration: none;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.logo:hover {
+  color: var(--white);
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
 }
 
 .nav-menu {
@@ -36,6 +42,15 @@
   transition: color 0.3s;
   position: relative;
   padding: 0.5rem 0;
+}
+
+.nav-link:focus {
+  outline: none;
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid var(--secondary-color);
+  outline-offset: 4px;
 }
 
 .nav-link:hover {
@@ -77,6 +92,15 @@
   justify-content: center;
 }
 
+.header-icon-btn:focus {
+  outline: none;
+}
+
+.header-icon-btn:focus-visible {
+  outline: 3px solid var(--secondary-color);
+  outline-offset: 2px;
+}
+
 .header-icon-btn:hover {
   transform: scale(1.1);
   color: var(--secondary-color);
@@ -114,6 +138,16 @@
   height: 3px;
   background: var(--secondary-color);
   transition: 0.3s;
+}
+
+.hamburger:focus {
+  outline: none;
+}
+
+.hamburger:focus-visible {
+  outline: 2px solid var(--secondary-color);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .hamburger.active span:nth-child(1) {
