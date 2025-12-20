@@ -80,11 +80,18 @@ export function ProductImage({
   useEffect(() => {
     if (priority || !imgRef.current) return;
 
-    const img = imgRef.current;
+    const observedImg = imgRef.current;
 
     const loadImage = () => {
-      if (img.dataset.src && img.src !== img.dataset.src) {
-        const picture = pictureRef.current || img.parentElement;
+      if (
+        observedImg.dataset.src &&
+        (!observedImg.src || observedImg.src !== observedImg.dataset.src)
+      ) {
+        const picture =
+          pictureRef.current ||
+          (observedImg.parentElement?.nodeName === 'PICTURE'
+            ? observedImg.parentElement
+            : null);
         if (picture) {
           picture.querySelectorAll('source').forEach((source) => {
             if (
@@ -95,13 +102,13 @@ export function ProductImage({
             }
           });
         }
-        img.src = img.dataset.src;
+        observedImg.src = observedImg.dataset.src;
       }
     };
 
     if (!('IntersectionObserver' in window)) {
       loadImage();
-      return undefined;
+      return;
     }
 
     const observer = new IntersectionObserver(
@@ -118,11 +125,13 @@ export function ProductImage({
       }
     );
 
-    observer.observe(img);
+    if (observedImg) {
+      observer.observe(observedImg);
+    }
 
     return () => {
-      if (img) {
-        observer.unobserve(img);
+      if (observedImg) {
+        observer.unobserve(observedImg);
       }
       observer.disconnect();
     };
@@ -184,8 +193,12 @@ export function ProductImage({
       {/* Fallback caso imagem não carregue */}
       {hasError && (
         <div className="product-image-error">
-          <span className="error-icon" aria-hidden="true">
-            !
+          <span
+            className="error-icon"
+            role="img"
+            aria-label="Erro ao carregar imagem"
+          >
+            ⚠
           </span>
           <p role="alert">Imagem indisponível</p>
         </div>
@@ -194,8 +207,11 @@ export function ProductImage({
       {/* Zoom Overlay (apenas desktop) */}
       {isLoaded && (
         <div className="product-image-zoom-hint">
-          <span className="zoom-icon" aria-hidden="true">
-            Zoom
+          <span
+            className="zoom-icon"
+            aria-label="Passe o mouse para ampliar a imagem"
+          >
+            Zoom disponível
           </span>
         </div>
       )}
