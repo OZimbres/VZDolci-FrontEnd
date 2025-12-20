@@ -12,17 +12,13 @@
           "value": "DENY"
         },
         {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
         }
       ]
     },
     {
-      "source": "/.*\\.(?:jpg|jpeg|png|gif|svg|webp|ico)$",
+      "source": "/:path*\\.(jpg|jpeg|png|gif|svg|webp|ico)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -31,7 +27,7 @@
       ]
     },
     {
-      "source": "/.*\\.(?:js|css)$",
+      "source": "/:path*\\.(js|css)",
       "headers": [
         {
           "key": "Cache-Control",
