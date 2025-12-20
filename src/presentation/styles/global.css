@@ -6,9 +6,11 @@
   --accent-color: #B2AC83;
   --dark-bg: #2C1B2E;
   --light-bg: #FFFCEC;
-  --text-dark: #2C1B2E;
+  --text-dark: #1A0F1C; /* Contrast ~18:1 on light background */
   --text-light: #FFFCEC;
   --white: #FFFFFF;
+  --text-on-gold: #2C1B2E;
+  --link-hover-color: #3A1A63;
 }
 
 * {
@@ -27,6 +29,26 @@ body {
   color: var(--text-dark);
   background-color: var(--light-bg);
   font-weight: 400;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--link-hover-color);
+  outline: 2px solid var(--secondary-color);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--secondary-color);
+  outline-offset: 2px;
 }
 
 #root {

@@ -37,7 +37,7 @@ export function FAQPage() {
         description="Tire suas dúvidas sobre nossos produtos, prazos de entrega, ingredientes e muito mais."
         canonical="https://vz-dolci.vercel.app/faq"
       />
-      <main>
+      <main id="main-content" tabIndex="-1">
         <section className="section animated-background">
           <div className="container">
             <h2 className="section-title">Perguntas Frequentes</h2>
