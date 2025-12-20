@@ -19,7 +19,7 @@ export default defineConfig({
         quality: IMAGE_QUALITY,
       },
       webp: {
-        quality: 85,
+        quality: IMAGE_QUALITY,
       },
     }),
   ],

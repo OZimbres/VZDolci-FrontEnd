@@ -13,6 +13,8 @@ export function OptimizedImage({
   alt,
   className = '',
   placeholderColor = '#f0f0f0',
+  onLoad: onLoadProp,
+  onError: onErrorProp,
   ...props
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -42,8 +44,14 @@ export function OptimizedImage({
           src={src}
           alt={alt}
           loading="lazy"
-          onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
+          onLoad={(event) => {
+            setIsLoaded(true);
+            onLoadProp?.(event);
+          }}
+          onError={(event) => {
+            setHasError(true);
+            onErrorProp?.(event);
+          }}
           className={`optimized-image ${isLoaded ? 'loaded' : ''}`}
           {...props}
         />

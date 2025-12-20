@@ -24,7 +24,6 @@ export class Product {
     this.story = story;
     this.emoji = emoji;
     this.image = image;
-    this._hasCustomImage = Boolean(image);
     this.imageAlt = imageAlt || `Foto do produto ${name}`;
   }
 
@@ -37,6 +36,6 @@ export class Product {
   }
 
   hasCustomImage() {
-    return this._hasCustomImage;
+    return Boolean(this.image);
   }
 }
