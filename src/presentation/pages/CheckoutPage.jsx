@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
 import { PhoneInput } from 'react-international-phone';
+import { OptimizedImage } from '../components/common/OptimizedImage';
 import 'react-international-phone/style.css';
 import './CheckoutPage.css';
 
@@ -195,7 +196,11 @@ export function CheckoutPage() {
               <div className="checkout-items-list">
                 {cart.map((item) => (
                   <div key={item.product.id} className="checkout-item">
-                    <span className="checkout-item-emoji">{item.product.emoji}</span>
+                    <OptimizedImage
+                      src={item.product.getImageUrl()}
+                      alt={item.product.imageAlt}
+                      className="checkout-item-image"
+                    />
                     
                     <div className="checkout-item-details">
                       <h4>{item.product.name}</h4>
