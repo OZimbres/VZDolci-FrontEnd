@@ -1,8 +1,8 @@
-import sharp from 'sharp';
-import fs from 'fs/promises';
 import imagemin from 'imagemin';
 import imageminMozjpeg from 'imagemin-mozjpeg';
 import path from 'node:path';
+import sharp from 'sharp';
+import fs from 'fs/promises';
 
 const INPUT_DIR = process.env.IMAGE_INPUT_DIR || './raw-images';
 const OUTPUT_DIR = process.env.IMAGE_OUTPUT_DIR || './public/images/products';
@@ -14,6 +14,14 @@ const QUALITY_SETTINGS = {
   hero: { jpeg: 85, webp: 80 },
   thumbnail: { jpeg: 80, webp: 75 },
   detail: { jpeg: 85, webp: 80 }
+};
+
+const JPEG_EXTENSIONS = new Set(['.jpg', '.jpeg']);
+const SUFFIX_TO_TYPE = {
+  '-hero': 'hero',
+  '-top': 'detail',
+  '-detail': 'detail',
+  '-thumb': 'thumbnail'
 };
 
 /**
@@ -58,7 +66,7 @@ async function processImage(inputPath, outputName, type) {
   }
 
   const ext = path.extname(inputPath).toLowerCase();
-  const isJpeg = ext === '.jpg' || ext === '.jpeg';
+  const isJpeg = JPEG_EXTENSIONS.has(ext);
 
   let optimizedSource = sourceBuffer;
   if (isJpeg) {
@@ -94,7 +102,12 @@ async function processImage(inputPath, outputName, type) {
           mozjpeg: true
         })
         .toFile(jpegPath);
+    } catch (error) {
+      error.stage = 'jpeg-encode';
+      throw error;
+    }
 
+    try {
       // Generate WebP
       await sharp(optimizedSource)
         .resize(size.width, null, {
@@ -107,12 +120,43 @@ async function processImage(inputPath, outputName, type) {
         })
         .toFile(webpPath);
     } catch (error) {
-      error.stage = 'resize';
+      error.stage = 'webp-encode';
       throw error;
     }
 
     console.log(`✅ Processed: ${outputName}${size.suffix}`);
   }
+}
+
+async function discoverImages() {
+  const images = [];
+  const entries = await fs.readdir(INPUT_DIR, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+
+    const ext = path.extname(entry.name).toLowerCase();
+    if (!JPEG_EXTENSIONS.has(ext)) continue;
+
+    const baseName = path.parse(entry.name).name;
+    let detectedType = null;
+    for (const [suffix, type] of Object.entries(SUFFIX_TO_TYPE)) {
+      if (baseName.endsWith(suffix)) {
+        detectedType = type;
+        break;
+      }
+    }
+
+    if (!detectedType) continue;
+
+    images.push({
+      input: path.join(INPUT_DIR, entry.name),
+      output: baseName,
+      type: detectedType
+    });
+  }
+
+  return images;
 }
 
 /**
@@ -122,34 +166,14 @@ async function optimizeAllImages() {
   // Create output directory if it doesn't exist
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
-  // List of images to process
-  const images = [
-    // Crema Cotta Abacaxi
-    { input: `${INPUT_DIR}/crema-abacaxi-hero.jpg`, output: 'crema-abacaxi-hero', type: 'hero' },
-    { input: `${INPUT_DIR}/crema-abacaxi-top.jpg`, output: 'crema-abacaxi-top', type: 'detail' },
-    { input: `${INPUT_DIR}/crema-abacaxi-detail.jpg`, output: 'crema-abacaxi-detail', type: 'detail' },
-    { input: `${INPUT_DIR}/crema-abacaxi-thumb.jpg`, output: 'crema-abacaxi-thumb', type: 'thumbnail' },
-
-    // Crema Cotta Maracujá
-    { input: `${INPUT_DIR}/crema-maracuja-hero.jpg`, output: 'crema-maracuja-hero', type: 'hero' },
-    { input: `${INPUT_DIR}/crema-maracuja-top.jpg`, output: 'crema-maracuja-top', type: 'detail' },
-    { input: `${INPUT_DIR}/crema-maracuja-detail.jpg`, output: 'crema-maracuja-detail', type: 'detail' },
-    { input: `${INPUT_DIR}/crema-maracuja-thumb.jpg`, output: 'crema-maracuja-thumb', type: 'thumbnail' },
-
-    // Crema Cotta Morango
-    { input: `${INPUT_DIR}/crema-morango-hero.jpg`, output: 'crema-morango-hero', type: 'hero' },
-    { input: `${INPUT_DIR}/crema-morango-top.jpg`, output: 'crema-morango-top', type: 'detail' },
-    { input: `${INPUT_DIR}/crema-morango-detail.jpg`, output: 'crema-morango-detail', type: 'detail' },
-    { input: `${INPUT_DIR}/crema-morango-thumb.jpg`, output: 'crema-morango-thumb', type: 'thumbnail' },
-
-    // Strati di Moca
-    { input: `${INPUT_DIR}/strati-moca-hero.jpg`, output: 'strati-moca-hero', type: 'hero' },
-    { input: `${INPUT_DIR}/strati-moca-top.jpg`, output: 'strati-moca-top', type: 'detail' },
-    { input: `${INPUT_DIR}/strati-moca-detail.jpg`, output: 'strati-moca-detail', type: 'detail' },
-    { input: `${INPUT_DIR}/strati-moca-thumb.jpg`, output: 'strati-moca-thumb', type: 'thumbnail' }
-  ];
+  const images = await discoverImages();
 
   console.log('🚀 Starting image optimization...\n');
+
+  if (images.length === 0) {
+    console.log('ℹ️ No matching images found to optimize.');
+    return;
+  }
 
   for (const img of images) {
     try {
@@ -159,6 +183,10 @@ async function optimizeAllImages() {
         console.error(`❌ Error reading input file "${img.input}":`, error);
       } else if (error?.stage === 'preoptimize') {
         console.error(`❌ Error optimizing source "${img.input}" before resizing:`, error);
+      } else if (error?.stage === 'jpeg-encode') {
+        console.error(`❌ Error encoding JPEG for "${img.input}":`, error);
+      } else if (error?.stage === 'webp-encode') {
+        console.error(`❌ Error encoding WebP for "${img.input}":`, error);
       } else {
         console.error(`❌ Error processing image "${img.input}" during optimization or resizing:`, error);
       }
