@@ -10,7 +10,7 @@ const organizationData = {
   name: 'VZ Dolci',
   description: 'Doceria artesanal de luxo especializada em doces premium',
   url: 'https://vz-dolci.vercel.app',
-  logo: 'https://vz-dolci.vercel.app/logo.png',
+  logo: 'https://vz-dolci.vercel.app/og-image.jpg',
   image: 'https://vz-dolci.vercel.app/og-image.jpg',
   priceRange: '$$$$',
   servesCuisine: 'Confeitaria Brasileira',

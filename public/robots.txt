@@ -4,4 +4,4 @@ Allow: /
 Disallow: /checkout
 
 # Sitemap
-Sitemap: /sitemap.xml
+Sitemap: https://vz-dolci.vercel.app/sitemap.xml
