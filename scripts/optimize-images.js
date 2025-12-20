@@ -81,30 +81,35 @@ async function processImage(inputPath, outputName, type) {
     const jpegPath = getOutputPath(outputName, size.suffix, 'jpg');
     const webpPath = getOutputPath(outputName, size.suffix, 'webp');
 
-    // Generate optimized JPEG
-    await sharp(optimizedSource)
-      .resize(size.width, null, {
-        withoutEnlargement: true,
-        fit: 'inside'
-      })
-      .jpeg({
-        quality: quality.jpeg,
-        progressive: true,
-        mozjpeg: true
-      })
-      .toFile(jpegPath);
+    try {
+      // Generate optimized JPEG
+      await sharp(optimizedSource)
+        .resize(size.width, null, {
+          withoutEnlargement: true,
+          fit: 'inside'
+        })
+        .jpeg({
+          quality: quality.jpeg,
+          progressive: true,
+          mozjpeg: true
+        })
+        .toFile(jpegPath);
 
-    // Generate WebP
-    await sharp(optimizedSource)
-      .resize(size.width, null, {
-        withoutEnlargement: true,
-        fit: 'inside'
-      })
-      .webp({
-        quality: quality.webp,
-        effort: 6
-      })
-      .toFile(webpPath);
+      // Generate WebP
+      await sharp(optimizedSource)
+        .resize(size.width, null, {
+          withoutEnlargement: true,
+          fit: 'inside'
+        })
+        .webp({
+          quality: quality.webp,
+          effort: 6
+        })
+        .toFile(webpPath);
+    } catch (error) {
+      error.stage = 'resize';
+      throw error;
+    }
 
     console.log(`✅ Processed: ${outputName}${size.suffix}`);
   }
