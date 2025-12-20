@@ -7,4 +7,4 @@ Disallow: /checkout
 Sitemap: https://vz-dolci.vercel.app/sitemap.xml
 
 # Crawl-delay (opcional, evita sobrecarga)
-Crawl-delay: 10
+Crawl-delay: 2

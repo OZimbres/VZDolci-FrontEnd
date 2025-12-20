@@ -9,6 +9,12 @@ import './CheckoutPage.css';
 
 // Environment variables
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
+const checkoutSeoProps = {
+  title: 'Finalizar Pedido',
+  description: 'Finalize seu pedido de doces artesanais premium da VZ Dolci.',
+  canonical: 'https://vz-dolci.vercel.app/checkout',
+  robots: 'noindex, follow'
+};
 
 /**
  * Checkout Page
@@ -164,15 +170,10 @@ export function CheckoutPage() {
     setShowConfirmationModal(false);
   };
 
-  if (cart.length === 0) {
-    return (
-      <>
-        <SEO 
-          title="Finalizar Pedido"
-          description="Finalize seu pedido de doces artesanais premium da VZ Dolci."
-          canonical="https://vz-dolci.vercel.app/checkout"
-          robots="noindex, follow"
-        />
+  return (
+    <>
+      <SEO {...checkoutSeoProps} />
+      {cart.length === 0 ? (
         <main>
           <section className="section checkout-section">
             <div className="container">
@@ -187,246 +188,236 @@ export function CheckoutPage() {
             </div>
           </section>
         </main>
-      </>
-    );
-  }
+      ) : (
+        <main>
+          <section className="section checkout-section">
+            <div className="container">
+              <h2 className="section-title">Finalizar Compra</h2>
+              <p className="section-subtitle">Revise seu pedido e escolha a forma de pagamento</p>
 
-  return (
-    <>
-      <SEO 
-        title="Finalizar Pedido"
-        description="Finalize seu pedido de doces artesanais premium da VZ Dolci."
-        canonical="https://vz-dolci.vercel.app/checkout"
-        robots="noindex, follow"
-      />
-      <main>
-        <section className="section checkout-section">
-          <div className="container">
-            <h2 className="section-title">Finalizar Compra</h2>
-            <p className="section-subtitle">Revise seu pedido e escolha a forma de pagamento</p>
-
-            <div className="checkout-container">
-              {/* Cart Items */}
-              <div className="checkout-items">
-                <h3>Itens do Pedido</h3>
-                <div className="checkout-items-list">
-                  {cart.map((item) => (
-                    <div key={item.product.id} className="checkout-item">
-                      <OptimizedImage
-                        src={item.product.getImageUrl()}
-                        alt={item.product.imageAlt}
-                        className="checkout-item-image"
-                      />
-                      
-                      <div className="checkout-item-details">
-                        <h4>{item.product.name}</h4>
-                        <p className="checkout-item-description">{item.product.description}</p>
-                        <p className="checkout-item-price">R$ {item.product.price.toFixed(2)} (unidade)</p>
-                      </div>
-                      
-                      <div className="checkout-item-actions">
-                        <div className="quantity-controls">
-                          <button 
-                            className="qty-btn"
-                            onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
-                            disabled={item.quantity <= 1 || isProcessingPayment}
-                            aria-label="Diminuir quantidade"
-                          >
-                            -
-                          </button>
-                          <span className="quantity">{item.quantity}</span>
-                          <button 
-                            className="qty-btn"
-                            onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
-                            disabled={isProcessingPayment}
-                            aria-label="Aumentar quantidade"
-                          >
-                            +
-                          </button>
+              <div className="checkout-container">
+                {/* Cart Items */}
+                <div className="checkout-items">
+                  <h3>Itens do Pedido</h3>
+                  <div className="checkout-items-list">
+                    {cart.map((item) => (
+                      <div key={item.product.id} className="checkout-item">
+                        <OptimizedImage
+                          src={item.product.getImageUrl()}
+                          alt={item.product.imageAlt}
+                          className="checkout-item-image"
+                        />
+                        
+                        <div className="checkout-item-details">
+                          <h4>{item.product.name}</h4>
+                          <p className="checkout-item-description">{item.product.description}</p>
+                          <p className="checkout-item-price">R$ {item.product.price.toFixed(2)} (unidade)</p>
                         </div>
-                        <button 
-                          className="remove-btn"
-                          onClick={() => handleRemove(item.product.id)}
-                          disabled={isProcessingPayment}
-                          title="Remover item"
-                          aria-label="Remover item"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                      
-                      <div className="checkout-item-total">
-                        Subtotal: R$ {item.getTotal().toFixed(2)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="checkout-total">
-                  <strong>Total do Pedido:</strong>
-                  <strong className="total-amount">R$ {total.toFixed(2)}</strong>
-                </div>
-              </div>
-
-              {/* Payment Options */}
-              <div className="checkout-payment">
-                <h3>Forma de Pagamento</h3>
-                
-                {!showPixForm ? (
-                  <div className="payment-options">
-                  <button 
-                    className="payment-option whatsapp-option"
-                    onClick={handleWhatsAppCheckout}
-                    disabled={isProcessingPayment}
-                  >
-                    <span className="payment-icon">💬</span>
-                    <div className="payment-option-content">
-                      <h4>WhatsApp</h4>
-                      <p>Finalize seu pedido enviando uma mensagem</p>
-                    </div>
-                  </button>
-
-                  <button 
-                    className="payment-option pix-option"
-                    onClick={handlePixCheckout}
-                    disabled={isProcessingPayment}
-                  >
-                    <span className="payment-icon">💳</span>
-                    <div className="payment-option-content">
-                      <h4>PIX</h4>
-                      <p>Pague agora com PIX e receba confirmação</p>
-                    </div>
-                  </button>
-                </div>
-              ) : (
-                <div className="pix-payment-section">
-                  {!pixQrCode ? (
-                    <form className="pix-form" onSubmit={(e) => {
-                      e.preventDefault();
-                      handlePixPaymentConfirm();
-                    }}>
-                      <h4>Informações de Contato</h4>
-                      <p>Informe pelo menos um método de contato (email ou telefone):</p>
-                      <input
-                        type="email"
-                        className="contact-input"
-                        placeholder="Email (exemplo@dominio.com)"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        autoComplete="email"
-                      />
-                      <PhoneInput
-                        defaultCountry="br"
-                        className="phone-input-container"
-                        placeholder="Telefone"
-                        value={phone}
-                        onChange={(phone) => setPhone(phone)}
-                      />
-                      <div className="pix-form-actions">
-                        <button 
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => {
-                            setShowPixForm(false);
-                            setPaymentMethod(null);
-                            setEmail('');
-                            setPhone('');
-                          }}
-                        >
-                          Voltar
-                        </button>
-                        <button 
-                          type="submit"
-                          className="btn btn-primary"
-                        >
-                          Gerar QR Code PIX
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="pix-qrcode-section">
-                      <h4>QR Code PIX</h4>
-                      <div className="qrcode-placeholder">
-                        <div className="qrcode-box">
-                          {/* Simple visual representation - in production, use a library like qrcode.react */}
-                          <div className="qrcode-pattern">
-                            <div></div><div></div><div></div>
-                            <div></div><div></div><div></div>
-                            <div></div><div></div><div></div>
+                        
+                        <div className="checkout-item-actions">
+                          <div className="quantity-controls">
+                            <button 
+                              className="qty-btn"
+                              onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                              disabled={item.quantity <= 1 || isProcessingPayment}
+                              aria-label="Diminuir quantidade"
+                            >
+                              -
+                            </button>
+                            <span className="quantity">{item.quantity}</span>
+                            <button 
+                              className="qty-btn"
+                              onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                              disabled={isProcessingPayment}
+                              aria-label="Aumentar quantidade"
+                            >
+                              +
+                            </button>
                           </div>
-                          <p className="qrcode-label">QR CODE PIX</p>
-                        </div>
-                      </div>
-                      <div className="pix-code-copy">
-                        <p>Código PIX:</p>
-                        <div className="code-box">
-                          <code>{pixQrCode.substring(0, 50)}...</code>
                           <button 
-                            className="copy-btn"
-                            onClick={() => {
-                              navigator.clipboard.writeText(pixQrCode);
-                              alert('Código PIX copiado!');
-                            }}
+                            className="remove-btn"
+                            onClick={() => handleRemove(item.product.id)}
+                            disabled={isProcessingPayment}
+                            title="Remover item"
+                            aria-label="Remover item"
                           >
-                            📋 Copiar
+                            🗑️
                           </button>
                         </div>
+                        
+                        <div className="checkout-item-total">
+                          Subtotal: R$ {item.getTotal().toFixed(2)}
+                        </div>
                       </div>
-                      <div className="pix-instructions">
-                        <p><strong>Instruções:</strong></p>
-                        <ol>
-                          <li>Abra o app do seu banco</li>
-                          <li>Escolha pagar com PIX</li>
-                          <li>Escaneie o QR Code ou cole o código PIX</li>
-                          <li>Confirme o pagamento de R$ {total.toFixed(2)}</li>
-                        </ol>
-                        <p className="contact-confirmation">
-                          ✅ Você receberá confirmação quando seu pedido estiver pronto!
-                          <br /><strong>Email:</strong> {email}
-                          <br /><strong>Telefone:</strong> {phone}
-                        </p>
-                      </div>
+                    ))}
+                  </div>
+
+                  <div className="checkout-total">
+                    <strong>Total do Pedido:</strong>
+                    <strong className="total-amount">R$ {total.toFixed(2)}</strong>
+                  </div>
+                </div>
+
+                {/* Payment Options */}
+                <div className="checkout-payment">
+                  <h3>Forma de Pagamento</h3>
+                  
+                  {!showPixForm ? (
+                    <div className="payment-options">
+                      <button 
+                        className="payment-option whatsapp-option"
+                        onClick={handleWhatsAppCheckout}
+                        disabled={isProcessingPayment}
+                      >
+                        <span className="payment-icon">💬</span>
+                        <div className="payment-option-content">
+                          <h4>WhatsApp</h4>
+                          <p>Finalize seu pedido enviando uma mensagem</p>
+                        </div>
+                      </button>
+
+                      <button 
+                        className="payment-option pix-option"
+                        onClick={handlePixCheckout}
+                        disabled={isProcessingPayment}
+                      >
+                        <span className="payment-icon">💳</span>
+                        <div className="payment-option-content">
+                          <h4>PIX</h4>
+                          <p>Pague agora com PIX e receba confirmação</p>
+                        </div>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="pix-payment-section">
+                      {!pixQrCode ? (
+                        <form className="pix-form" onSubmit={(e) => {
+                          e.preventDefault();
+                          handlePixPaymentConfirm();
+                        }}>
+                          <h4>Informações de Contato</h4>
+                          <p>Informe pelo menos um método de contato (email ou telefone):</p>
+                          <input
+                            type="email"
+                            className="contact-input"
+                            placeholder="Email (exemplo@dominio.com)"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="email"
+                          />
+                          <PhoneInput
+                            defaultCountry="br"
+                            className="phone-input-container"
+                            placeholder="Telefone"
+                            value={phone}
+                            onChange={(phone) => setPhone(phone)}
+                          />
+                          <div className="pix-form-actions">
+                            <button 
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={() => {
+                                setShowPixForm(false);
+                                setPaymentMethod(null);
+                                setEmail('');
+                                setPhone('');
+                              }}
+                            >
+                              Voltar
+                            </button>
+                            <button 
+                              type="submit"
+                              className="btn btn-primary"
+                            >
+                              Gerar QR Code PIX
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="pix-qrcode-section">
+                          <h4>QR Code PIX</h4>
+                          <div className="qrcode-placeholder">
+                            <div className="qrcode-box">
+                              {/* Simple visual representation - in production, use a library like qrcode.react */}
+                              <div className="qrcode-pattern">
+                                <div></div><div></div><div></div>
+                                <div></div><div></div><div></div>
+                                <div></div><div></div><div></div>
+                              </div>
+                              <p className="qrcode-label">QR CODE PIX</p>
+                            </div>
+                          </div>
+                          <div className="pix-code-copy">
+                            <p>Código PIX:</p>
+                            <div className="code-box">
+                              <code>{pixQrCode.substring(0, 50)}...</code>
+                              <button 
+                                className="copy-btn"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(pixQrCode);
+                                  alert('Código PIX copiado!');
+                                }}
+                              >
+                                📋 Copiar
+                              </button>
+                            </div>
+                          </div>
+                          <div className="pix-instructions">
+                            <p><strong>Instruções:</strong></p>
+                            <ol>
+                              <li>Abra o app do seu banco</li>
+                              <li>Escolha pagar com PIX</li>
+                              <li>Escaneie o QR Code ou cole o código PIX</li>
+                              <li>Confirme o pagamento de R$ {total.toFixed(2)}</li>
+                            </ol>
+                            <p className="contact-confirmation">
+                              ✅ Você receberá confirmação quando seu pedido estiver pronto!
+                              <br /><strong>Email:</strong> {email}
+                              <br /><strong>Telefone:</strong> {phone}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* Confirmation Modal */}
-      {showConfirmationModal && (
-        <div className="modal-overlay" onClick={(e) => {
-          if (e.target.className === 'modal-overlay') {
-            // Prevent closing modal by clicking outside
-          }
-        }}>
-          <div className="modal-content">
-            <h3>Confirmação de Pagamento</h3>
-            <p>
-              {paymentMethod === 'whatsapp' 
-                ? 'Você finalizou a compra via WhatsApp?' 
-                : 'Você concluiu o pagamento via PIX?'}
-            </p>
-            <div className="modal-actions">
-              <button 
-                className="btn btn-secondary"
-                onClick={() => handlePaymentConfirmation(false)}
-              >
-                Não, cancelar
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={() => handlePaymentConfirmation(true)}
-              >
-                Sim, concluí
-              </button>
+          {/* Confirmation Modal */}
+          {showConfirmationModal && (
+            <div className="modal-overlay" onClick={(e) => {
+              if (e.target.className === 'modal-overlay') {
+                // Prevent closing modal by clicking outside
+              }
+            }}>
+              <div className="modal-content">
+                <h3>Confirmação de Pagamento</h3>
+                <p>
+                  {paymentMethod === 'whatsapp' 
+                    ? 'Você finalizou a compra via WhatsApp?' 
+                    : 'Você concluiu o pagamento via PIX?'}
+                </p>
+                <div className="modal-actions">
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => handlePaymentConfirmation(false)}
+                  >
+                    Não, cancelar
+                  </button>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => handlePaymentConfirmation(true)}
+                  >
+                    Sim, concluí
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </main>
       )}
-    </main>
     </>
   );
 }
