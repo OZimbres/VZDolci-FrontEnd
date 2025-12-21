@@ -136,11 +136,9 @@ export function ProductImage({
 
   useEffect(() => {
     setHasError(false);
-  }, [src]);
-
-  useEffect(() => {
-    if (!priority || !imgRef.current) return;
-    setIsLoaded(false);
+    if (priority && imgRef.current) {
+      setIsLoaded(false);
+    }
   }, [priority, src]);
 
   return (
