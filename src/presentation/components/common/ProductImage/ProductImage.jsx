@@ -90,15 +90,12 @@ export function ProductImage({
         observedImg.dataset.src &&
         !(observedImg.complete && observedImg.naturalWidth > 0)
       ) {
-        if (isLoaded) {
-          setIsLoaded(false);
-        }
         const picture = pictureRef.current;
         if (picture) {
           picture.querySelectorAll('source').forEach((source) => {
             if (
               source.dataset.srcset &&
-              !source.srcset
+              source.srcset !== source.dataset.srcset
             ) {
               source.srcset = source.dataset.srcset;
             }
@@ -135,7 +132,7 @@ export function ProductImage({
     return () => {
       observer.disconnect();
     };
-  }, [priority, src, isLoaded]);
+  }, [priority, src]);
 
   useEffect(() => {
     setHasError(false);
