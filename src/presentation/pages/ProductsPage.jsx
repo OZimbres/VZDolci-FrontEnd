@@ -1,5 +1,6 @@
 import { ProductList } from '../components/features/Products/ProductList';
 import { SEO } from '../components/common/SEO';
+import { ProductGallery } from '../components/features/Product/ProductGallery/ProductGallery';
 import './ProductsPage.css';
 
 /**
@@ -19,6 +20,14 @@ export function ProductsPage() {
           <div className="container">
             <h2 className="section-title">Nossos Doces</h2>
             <p className="section-subtitle">Criações artesanais com ingredientes premium</p>
+            <ProductGallery
+              productName="Crema Cotta Abacaxi"
+              images={[
+                { id: 'hero', src: 'crema-abacaxi-hero', alt: 'Visão principal do doce', type: 'hero' },
+                { id: 'top', src: 'crema-abacaxi-top', alt: 'Vista superior do doce', type: 'top' },
+                { id: 'detail', src: 'crema-abacaxi-detail', alt: 'Detalhe da textura', type: 'detail' },
+              ]}
+            />
             <ProductList />
           </div>
         </section>

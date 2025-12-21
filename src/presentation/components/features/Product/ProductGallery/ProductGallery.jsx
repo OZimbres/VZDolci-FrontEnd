@@ -1,0 +1,347 @@
+import { useState, useEffect, useCallback, useId } from 'react';
+import PropTypes from 'prop-types';
+import { ProductImage } from '../../../common/ProductImage/ProductImage';
+import './ProductGallery.css';
+
+const disableBodyScroll = () => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+const restoreBodyScroll = () => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = '';
+  }
+};
+
+const HIGH_RES_BASE_PATH = '/images/products';
+const SWIPE_THRESHOLD = 50;
+
+const normalizeZoomSuffix = (suffix) => {
+  const safeSuffix = suffix || '@2x.jpg';
+  const hasAtPrefix = safeSuffix.startsWith('@') || safeSuffix.startsWith('.');
+  const normalizedPrefix = hasAtPrefix ? '' : '@';
+  const hasExtension = safeSuffix.includes('.');
+  return `${normalizedPrefix}${safeSuffix}${hasExtension ? '' : '.jpg'}`;
+};
+
+/**
+ * ProductGallery Component
+ *
+ * Galeria de imagens do produto com:
+ * - Imagem principal grande
+ * - Thumbnails clicáveis
+ * - Modal de zoom em alta resolução
+ * - Navegação por teclado (arrows)
+ * - Swipe em mobile
+ *
+ * @example
+ * <ProductGallery
+ *   images={[
+ *     { src: 'crema-abacaxi-hero', alt: 'Visão principal', type: 'hero' },
+ *     { src: 'crema-abacaxi-top', alt: 'Vista superior', type: 'detail' },
+ *     { src: 'crema-abacaxi-detail', alt: 'Detalhe da textura', type: 'detail' }
+ *   ]}
+ *   productName="Crema Cotta Abacaxi"
+ * />
+ */
+export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const zoomTitleId = useId();
+  const hasImages = Array.isArray(images) && images.length > 0;
+  const activeImage = hasImages ? images[activeIndex] : null;
+  const normalizedZoomSuffix = normalizeZoomSuffix(zoomSuffix);
+
+  /**
+   * Navegar para próxima/anterior imagem
+   */
+  const goToImage = useCallback(
+    (index) => {
+      const totalImages = Array.isArray(images) ? images.length : 0;
+      if (index < 0 || index >= totalImages) return;
+      setActiveIndex(index);
+    },
+    [images]
+  );
+
+  const goToNext = useCallback(() => {
+    goToImage(activeIndex + 1);
+  }, [activeIndex, goToImage]);
+
+  const goToPrevious = useCallback(() => {
+    goToImage(activeIndex - 1);
+  }, [activeIndex, goToImage]);
+
+  const getImageKey = (image, index) => image?.id ?? image?.src ?? index;
+
+  /**
+   * Abrir modal de zoom
+   */
+  const openZoom = useCallback(() => {
+    setIsZoomOpen(true);
+    disableBodyScroll();
+  }, []);
+
+  const closeZoom = useCallback(() => {
+    setIsZoomOpen(false);
+    restoreBodyScroll();
+  }, []);
+
+  /**
+   * Navegação por teclado
+   */
+  useEffect(() => {
+    if (!isZoomOpen || !hasImages) return;
+
+    const handleKeyDown = (e) => {
+      switch (e.key) {
+        case 'Escape':
+          closeZoom();
+          break;
+        case 'ArrowLeft':
+          goToPrevious();
+          break;
+        case 'ArrowRight':
+          goToNext();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [closeZoom, goToNext, goToPrevious, hasImages, images, isZoomOpen]);
+
+  /**
+   * Garantir que o scroll seja restaurado ao desmontar
+   */
+  useEffect(() => {
+    return () => {
+      restoreBodyScroll();
+    };
+  }, []);
+
+  /**
+   * Swipe em mobile
+   */
+  const handleTouchStart = (e) => {
+    if (typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches) return;
+    const touch = e.targetTouches?.[0];
+    if (!touch) return;
+    setTouchStart(touch.clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    if (typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches) return;
+    const touch = e.targetTouches?.[0];
+    if (!touch) return;
+    setTouchEnd(touch.clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches) return;
+    if (touchStart === null || touchEnd === null) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > SWIPE_THRESHOLD;
+    const isRightSwipe = distance < -SWIPE_THRESHOLD;
+
+    if (isLeftSwipe) goToNext();
+    if (isRightSwipe) goToPrevious();
+
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  if (!hasImages) {
+    return null;
+  }
+
+  return (
+    <div className="product-gallery">
+      {/* Imagem Principal */}
+      <div
+        className="gallery-main"
+        onClick={openZoom}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && openZoom()}
+        aria-label={`Ampliar imagem de ${productName}`}
+      >
+        <ProductImage
+          src={activeImage.src}
+          alt={activeImage.alt || `${productName} - ${activeIndex + 1}`}
+          aspectRatio="4/3"
+          sizes="(max-width: 768px) 100vw, 50vw"
+          priority={activeIndex === 0}
+        />
+
+        {/* Badge de tipo de imagem */}
+        {activeImage.type === 'hero' && (
+          <div className="image-type-badge">✨ Principal</div>
+        )}
+        {activeImage.type === 'detail' && (
+          <div className="image-type-badge">🔍 Detalhe</div>
+        )}
+        {activeImage.type === 'top' && (
+          <div className="image-type-badge">👁️ Vista Superior</div>
+        )}
+
+        {/* Botões de navegação (desktop) */}
+        {images.length > 1 && (
+          <>
+            <button
+              className="gallery-nav-btn prev"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevious();
+              }}
+              disabled={activeIndex === 0}
+              aria-label="Imagem anterior"
+            >
+              ‹
+            </button>
+            <button
+              className="gallery-nav-btn next"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
+              disabled={activeIndex === images.length - 1}
+              aria-label="Próxima imagem"
+            >
+              ›
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      {images.length > 1 && (
+        <div className="gallery-thumbnails">
+          {images.map((image, index) => (
+            <button
+              key={getImageKey(image, index)}
+              className={`gallery-thumbnail ${index === activeIndex ? 'active' : ''}`}
+              onClick={() => goToImage(index)}
+              aria-label={`Ver imagem ${index + 1}`}
+              aria-pressed={index === activeIndex}
+            >
+              <ProductImage
+                src={image.src}
+                alt={`Miniatura ${index + 1}`}
+                aspectRatio="1/1"
+                sizes="100px"
+              />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Indicador de posição (mobile) */}
+      {images.length > 1 && (
+        <div className="gallery-indicators">
+          {images.map((image, index) => (
+            <button
+              key={getImageKey(image, index)}
+              className={`indicator-dot ${index === activeIndex ? 'active' : ''}`}
+              onClick={() => goToImage(index)}
+              aria-label={`Ir para imagem ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Modal de Zoom */}
+      {isZoomOpen && (
+        <div
+          className="gallery-zoom-modal"
+          onClick={closeZoom}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={zoomTitleId}
+        >
+          <div className="zoom-content" onClick={(e) => e.stopPropagation()}>
+            <h2 id={zoomTitleId} className="visually-hidden">
+              Visualização ampliada de {productName}
+            </h2>
+            <ProductImage
+              src={`${HIGH_RES_BASE_PATH}/${activeImage.src}${normalizedZoomSuffix}`}
+              alt={activeImage.alt || `${productName} - ${activeIndex + 1}`}
+              aspectRatio="4/3"
+              sizes="90vw"
+              className="zoom-image"
+              priority
+            />
+
+            {/* Botão de fechar */}
+            <button
+              className="zoom-close"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeZoom();
+              }}
+              aria-label="Fechar visualização"
+            >
+              ✕
+            </button>
+
+            {/* Navegação no modal */}
+            {images.length > 1 && (
+              <>
+                <button
+                  className="zoom-nav-btn prev"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToPrevious();
+                  }}
+                  disabled={activeIndex === 0}
+                  aria-label="Imagem anterior"
+                >
+                  ‹
+                </button>
+                <button
+                  className="zoom-nav-btn next"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToNext();
+                  }}
+                  disabled={activeIndex === images.length - 1}
+                  aria-label="Próxima imagem"
+                >
+                  ›
+                </button>
+              </>
+            )}
+
+            {/* Contador de imagens */}
+            <div className="zoom-counter">
+              {activeIndex + 1} / {images.length}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ProductGallery.propTypes = {
+  images: PropTypes.arrayOf(
+    PropTypes.shape({
+      src: PropTypes.string.isRequired,
+      alt: PropTypes.string,
+      type: PropTypes.oneOf(['hero', 'detail', 'top']),
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })
+  ).isRequired,
+  productName: PropTypes.string.isRequired,
+  zoomSuffix: PropTypes.string,
+};
