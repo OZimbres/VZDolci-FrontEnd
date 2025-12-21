@@ -1,7 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { ProductImage } from '../../../common/ProductImage/ProductImage';
 import './ProductGallery.css';
+
+const disableBodyScroll = () => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+const restoreBodyScroll = () => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = '';
+  }
+};
+
+const HIGH_RES_BASE_PATH = '/images/products';
 
 /**
  * ProductGallery Component
@@ -23,7 +37,7 @@ import './ProductGallery.css';
  *   productName="Crema Cotta Abacaxi"
  * />
  */
-export function ProductGallery({ images, productName }) {
+export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
@@ -35,29 +49,28 @@ export function ProductGallery({ images, productName }) {
    * Navegar para próxima/anterior imagem
    */
   const goToImage = (index) => {
-    if (index < 0 || index >= images.length) return;
+    const totalImages = Array.isArray(images) ? images.length : 0;
+    if (index < 0 || index >= totalImages) return;
     setActiveIndex(index);
   };
 
   const goToNext = () => goToImage(activeIndex + 1);
   const goToPrevious = () => goToImage(activeIndex - 1);
 
+  const getImageKey = (image, index) => image?.id ?? image?.src ?? index;
+
   /**
    * Abrir modal de zoom
    */
-  const openZoom = () => {
+  const openZoom = useCallback(() => {
     setIsZoomOpen(true);
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = 'hidden';
-    }
-  };
+    disableBodyScroll();
+  }, []);
 
-  const closeZoom = () => {
+  const closeZoom = useCallback(() => {
     setIsZoomOpen(false);
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = '';
-    }
-  };
+    restoreBodyScroll();
+  }, []);
 
   /**
    * Navegação por teclado
@@ -68,10 +81,7 @@ export function ProductGallery({ images, productName }) {
     const handleKeyDown = (e) => {
       switch (e.key) {
         case 'Escape':
-          setIsZoomOpen(false);
-          if (typeof document !== 'undefined') {
-            document.body.style.overflow = '';
-          }
+          closeZoom();
           break;
         case 'ArrowLeft':
           setActiveIndex((current) =>
@@ -91,16 +101,14 @@ export function ProductGallery({ images, productName }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasImages, images.length, isZoomOpen]);
+  }, [closeZoom, hasImages, images, isZoomOpen]);
 
   /**
    * Garantir que o scroll seja restaurado ao desmontar
    */
   useEffect(() => {
     return () => {
-      if (typeof document !== 'undefined') {
-        document.body.style.overflow = '';
-      }
+      restoreBodyScroll();
     };
   }, []);
 
@@ -108,11 +116,15 @@ export function ProductGallery({ images, productName }) {
    * Swipe em mobile
    */
   const handleTouchStart = (e) => {
-    setTouchStart(e.targetTouches[0].clientX);
+    const touch = e.targetTouches?.[0];
+    if (!touch) return;
+    setTouchStart(touch.clientX);
   };
 
   const handleTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    const touch = e.targetTouches?.[0];
+    if (!touch) return;
+    setTouchEnd(touch.clientX);
   };
 
   const handleTouchEnd = () => {
@@ -196,7 +208,7 @@ export function ProductGallery({ images, productName }) {
         <div className="gallery-thumbnails">
           {images.map((image, index) => (
             <button
-              key={index}
+              key={getImageKey(image, index)}
               className={`gallery-thumbnail ${index === activeIndex ? 'active' : ''}`}
               onClick={() => goToImage(index)}
               aria-label={`Ver imagem ${index + 1}`}
@@ -216,9 +228,9 @@ export function ProductGallery({ images, productName }) {
       {/* Indicador de posição (mobile) */}
       {images.length > 1 && (
         <div className="gallery-indicators">
-          {images.map((_, index) => (
+          {images.map((image, index) => (
             <button
-              key={index}
+              key={getImageKey(image, index)}
               className={`indicator-dot ${index === activeIndex ? 'active' : ''}`}
               onClick={() => goToImage(index)}
               aria-label={`Ir para imagem ${index + 1}`}
@@ -238,7 +250,7 @@ export function ProductGallery({ images, productName }) {
         >
           <div className="zoom-content" onClick={(e) => e.stopPropagation()}>
             <img
-              src={`/images/products/${activeImage.src}@2x.jpg`}
+              src={`${HIGH_RES_BASE_PATH}/${activeImage.src}${zoomSuffix}`}
               alt={activeImage.alt || `${productName} - ${activeIndex + 1}`}
               className="zoom-image"
             />
@@ -294,4 +306,5 @@ ProductGallery.propTypes = {
     })
   ).isRequired,
   productName: PropTypes.string.isRequired,
+  zoomSuffix: PropTypes.string,
 };
