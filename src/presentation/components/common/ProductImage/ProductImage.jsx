@@ -2,6 +2,16 @@ import { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './ProductImage.css';
 
+const BASE_PATH = '/images/products';
+
+const generateSrcSet = (filename, format) => {
+  return `
+      ${BASE_PATH}/${filename}@mobile.${format} 400w,
+      ${BASE_PATH}/${filename}.${format} 800w,
+      ${BASE_PATH}/${filename}@2x.${format} 1600w
+    `.trim();
+};
+
 /**
  * ProductImage Component
  * * Componente responsivo para exibir imagens de produtos com:
@@ -25,26 +35,14 @@ export function ProductImage({
   sizes = '100vw',
   priority = false,
   onLoad,
+  onError,
   className = '',
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef(null);
-
-  // Base path para imagens
-  const BASE_PATH = '/images/products';
-
-  /**
-   * Gera srcset para diferentes resoluções
-   * Exemplo: "image.webp 800w, image@2x.webp 1600w"
-   */
-  const generateSrcSet = (filename, format) => {
-    return `
-      ${BASE_PATH}/${filename}@mobile.${format} 400w,
-      ${BASE_PATH}/${filename}.${format} 800w,
-      ${BASE_PATH}/${filename}@2x.${format} 1600w
-    `.trim();
-  };
+  const pictureRef = useRef(null);
+  const defaultSrc = `${BASE_PATH}/${src}.jpg`;
 
   /**
    * Handlers de loading
@@ -54,9 +52,29 @@ export function ProductImage({
     if (onLoad) onLoad();
   };
 
-  const handleError = () => {
+  const handleError = (event) => {
     setHasError(true);
-    console.error(`Erro ao carregar imagem: ${src}`);
+    const imageElement = event?.currentTarget || imgRef.current;
+    const computedSrc =
+      imageElement?.currentSrc ||
+      imageElement?.src ||
+      imageElement?.dataset?.src ||
+      defaultSrc;
+    const pageLocation =
+      typeof window !== 'undefined' && window.location
+        ? window.location.href
+        : 'SSR environment';
+
+    console.error('Erro ao carregar imagem em ProductImage:', {
+      srcProp: src,
+      computedSrc,
+      alt,
+      aspectRatio,
+      sizes,
+      priority,
+      pageLocation,
+    });
+    if (onError) onError(event);
   };
 
   /**
@@ -65,11 +83,26 @@ export function ProductImage({
   useEffect(() => {
     if (priority || !imgRef.current) return;
 
-    const img = imgRef.current;
+    const observedImg = imgRef.current;
 
     const loadImage = () => {
-      if (img.dataset.src && !img.src) {
-        img.src = img.dataset.src;
+      if (
+        observedImg.dataset.src &&
+        !(observedImg.complete && observedImg.naturalWidth > 0)
+      ) {
+        const picture = pictureRef.current;
+        if (picture) {
+          picture.querySelectorAll('source').forEach((source) => {
+            if (
+              source.dataset.srcset &&
+              source.srcset !== source.dataset.srcset
+            ) {
+              source.srcset = source.dataset.srcset;
+            }
+          });
+        }
+        setIsLoaded(false);
+        observedImg.src = observedImg.dataset.src;
       }
     };
 
@@ -92,12 +125,21 @@ export function ProductImage({
       }
     );
 
-    observer.observe(img);
+    if (observedImg) {
+      observer.observe(observedImg);
+    }
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [priority, src]);
 
-  const defaultSrc = `${BASE_PATH}/${src}.jpg`;
+  useEffect(() => {
+    setHasError(false);
+    if (priority && imgRef.current) {
+      setIsLoaded(false);
+    }
+  }, [priority, src]);
 
   return (
     <div
@@ -113,18 +155,20 @@ export function ProductImage({
 
       {/* Imagem Principal com WebP e Fallback */}
       {!hasError && (
-        <picture>
+        <picture ref={pictureRef}>
           {/* WebP para navegadores modernos */}
           <source
             type="image/webp"
-            srcSet={generateSrcSet(src, 'webp')}
+            srcSet={priority ? generateSrcSet(src, 'webp') : undefined}
+            data-srcset={!priority ? generateSrcSet(src, 'webp') : undefined}
             sizes={sizes}
           />
 
           {/* JPEG fallback */}
           <source
             type="image/jpeg"
-            srcSet={generateSrcSet(src, 'jpg')}
+            srcSet={priority ? generateSrcSet(src, 'jpg') : undefined}
+            data-srcset={!priority ? generateSrcSet(src, 'jpg') : undefined}
             sizes={sizes}
           />
 
@@ -146,15 +190,23 @@ export function ProductImage({
       {/* Fallback caso imagem não carregue */}
       {hasError && (
         <div className="product-image-error">
-          <span className="error-icon">📷</span>
-          <p>Imagem indisponível</p>
+          <span
+            className="error-icon"
+            role="img"
+            aria-label="Erro ao carregar imagem"
+          >
+            ⚠
+          </span>
+          <p role="alert">Imagem indisponível</p>
         </div>
       )}
 
       {/* Zoom Overlay (apenas desktop) */}
       {isLoaded && (
         <div className="product-image-zoom-hint">
-          <span className="zoom-icon">🔍</span>
+          <span className="zoom-icon" aria-label="Passe o mouse para ampliar a imagem">
+            <span aria-hidden="true">Zoom disponível</span>
+          </span>
         </div>
       )}
     </div>
@@ -168,5 +220,6 @@ ProductImage.propTypes = {
   sizes: PropTypes.string,
   priority: PropTypes.bool,
   onLoad: PropTypes.func,
+  onError: PropTypes.func,
   className: PropTypes.string,
 };
