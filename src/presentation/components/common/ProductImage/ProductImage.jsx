@@ -35,12 +35,14 @@ export function ProductImage({
   sizes = '100vw',
   priority = false,
   onLoad,
+  onError,
   className = '',
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef(null);
   const pictureRef = useRef(null);
+  const defaultSrc = `${BASE_PATH}/${src}.jpg`;
 
   /**
    * Handlers de loading
@@ -57,11 +59,11 @@ export function ProductImage({
       imageElement?.currentSrc ||
       imageElement?.src ||
       imageElement?.dataset?.src ||
-      `${BASE_PATH}/${src}`;
+      defaultSrc;
     const pageLocation =
       typeof window !== 'undefined' && window.location
         ? window.location.href
-        : 'window.location unavailable (non-browser environment)';
+        : 'SSR environment';
 
     console.error('Erro ao carregar imagem em ProductImage:', {
       srcProp: src,
@@ -72,6 +74,7 @@ export function ProductImage({
       priority,
       pageLocation,
     });
+    if (onError) onError(event);
   };
 
   /**
@@ -85,23 +88,20 @@ export function ProductImage({
     const loadImage = () => {
       if (
         observedImg.dataset.src &&
-        (!observedImg.src || observedImg.src !== observedImg.dataset.src)
+        !(observedImg.complete && observedImg.naturalWidth > 0)
       ) {
-        const picture =
-          pictureRef.current ||
-          (observedImg.parentElement?.nodeName === 'PICTURE'
-            ? observedImg.parentElement
-            : null);
+        const picture = pictureRef.current;
         if (picture) {
           picture.querySelectorAll('source').forEach((source) => {
             if (
               source.dataset.srcset &&
-              source.srcset !== source.dataset.srcset
+              !source.srcset
             ) {
               source.srcset = source.dataset.srcset;
             }
           });
         }
+        setIsLoaded(false);
         observedImg.src = observedImg.dataset.src;
       }
     };
@@ -130,19 +130,18 @@ export function ProductImage({
     }
 
     return () => {
-      if (observedImg) {
-        observer.unobserve(observedImg);
-      }
       observer.disconnect();
     };
   }, [priority, src]);
 
   useEffect(() => {
-    setIsLoaded(false);
     setHasError(false);
   }, [src]);
 
-  const defaultSrc = `${BASE_PATH}/${src}.jpg`;
+  useEffect(() => {
+    if (!priority || !imgRef.current) return;
+    setIsLoaded(false);
+  }, [priority, src]);
 
   return (
     <div
@@ -207,11 +206,8 @@ export function ProductImage({
       {/* Zoom Overlay (apenas desktop) */}
       {isLoaded && (
         <div className="product-image-zoom-hint">
-          <span
-            className="zoom-icon"
-            aria-label="Passe o mouse para ampliar a imagem"
-          >
-            Zoom disponível
+          <span className="zoom-icon" aria-label="Passe o mouse para ampliar a imagem">
+            <span aria-hidden="true">Zoom disponível</span>
           </span>
         </div>
       )}
@@ -226,5 +222,6 @@ ProductImage.propTypes = {
   sizes: PropTypes.string,
   priority: PropTypes.bool,
   onLoad: PropTypes.func,
+  onError: PropTypes.func,
   className: PropTypes.string,
 };

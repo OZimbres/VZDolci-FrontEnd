@@ -3,7 +3,9 @@
   --product-image-radius-mobile: 8px;
   --product-image-zoom-size: 40px;
   --product-image-zoom-offset: 12px;
-  --product-image-zoom-blur: 8px;
+  --product-image-zoom-padding-y: 6px;
+  --product-image-zoom-padding-x: 12px;
+  --product-image-zoom-radius: 9999px;
   --product-image-zoom-opacity: 0.9;
   --product-image-zoom-icon-size: 1.2rem;
   --product-image-error-icon-size: 3rem;
@@ -79,10 +81,11 @@
   top: var(--product-image-zoom-offset);
   right: var(--product-image-zoom-offset);
   background: rgba(255, 255, 255, var(--product-image-zoom-opacity));
-  backdrop-filter: blur(var(--product-image-zoom-blur));
-  border-radius: 50%;
-  width: var(--product-image-zoom-size);
-  height: var(--product-image-zoom-size);
+  backdrop-filter: blur(8px);
+  border-radius: var(--product-image-zoom-radius);
+  width: auto;
+  height: auto;
+  padding: var(--product-image-zoom-padding-y) var(--product-image-zoom-padding-x);
   display: flex;
   align-items: center;
   justify-content: center;
