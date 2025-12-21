@@ -42,7 +42,8 @@ export function ProductImage({
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef(null);
   const pictureRef = useRef(null);
-  const defaultSrc = `${BASE_PATH}/${src}.jpg`;
+  const isFullPath = src?.includes('/') || src?.includes('.');
+  const defaultSrc = isFullPath ? src : `${BASE_PATH}/${src}.jpg`;
 
   /**
    * Handlers de loading
@@ -156,21 +157,25 @@ export function ProductImage({
       {/* Imagem Principal com WebP e Fallback */}
       {!hasError && (
         <picture ref={pictureRef}>
-          {/* WebP para navegadores modernos */}
-          <source
-            type="image/webp"
-            srcSet={priority ? generateSrcSet(src, 'webp') : undefined}
-            data-srcset={!priority ? generateSrcSet(src, 'webp') : undefined}
-            sizes={sizes}
-          />
+          {!isFullPath && (
+            <>
+              {/* WebP para navegadores modernos */}
+              <source
+                type="image/webp"
+                srcSet={priority ? generateSrcSet(src, 'webp') : undefined}
+                data-srcset={!priority ? generateSrcSet(src, 'webp') : undefined}
+                sizes={sizes}
+              />
 
-          {/* JPEG fallback */}
-          <source
-            type="image/jpeg"
-            srcSet={priority ? generateSrcSet(src, 'jpg') : undefined}
-            data-srcset={!priority ? generateSrcSet(src, 'jpg') : undefined}
-            sizes={sizes}
-          />
+              {/* JPEG fallback */}
+              <source
+                type="image/jpeg"
+                srcSet={priority ? generateSrcSet(src, 'jpg') : undefined}
+                data-srcset={!priority ? generateSrcSet(src, 'jpg') : undefined}
+                sizes={sizes}
+              />
+            </>
+          )}
 
           {/* Imagem padrão */}
           <img

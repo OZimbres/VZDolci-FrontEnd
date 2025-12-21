@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useId } from 'react';
 import PropTypes from 'prop-types';
 import { ProductImage } from '../../../common/ProductImage/ProductImage';
 import './ProductGallery.css';
@@ -16,6 +16,15 @@ const restoreBodyScroll = () => {
 };
 
 const HIGH_RES_BASE_PATH = '/images/products';
+const SWIPE_THRESHOLD = 50;
+
+const normalizeZoomSuffix = (suffix) => {
+  const safeSuffix = suffix || '@2x.jpg';
+  const hasAtPrefix = safeSuffix.startsWith('@') || safeSuffix.startsWith('.');
+  const normalizedPrefix = hasAtPrefix ? '' : '@';
+  const hasExtension = safeSuffix.includes('.');
+  return `${normalizedPrefix}${safeSuffix}${hasExtension ? '' : '.jpg'}`;
+};
 
 /**
  * ProductGallery Component
@@ -42,20 +51,30 @@ export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) 
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const zoomTitleId = useId();
   const hasImages = Array.isArray(images) && images.length > 0;
   const activeImage = hasImages ? images[activeIndex] : null;
+  const normalizedZoomSuffix = normalizeZoomSuffix(zoomSuffix);
 
   /**
    * Navegar para próxima/anterior imagem
    */
-  const goToImage = (index) => {
-    const totalImages = Array.isArray(images) ? images.length : 0;
-    if (index < 0 || index >= totalImages) return;
-    setActiveIndex(index);
-  };
+  const goToImage = useCallback(
+    (index) => {
+      const totalImages = Array.isArray(images) ? images.length : 0;
+      if (index < 0 || index >= totalImages) return;
+      setActiveIndex(index);
+    },
+    [images]
+  );
 
-  const goToNext = () => goToImage(activeIndex + 1);
-  const goToPrevious = () => goToImage(activeIndex - 1);
+  const goToNext = useCallback(() => {
+    goToImage(activeIndex + 1);
+  }, [activeIndex, goToImage]);
+
+  const goToPrevious = useCallback(() => {
+    goToImage(activeIndex - 1);
+  }, [activeIndex, goToImage]);
 
   const getImageKey = (image, index) => image?.id ?? image?.src ?? index;
 
@@ -84,15 +103,10 @@ export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) 
           closeZoom();
           break;
         case 'ArrowLeft':
-          setActiveIndex((current) =>
-            current > 0 ? current - 1 : current
-          );
+          goToPrevious();
           break;
         case 'ArrowRight':
-          setActiveIndex((current) => {
-            const nextIndex = current + 1;
-            return nextIndex < images.length ? nextIndex : current;
-          });
+          goToNext();
           break;
         default:
           break;
@@ -101,7 +115,7 @@ export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) 
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [closeZoom, hasImages, images, isZoomOpen]);
+  }, [closeZoom, goToNext, goToPrevious, hasImages, images, isZoomOpen]);
 
   /**
    * Garantir que o scroll seja restaurado ao desmontar
@@ -116,23 +130,26 @@ export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) 
    * Swipe em mobile
    */
   const handleTouchStart = (e) => {
+    if (typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches) return;
     const touch = e.targetTouches?.[0];
     if (!touch) return;
     setTouchStart(touch.clientX);
   };
 
   const handleTouchMove = (e) => {
+    if (typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches) return;
     const touch = e.targetTouches?.[0];
     if (!touch) return;
     setTouchEnd(touch.clientX);
   };
 
   const handleTouchEnd = () => {
+    if (typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches) return;
     if (touchStart === null || touchEnd === null) return;
 
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
+    const isLeftSwipe = distance > SWIPE_THRESHOLD;
+    const isRightSwipe = distance < -SWIPE_THRESHOLD;
 
     if (isLeftSwipe) goToNext();
     if (isRightSwipe) goToPrevious();
@@ -168,11 +185,15 @@ export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) 
         />
 
         {/* Badge de tipo de imagem */}
-        <div className="image-type-badge">
-          {activeImage.type === 'hero' && '✨ Principal'}
-          {activeImage.type === 'detail' && '🔍 Detalhe'}
-          {activeImage.type === 'top' && '👁️ Vista Superior'}
-        </div>
+        {activeImage.type === 'hero' && (
+          <div className="image-type-badge">✨ Principal</div>
+        )}
+        {activeImage.type === 'detail' && (
+          <div className="image-type-badge">🔍 Detalhe</div>
+        )}
+        {activeImage.type === 'top' && (
+          <div className="image-type-badge">👁️ Vista Superior</div>
+        )}
 
         {/* Botões de navegação (desktop) */}
         {images.length > 1 && (
@@ -246,19 +267,28 @@ export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) 
           onClick={closeZoom}
           role="dialog"
           aria-modal="true"
-          aria-label="Visualização ampliada"
+          aria-labelledby={zoomTitleId}
         >
           <div className="zoom-content" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={`${HIGH_RES_BASE_PATH}/${activeImage.src}${zoomSuffix}`}
+            <h2 id={zoomTitleId} className="visually-hidden">
+              Visualização ampliada de {productName}
+            </h2>
+            <ProductImage
+              src={`${HIGH_RES_BASE_PATH}/${activeImage.src}${normalizedZoomSuffix}`}
               alt={activeImage.alt || `${productName} - ${activeIndex + 1}`}
+              aspectRatio="4/3"
+              sizes="90vw"
               className="zoom-image"
+              priority
             />
 
             {/* Botão de fechar */}
             <button
               className="zoom-close"
-              onClick={closeZoom}
+              onClick={(e) => {
+                e.stopPropagation();
+                closeZoom();
+              }}
               aria-label="Fechar visualização"
             >
               ✕
@@ -269,7 +299,10 @@ export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) 
               <>
                 <button
                   className="zoom-nav-btn prev"
-                  onClick={goToPrevious}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToPrevious();
+                  }}
                   disabled={activeIndex === 0}
                   aria-label="Imagem anterior"
                 >
@@ -277,7 +310,10 @@ export function ProductGallery({ images, productName, zoomSuffix = '@2x.jpg' }) 
                 </button>
                 <button
                   className="zoom-nav-btn next"
-                  onClick={goToNext}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goToNext();
+                  }}
                   disabled={activeIndex === images.length - 1}
                   aria-label="Próxima imagem"
                 >
@@ -303,6 +339,7 @@ ProductGallery.propTypes = {
       src: PropTypes.string.isRequired,
       alt: PropTypes.string,
       type: PropTypes.oneOf(['hero', 'detail', 'top']),
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     })
   ).isRequired,
   productName: PropTypes.string.isRequired,
