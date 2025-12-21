@@ -90,6 +90,9 @@ export function ProductImage({
         observedImg.dataset.src &&
         !(observedImg.complete && observedImg.naturalWidth > 0)
       ) {
+        if (isLoaded) {
+          setIsLoaded(false);
+        }
         const picture = pictureRef.current;
         if (picture) {
           picture.querySelectorAll('source').forEach((source) => {
@@ -132,7 +135,7 @@ export function ProductImage({
     return () => {
       observer.disconnect();
     };
-  }, [priority, src]);
+  }, [priority, src, isLoaded]);
 
   useEffect(() => {
     setHasError(false);
