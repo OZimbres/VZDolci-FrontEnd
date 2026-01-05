@@ -3,5 +3,5 @@
  * Centralizes payment gateway settings
  */
 export const MERCADO_PAGO_CONFIG = {
-  // Future configurations will be added here
+  publicKey: import.meta.env.VITE_MP_PUBLIC_KEY,
 };
