@@ -3,5 +3,5 @@
  * Centralizes payment gateway settings
  */
 export const MERCADO_PAGO_CONFIG = {
-  // Configurações futuras virão aqui
+  // Future configurations will be added here
 };
