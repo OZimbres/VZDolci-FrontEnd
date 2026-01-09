@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
 import { CreateOrderUseCase } from '../../domain/usecases/CreateOrderUseCase';
@@ -19,15 +19,16 @@ const checkoutSeoProps = {
   robots: 'noindex, follow'
 };
 
+/**
+ * Builds a placeholder shipping payload that respects minimum lead time
+ * and avoids finais de semana. Endereço definitivo é combinado após pagamento.
+ */
 const buildShippingData = () => {
   const deliveryDate = new Date();
-  deliveryDate.setDate(deliveryDate.getDate() + 2);
+  deliveryDate.setHours(deliveryDate.getHours() + 48);
 
-  const dayOfWeek = deliveryDate.getDay();
-  if (dayOfWeek === 0) {
+  while (deliveryDate.getDay() === 0 || deliveryDate.getDay() === 6) {
     deliveryDate.setDate(deliveryDate.getDate() + 1);
-  } else if (dayOfWeek === 6) {
-    deliveryDate.setDate(deliveryDate.getDate() + 2);
   }
 
   return {
@@ -61,6 +62,7 @@ export function CheckoutPage() {
   const [gatewayError, setGatewayError] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [processPaymentUseCase, setProcessPaymentUseCase] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
 
   const createOrderUseCase = useMemo(() => new CreateOrderUseCase(), []);
 
@@ -75,38 +77,38 @@ export function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    if (paymentInfo || pixQrCode) {
+    if ((paymentInfo || pixQrCode) && !gatewayError && !isProcessingPayment) {
       setCurrentStep(3);
     } else if (showPixForm || paymentMethod) {
       setCurrentStep(2);
     } else {
       setCurrentStep(1);
     }
-  }, [paymentInfo, pixQrCode, showPixForm, paymentMethod]);
+  }, [paymentInfo, pixQrCode, showPixForm, paymentMethod, gatewayError, isProcessingPayment]);
 
-  const handleQuantityChange = (productId, newQuantity) => {
+  const handleQuantityChange = useCallback((productId, newQuantity) => {
     if (isProcessingPayment) return;
     if (newQuantity >= 1) {
       updateQuantity(productId, newQuantity);
     }
-  };
+  }, [isProcessingPayment, updateQuantity]);
 
-  const handleRemove = (productId) => {
+  const handleRemove = useCallback((productId) => {
     if (isProcessingPayment) return;
     removeFromCart(productId);
-  };
+  }, [isProcessingPayment, removeFromCart]);
 
-  const generateWhatsAppMessage = (includeContactInfo = false) => {
+  const generateWhatsAppMessage = useCallback((includeContactInfo = false) => {
     let message = '*Pedido VZ Dolci*%0A%0A';
-    let cartTotal = 0;
+    let messageTotal = 0;
     
     cart.forEach(item => {
       const itemTotal = item.getTotal();
-      cartTotal += itemTotal;
+      messageTotal += itemTotal;
       message += `${item.product.name} x${item.quantity} - R$ ${itemTotal.toFixed(2)}%0A`;
     });
     
-    message += `%0A*Total: R$ ${cartTotal.toFixed(2)}*`;
+    message += `%0A*Total: R$ ${messageTotal.toFixed(2)}*`;
 
     if (includeContactInfo) {
       message += `%0A%0A*Dados do Cliente:*`;
@@ -117,16 +119,17 @@ export function CheckoutPage() {
     }
     
     return message;
-  };
+  }, [cart, customerData]);
 
   const handleWhatsAppCheckout = () => {
+    setFeedbackMessage(null);
     if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
+      setFeedbackMessage('Seu carrinho está vazio!');
       return;
     }
 
     if (!isCustomerValid) {
-      alert('Complete os dados do cliente para finalizar via WhatsApp.');
+      setFeedbackMessage('Complete os dados do cliente para finalizar via WhatsApp. Verifique nome, email, telefone e CPF.');
       return;
     }
 
@@ -134,24 +137,36 @@ export function CheckoutPage() {
 
     const message = generateWhatsAppMessage(true);
     const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    window.open(whatsappLink, '_blank');
+    try {
+      const whatsappWindow = window.open(whatsappLink, '_blank');
+      if (!whatsappWindow || whatsappWindow.closed || typeof whatsappWindow.closed === 'undefined') {
+        setFeedbackMessage('Não foi possível abrir o WhatsApp. Verifique se o bloqueio de pop-ups está ativo.');
+        setPaymentMethod(null);
+        return;
+      }
+    } catch (error) {
+      setFeedbackMessage('Ocorreu um erro ao abrir o WhatsApp. Tente novamente ou ajuste o bloqueio de pop-ups.');
+      setPaymentMethod(null);
+      return;
+    }
     
     setShowConfirmationModal(true);
   };
 
   const handlePixCheckout = () => {
+    setFeedbackMessage(null);
     if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
+      setFeedbackMessage('Seu carrinho está vazio!');
       return;
     }
 
     if (!isCustomerValid) {
-      alert('Complete os dados do cliente antes de prosseguir para o PIX.');
+      setFeedbackMessage('Complete os dados do cliente (nome, email, telefone e CPF válidos) antes de gerar o PIX.');
       return;
     }
 
     if (gatewayError) {
-      alert('Método de pagamento PIX indisponível no momento.');
+      setFeedbackMessage('Método de pagamento PIX indisponível no momento.');
       return;
     }
 
@@ -160,28 +175,19 @@ export function CheckoutPage() {
   };
 
   const handlePixPaymentConfirm = async () => {
-    if (!isCustomerValid) {
-      alert('Valide os dados do cliente para gerar o PIX.');
-      return;
-    }
-
-    if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
-      return;
-    }
-
+    setFeedbackMessage(null);
     setIsProcessingPayment(true);
 
     let createdOrder;
     try {
       createdOrder = createOrderUseCase.execute({
-        id: `ORDER-${Date.now()}`,
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `ORDER-${Date.now()}`,
         items: cart,
         customerData,
         shippingData: buildShippingData()
       });
     } catch (error) {
-      alert(error.message || 'Erro ao criar pedido');
+      setFeedbackMessage(error.message || 'Erro ao criar pedido');
       setIsProcessingPayment(false);
       return;
     }
@@ -195,6 +201,9 @@ export function CheckoutPage() {
         });
       } catch (error) {
         console.warn('Erro ao processar pagamento', error);
+        setFeedbackMessage('Não foi possível processar o pagamento via PIX. Tente novamente ou escolha outra forma.');
+        setIsProcessingPayment(false);
+        return;
       }
     }
 
@@ -211,6 +220,9 @@ export function CheckoutPage() {
   const handlePaymentConfirmation = (completed) => {
     if (completed) {
       clearCart();
+      setFeedbackMessage('Pagamento confirmado! Obrigado pela compra.');
+    } else {
+      setFeedbackMessage('Pagamento não concluído. Você pode tentar novamente ou escolher outra forma.');
     }
     setIsProcessingPayment(false);
     setShowPixForm(false);
@@ -220,6 +232,12 @@ export function CheckoutPage() {
     setPaymentInfo(null);
     setShowConfirmationModal(false);
   };
+
+  const maskedCpf = useMemo(() => {
+    const digits = customerData.cpf?.replace(/\D/g, '') ?? '';
+    if (digits.length < 3) return customerData.cpf;
+    return `***.***.${digits.slice(-3)}`;
+  }, [customerData.cpf]);
 
   return (
     <>
@@ -320,6 +338,7 @@ export function CheckoutPage() {
                   />
 
                   <h3>Forma de Pagamento</h3>
+                  {feedbackMessage && <p className="field-error" role="alert">{feedbackMessage}</p>}
                   
                   {!showPixForm ? (
                     <div className="payment-options">
@@ -419,7 +438,7 @@ export function CheckoutPage() {
                               <br /><strong>Nome:</strong> {customerData.name}
                               <br /><strong>Email:</strong> {customerData.email}
                               <br /><strong>Telefone:</strong> {customerData.phone}
-                              <br /><strong>CPF:</strong> {customerData.cpf}
+                              <br /><strong>CPF:</strong> {maskedCpf}
                             </p>
                           </div>
                         </div>

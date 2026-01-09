@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { CustomerInfo } from '../../../../domain/valueObjects/CustomerInfo';
 import './CustomerForm.css';
@@ -59,13 +59,18 @@ const validateCustomer = (payload) => {
 export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChange }) {
   const [errors, setErrors] = useState({});
   const data = useMemo(() => ({ ...EMPTY_CUSTOMER, ...value }), [value]);
+  const lastValidityRef = useRef(null);
 
   useEffect(() => {
     setErrors(validateCustomer(data));
   }, [data]);
 
   useEffect(() => {
-    onValidityChange?.(Object.keys(errors).length === 0);
+    const isValid = Object.keys(errors).length === 0;
+    if (lastValidityRef.current !== isValid) {
+      lastValidityRef.current = isValid;
+      onValidityChange?.(isValid);
+    }
   }, [errors, onValidityChange]);
 
   const handleChange = (field, formatter) => (event) => {
@@ -140,6 +145,7 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
           {errors.cpf && <span className="field-error">{errors.cpf}</span>}
         </label>
       </div>
+      {errors.general && <span className="field-error">{errors.general}</span>}
     </div>
   );
 }
