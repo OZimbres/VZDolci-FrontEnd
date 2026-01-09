@@ -117,6 +117,7 @@ export function CheckoutPage() {
     const digits = cpf?.replace(/\D/g, '') ?? '';
     if (!digits) return '';
     if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.***`;
     return `${digits.slice(0, 3)}.***.${digits.slice(-3)}`;
   };
 
@@ -240,8 +241,7 @@ export function CheckoutPage() {
           errorMessage = 'Muitas tentativas. Aguarde 1 minuto antes de gerar um novo pagamento.';
         }
 
-        const resolvedOrderId = orderId ?? generateOrderId();
-        setOrderId(resolvedOrderId);
+        setOrderId(orderId ?? resolvedOrderId);
 
         setFeedbackMessage(
           <div className="error-with-fallback">
@@ -299,27 +299,21 @@ export function CheckoutPage() {
   }, [customerData.cpf]);
 
   useEffect(() => {
-    if (paymentInfo?.paymentId && pixQrCode) {
-      if (paymentInfo.status === 'pending') {
-        setIsPolling(true);
-        if (!pollingIntervalRef.current) {
-          pollingIntervalRef.current = setInterval(async () => {
-            try {
-              const response = await fetch(`/api/mercadopago/payment-status/${paymentInfo.paymentId}`);
-              const payload = await response.json().catch(() => ({}));
-              if (response.ok && payload?.payment) {
-                setPaymentInfo((prev) => ({ ...prev, ...payload.payment }));
-              }
-            } catch (error) {
-              console.warn('Erro ao consultar status do pagamento', error);
-            }
-          }, 5000);
+    stopPolling();
+
+    if (paymentInfo?.paymentId && pixQrCode && paymentInfo.status === 'pending') {
+      setIsPolling(true);
+      pollingIntervalRef.current = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/mercadopago/payment-status/${paymentInfo.paymentId}`);
+          const payload = await response.json().catch(() => ({}));
+          if (response.ok && payload?.payment) {
+            setPaymentInfo((prev) => ({ ...prev, ...payload.payment }));
+          }
+        } catch (error) {
+          console.warn('Erro ao consultar status do pagamento', error);
         }
-      } else {
-        stopPolling();
-      }
-    } else {
-      stopPolling();
+      }, 5000);
     }
 
     return () => {
@@ -357,7 +351,11 @@ export function CheckoutPage() {
       ? paymentInfo.expiresAt
       : new Date(paymentInfo.expiresAt);
 
-    let intervalId;
+    if (Number.isNaN(expiration.getTime())) {
+      setTimeRemaining(null);
+      return undefined;
+    }
+
     const updateTime = () => {
       const total = Math.max(0, expiration.getTime() - Date.now());
       const minutes = Math.floor(total / 60000);
@@ -365,14 +363,11 @@ export function CheckoutPage() {
       setTimeRemaining({ total, minutes, seconds });
       if (total === 0) {
         stopPolling();
-        if (intervalId) {
-          clearInterval(intervalId);
-        }
       }
     };
 
+    const intervalId = setInterval(updateTime, 1000);
     updateTime();
-    intervalId = setInterval(updateTime, 1000);
     return () => clearInterval(intervalId);
   }, [paymentInfo, stopPolling]);
 

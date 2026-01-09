@@ -142,7 +142,7 @@ export default async function handler(req, res) {
 
     return res.status(201).json({ payment: normalized });
   } catch (error) {
-    console.error('Erro ao criar pagamento Mercado Pago', error);
+    logger.error('Erro ao criar pagamento Mercado Pago', { error });
     const rawDetails = error?.response?.body;
     const safeDetails = {
       message: rawDetails?.message || error?.message || 'Erro ao processar pagamento'
