@@ -20,12 +20,12 @@ const checkoutSeoProps = {
 };
 
 /**
- * Builds a placeholder shipping payload that respects minimum lead time
- * and avoids finais de semana. Endereço definitivo é combinado após pagamento.
+ * Monta um payload de entrega provisório respeitando tempo mínimo
+ * e evitando finais de semana. Endereço definitivo é combinado após pagamento.
  */
 const buildShippingData = () => {
   const deliveryDate = new Date();
-  deliveryDate.setHours(deliveryDate.getHours() + 48);
+  deliveryDate.setTime(deliveryDate.getTime() + (48 * 60 * 60 * 1000));
 
   while (deliveryDate.getDay() === 0 || deliveryDate.getDay() === 6) {
     deliveryDate.setDate(deliveryDate.getDate() + 1);
@@ -181,7 +181,7 @@ export function CheckoutPage() {
     let createdOrder;
     try {
       createdOrder = createOrderUseCase.execute({
-        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `ORDER-${Date.now()}`,
+        id: (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : `ORDER-${Date.now()}`,
         items: cart,
         customerData,
         shippingData: buildShippingData()
@@ -235,7 +235,7 @@ export function CheckoutPage() {
 
   const maskedCpf = useMemo(() => {
     const digits = customerData.cpf?.replace(/\D/g, '') ?? '';
-    if (digits.length < 3) return customerData.cpf;
+    if (digits.length < 3) return '';
     return `***.***.${digits.slice(-3)}`;
   }, [customerData.cpf]);
 
