@@ -19,15 +19,23 @@ const buildNotificationUrl = (req) => {
 const mapPayer = (order, paymentData) => {
   const payerInput = paymentData?.payer ?? {};
   const customer = order?.customerInfo ?? {};
-  const [firstName, ...restName] = (payerInput.firstName ?? customer.name ?? '').trim().split(' ');
+  const rawName = (payerInput.name ?? customer.name ?? '').trim();
+  const [firstNameFromName, ...restName] = rawName.split(/\s+/).filter(Boolean);
 
-  const lastName = payerInput.lastName ?? restName.join(' ');
+  const resolvedFirstName = payerInput.firstName?.trim()
+    || firstNameFromName
+    || 'Cliente';
+
+  const resolvedLastName = payerInput.lastName?.trim()
+    || restName.join(' ').trim()
+    || 'VZ Dolci';
+
   const cpf = payerInput.documentNumber ?? payerInput.cpf ?? customer.cpf;
 
   return {
     email: payerInput.email ?? customer.email,
-    first_name: firstName || customer.name,
-    last_name: lastName || undefined,
+    first_name: resolvedFirstName,
+    last_name: resolvedLastName,
     identification: cpf ? {
       type: payerInput.documentType ?? 'CPF',
       number: cpf

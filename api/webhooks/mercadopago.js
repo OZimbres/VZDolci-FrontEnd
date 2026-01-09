@@ -29,7 +29,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true });
     }
 
-    // Consulta o pagamento para registrar status atualizado
+    // Consulta o pagamento para registrar status atualizado; a resposta não é usada
+    // pois o Mercado Pago apenas exige um 200 OK para considerar a notificação entregue
     await mercadopago.payment.findById(data.id);
     return res.status(200).json({ received: true });
   } catch (error) {
