@@ -1,19 +1,48 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
-import { PhoneInput } from 'react-international-phone';
+import { CreateOrderUseCase } from '../../domain/usecases/CreateOrderUseCase';
+import { ProcessPaymentUseCase } from '../../domain/usecases/ProcessPaymentUseCase';
+import { MercadoPagoGateway } from '../../infrastructure/gateways/MercadoPagoGateway';
+import { CheckoutSteps } from '../components/features/Checkout/CheckoutSteps';
+import { CustomerForm } from '../components/features/Checkout/CustomerForm';
 import { OptimizedImage } from '../components/common/OptimizedImage';
 import { SEO } from '../components/common/SEO';
-import 'react-international-phone/style.css';
 import './CheckoutPage.css';
 
 // Environment variables
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
+const TWO_DAYS_MS = 48 * 60 * 60 * 1000;
 const checkoutSeoProps = {
   title: 'Finalizar Pedido',
   description: 'Finalize seu pedido de doces artesanais premium da VZ Dolci.',
   canonical: 'https://vz-dolci.vercel.app/checkout',
   robots: 'noindex, follow'
+};
+
+/**
+ * Monta um payload de entrega provisório respeitando tempo mínimo
+ * e evitando finais de semana. Endereço definitivo é combinado após pagamento.
+ */
+const buildShippingData = () => {
+  const deliveryDate = new Date();
+  deliveryDate.setTime(deliveryDate.getTime() + TWO_DAYS_MS);
+
+  while (deliveryDate.getDay() === 0 || deliveryDate.getDay() === 6) {
+    deliveryDate.setDate(deliveryDate.getDate() + 1);
+  }
+
+  return {
+    street: 'Endereço a combinar',
+    number: 'S/N',
+    district: 'Centro',
+    city: 'São Paulo',
+    state: 'SP',
+    postalCode: '01000000',
+    deliveryDate,
+    complement: '',
+    deliveryInstructions: 'Confirmaremos endereço e entrega após o pagamento'
+  };
 };
 
 /**
@@ -23,152 +52,199 @@ const checkoutSeoProps = {
 export function CheckoutPage() {
   const { cart, updateQuantity, removeFromCart, total, clearCart } = useCart();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState(null); // 'whatsapp' or 'pix'
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState(null);
   const [showPixForm, setShowPixForm] = useState(false);
   const [pixQrCode, setPixQrCode] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [customerData, setCustomerData] = useState({ name: '', email: '', phone: '', cpf: '' });
+  const [isCustomerValid, setIsCustomerValid] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState(null);
+  const [gatewayError, setGatewayError] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [processPaymentUseCase, setProcessPaymentUseCase] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
 
-  // Memoize event handlers to prevent recreation on every render
+  const createOrderUseCase = useMemo(() => new CreateOrderUseCase(), []);
+
+  useEffect(() => {
+    try {
+      const gateway = new MercadoPagoGateway();
+      setProcessPaymentUseCase(new ProcessPaymentUseCase(gateway));
+      setGatewayError(null);
+    } catch (error) {
+      setGatewayError(error.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    if ((paymentInfo || pixQrCode) && !gatewayError && !isProcessingPayment) {
+      setCurrentStep(3);
+    } else if (showPixForm || paymentMethod) {
+      setCurrentStep(2);
+    } else {
+      setCurrentStep(1);
+    }
+  }, [paymentInfo, pixQrCode, showPixForm, paymentMethod, gatewayError, isProcessingPayment]);
+
   const handleQuantityChange = useCallback((productId, newQuantity) => {
-    if (isProcessingPayment) return; // Prevent changes during payment
+    if (isProcessingPayment) return;
     if (newQuantity >= 1) {
       updateQuantity(productId, newQuantity);
     }
   }, [isProcessingPayment, updateQuantity]);
 
   const handleRemove = useCallback((productId) => {
-    if (isProcessingPayment) return; // Prevent changes during payment
+    if (isProcessingPayment) return;
     removeFromCart(productId);
   }, [isProcessingPayment, removeFromCart]);
 
-  // Memoize message generation to avoid recreation on every render
   const generateWhatsAppMessage = useCallback((includeContactInfo = false) => {
     let message = '*Pedido VZ Dolci*%0A%0A';
-    let total = 0;
+    let messageTotal = 0;
     
-    // Single iteration to build message and calculate total
     cart.forEach(item => {
       const itemTotal = item.getTotal();
-      total += itemTotal;
+      messageTotal += itemTotal;
       message += `${item.product.name} x${item.quantity} - R$ ${itemTotal.toFixed(2)}%0A`;
     });
     
-    message += `%0A*Total: R$ ${total.toFixed(2)}*`;
+    message += `%0A*Total: R$ ${messageTotal.toFixed(2)}*`;
 
-    if (includeContactInfo && (email || phone)) {
-      message += `%0A%0A*Forma de Pagamento:* PIX`;
-      if (email) {
-        message += `%0A*Email:* ${email}`;
-      }
-      if (phone) {
-        message += `%0A*Telefone:* ${phone}`;
-      }
+    if (includeContactInfo) {
+      message += `%0A%0A*Dados do Cliente:*`;
+      if (customerData.name) message += `%0A*Nome:* ${customerData.name}`;
+      if (customerData.email) message += `%0A*Email:* ${customerData.email}`;
+      if (customerData.phone) message += `%0A*Telefone:* ${customerData.phone}`;
+      if (customerData.cpf) message += `%0A*CPF:* ${customerData.cpf}`;
     }
     
     return message;
-  }, [cart, total, email, phone]);
+  }, [cart, customerData]);
+
+  const isPopupBlocked = (popupWindow) => !popupWindow || popupWindow.closed || typeof popupWindow.closed === 'undefined';
+
+  const generateOrderId = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+    ? crypto.randomUUID()
+    : `ORDER-${Date.now()}`;
 
   const handleWhatsAppCheckout = () => {
+    setFeedbackMessage(null);
     if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
+      setFeedbackMessage('Seu carrinho está vazio!');
       return;
     }
 
-    setIsProcessingPayment(true);
+    if (!isCustomerValid) {
+      setFeedbackMessage('Complete os dados do cliente para finalizar via WhatsApp. Verifique nome, email, telefone e CPF.');
+      return;
+    }
+
     setPaymentMethod('whatsapp');
 
-    const message = generateWhatsAppMessage(false);
+    const message = generateWhatsAppMessage(true);
     const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    window.open(whatsappLink, '_blank');
+    try {
+      const whatsappWindow = window.open(whatsappLink, '_blank');
+      if (isPopupBlocked(whatsappWindow)) {
+        setFeedbackMessage('Não foi possível abrir o WhatsApp. Verifique se o bloqueio de pop-ups está ativo.');
+        setPaymentMethod(null);
+        return;
+      }
+    } catch (error) {
+      setFeedbackMessage('Ocorreu um erro ao abrir o WhatsApp. Tente novamente ou ajuste o bloqueio de pop-ups.');
+      setPaymentMethod(null);
+      return;
+    }
     
-    // Show confirmation modal
     setShowConfirmationModal(true);
   };
 
   const handlePixCheckout = () => {
+    setFeedbackMessage(null);
     if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
+      setFeedbackMessage('Seu carrinho está vazio!');
       return;
     }
 
-    setIsProcessingPayment(true);
+    if (!isCustomerValid) {
+      setFeedbackMessage('Complete os dados do cliente (nome, email, telefone e CPF válidos) antes de gerar o PIX.');
+      return;
+    }
+
+    if (gatewayError) {
+      setFeedbackMessage('Método de pagamento PIX indisponível no momento.');
+      return;
+    }
+
     setPaymentMethod('pix');
     setShowPixForm(true);
   };
 
-  const handlePixPaymentConfirm = () => {
-    // Validate that at least one contact method is provided
-    const hasEmail = email.trim().length > 0;
-    const phoneDigits = phone ? phone.replace(/\D/g, '') : '';
-    // Phone is valid if it has 10+ digits (br number is usually 11 digits with area code)
-    // Consider phone entered if there are more digits than just the country code
-    const hasPhone = phoneDigits.length >= 10;
-    
-    if (!hasEmail && !hasPhone) {
-      alert('Por favor, informe pelo menos um método de contato (email ou telefone)!');
+  const handlePixPaymentConfirm = async () => {
+    setFeedbackMessage(null);
+    setIsProcessingPayment(true);
+
+    let createdOrder;
+    try {
+      createdOrder = createOrderUseCase.execute({
+        id: generateOrderId(),
+        items: cart,
+        customerData,
+        shippingData: buildShippingData()
+      });
+    } catch (error) {
+      setFeedbackMessage(error.message || 'Erro ao criar pedido');
+      setIsProcessingPayment(false);
       return;
     }
 
-    // Email validation if provided
-    if (hasEmail) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        alert('Por favor, informe um email válido!');
+    let payment = null;
+    if (processPaymentUseCase) {
+      try {
+        payment = await processPaymentUseCase.execute(createdOrder, {
+          paymentMethod: 'pix',
+          amount: total
+        });
+      } catch (error) {
+        console.warn('Erro ao processar pagamento', error);
+        setFeedbackMessage('Não foi possível processar o pagamento via PIX. Tente novamente ou escolha outra forma.');
+        setIsProcessingPayment(false);
         return;
       }
     }
 
-    // Phone validation: if user started entering phone but incomplete
-    // Only validate if there are digits beyond 2 (country code like "55")
-    if (phoneDigits.length > 2 && phoneDigits.length < 10) {
-      alert('Por favor, informe um telefone válido!');
-      return;
-    }
+    const pixCode = payment?.qrCode
+      ?? payment?.qrCodeBase64
+      ?? `00020126580014BR.GOV.BCB.PIX0136${Date.now()}520400005303986540${total.toFixed(2)}5802BR5913VZ Dolci6009SAO PAULO62070503***6304`;
 
-    // Generate a simple PIX QR Code (in a real scenario, this would be generated by a backend)
-    const pixCode = `00020126580014BR.GOV.BCB.PIX0136${Date.now()}520400005303986540${total.toFixed(2)}5802BR5913VZ Dolci6009SAO PAULO62070503***6304`;
     setPixQrCode(pixCode);
-
-    // Send WhatsApp message in the background (user doesn't see this)
-    const message = generateWhatsAppMessage(true);
-    const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    
-    // Open in a hidden/background way (we'll use a timeout and then close it)
-    const hiddenWindow = window.open(whatsappLink, '_blank');
-    setTimeout(() => {
-      if (hiddenWindow) {
-        hiddenWindow.close();
-      }
-    }, 1000);
-    
-    // Show confirmation modal
+    setPaymentInfo(payment);
     setShowConfirmationModal(true);
+    setIsProcessingPayment(false);
   };
 
   const handlePaymentConfirmation = (completed) => {
     if (completed) {
-      // Payment completed - clear cart and reset state, but STAY on checkout page
       clearCart();
-      setIsProcessingPayment(false);
-      setShowPixForm(false);
-      setPixQrCode(null);
-      setPaymentMethod(null);
-      setEmail('');
-      setPhone('');
+      setFeedbackMessage('Pagamento confirmado! Obrigado pela compra.');
     } else {
-      // Payment not completed - reset state
-      setIsProcessingPayment(false);
-      setShowPixForm(false);
-      setPixQrCode(null);
-      setPaymentMethod(null);
-      setEmail('');
-      setPhone('');
+      setFeedbackMessage('Pagamento não concluído. Você pode tentar novamente ou escolher outra forma.');
     }
+    setIsProcessingPayment(false);
+    setShowPixForm(false);
+    setPixQrCode(null);
+    setPaymentMethod(null);
+    setCustomerData({ name: '', email: '', phone: '', cpf: '' });
+    setPaymentInfo(null);
     setShowConfirmationModal(false);
   };
+
+  const maskedCpf = useMemo(() => {
+    const digits = customerData.cpf?.replace(/\D/g, '') ?? '';
+    if (digits.length < 3) return '';
+    return `***.***.${digits.slice(-3)}`;
+  }, [customerData.cpf]);
 
   return (
     <>
@@ -193,7 +269,9 @@ export function CheckoutPage() {
           <section className="section checkout-section">
             <div className="container">
               <h2 className="section-title">Finalizar Compra</h2>
-              <p className="section-subtitle">Revise seu pedido e escolha a forma de pagamento</p>
+              <p className="section-subtitle">Revise seu pedido, preencha seus dados e escolha a forma de pagamento</p>
+
+              <CheckoutSteps currentStep={currentStep} />
 
               <div className="checkout-container">
                 {/* Cart Items */}
@@ -260,14 +338,21 @@ export function CheckoutPage() {
 
                 {/* Payment Options */}
                 <div className="checkout-payment">
+                  <CustomerForm
+                    value={customerData}
+                    onChange={setCustomerData}
+                    onValidityChange={setIsCustomerValid}
+                  />
+
                   <h3>Forma de Pagamento</h3>
+                  {feedbackMessage && <p className="field-error" role="alert">{feedbackMessage}</p>}
                   
                   {!showPixForm ? (
                     <div className="payment-options">
                       <button 
                         className="payment-option whatsapp-option"
                         onClick={handleWhatsAppCheckout}
-                        disabled={isProcessingPayment}
+                        disabled={isProcessingPayment || !isCustomerValid}
                       >
                         <span className="payment-icon">💬</span>
                         <div className="payment-option-content">
@@ -279,7 +364,7 @@ export function CheckoutPage() {
                       <button 
                         className="payment-option pix-option"
                         onClick={handlePixCheckout}
-                        disabled={isProcessingPayment}
+                        disabled={isProcessingPayment || !isCustomerValid || Boolean(gatewayError)}
                       >
                         <span className="payment-icon">💳</span>
                         <div className="payment-option-content">
@@ -287,45 +372,16 @@ export function CheckoutPage() {
                           <p>Pague agora com PIX e receba confirmação</p>
                         </div>
                       </button>
+                      {gatewayError && (
+                        <p className="field-error" role="alert">{gatewayError}</p>
+                      )}
                     </div>
                   ) : (
                     <div className="pix-payment-section">
                       {!pixQrCode ? (
-                        <form className="pix-form" onSubmit={(e) => {
-                          e.preventDefault();
-                          handlePixPaymentConfirm();
-                        }}>
-                          <h4>Informações de Contato</h4>
-                          <p id="contact-instructions">Informe pelo menos um método de contato (email ou telefone):</p>
-                          <label htmlFor="pix-email">
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            className="contact-input"
-                            placeholder="Email (exemplo@dominio.com)"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            autoComplete="email"
-                            id="pix-email"
-                            name="email"
-                            aria-describedby="contact-instructions"
-                          />
-                          <label htmlFor="pix-phone">
-                            Telefone
-                          </label>
-                          <PhoneInput
-                            defaultCountry="br"
-                            className="phone-input-container"
-                            placeholder="Telefone"
-                            value={phone}
-                            onChange={(phone) => setPhone(phone)}
-                            inputProps={{
-                              id: 'pix-phone',
-                              name: 'phone',
-                              'aria-describedby': 'contact-instructions'
-                            }}
-                          />
+                        <div className="pix-form">
+                          <h4>Pagamento via PIX</h4>
+                          <p>Confirme os dados e gere o QR Code com o valor total do pedido.</p>
                           <div className="pix-form-actions">
                             <button 
                               type="button"
@@ -333,26 +389,26 @@ export function CheckoutPage() {
                               onClick={() => {
                                 setShowPixForm(false);
                                 setPaymentMethod(null);
-                                setEmail('');
-                                setPhone('');
                               }}
+                              disabled={isProcessingPayment}
                             >
                               Voltar
                             </button>
                             <button 
-                              type="submit"
+                              type="button"
                               className="btn btn-primary"
+                              onClick={handlePixPaymentConfirm}
+                              disabled={isProcessingPayment}
                             >
-                              Gerar QR Code PIX
+                              {isProcessingPayment ? 'Gerando...' : 'Gerar QR Code PIX'}
                             </button>
                           </div>
-                        </form>
+                        </div>
                       ) : (
                         <div className="pix-qrcode-section">
                           <h4>QR Code PIX</h4>
                           <div className="qrcode-placeholder">
                             <div className="qrcode-box">
-                              {/* Simple visual representation - in production, use a library like qrcode.react */}
                               <div className="qrcode-pattern">
                                 <div></div><div></div><div></div>
                                 <div></div><div></div><div></div>
@@ -386,8 +442,10 @@ export function CheckoutPage() {
                             </ol>
                             <p className="contact-confirmation">
                               ✅ Você receberá confirmação quando seu pedido estiver pronto!
-                              <br /><strong>Email:</strong> {email}
-                              <br /><strong>Telefone:</strong> {phone}
+                              <br /><strong>Nome:</strong> {customerData.name}
+                              <br /><strong>Email:</strong> {customerData.email}
+                              <br /><strong>Telefone:</strong> {customerData.phone}
+                              <br /><strong>CPF:</strong> {maskedCpf}
                             </p>
                           </div>
                         </div>

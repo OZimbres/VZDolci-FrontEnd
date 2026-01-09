@@ -1,0 +1,59 @@
+/* Customer Form Styles */
+.checkout-form-card {
+  background: #FFFFFF;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 8px 24px rgba(90, 42, 131, 0.08);
+  margin-bottom: 1.5rem;
+}
+
+.checkout-form-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--primary-color);
+  font-family: Palatino, 'Times New Roman', serif;
+}
+
+.form-helper {
+  margin: 0 0 1.25rem 0;
+  color: var(--accent-color);
+  font-size: 0.95rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.checkout-form-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.checkout-form-card input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--light-bg);
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.checkout-form-card input:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+}
+
+.field-error {
+  color: #b42318;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .checkout-form-card {
+    padding: 1.25rem;
+  }
+}
