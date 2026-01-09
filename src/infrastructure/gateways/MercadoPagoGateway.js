@@ -29,7 +29,10 @@ export class MercadoPagoGateway extends PaymentGateway {
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
       const message = errorBody?.error || 'Falha ao criar pagamento no servidor';
-      throw new Error(message);
+      const error = new Error(message);
+      error.status = response.status;
+      error.details = errorBody;
+      throw error;
     }
 
     const payload = await response.json();

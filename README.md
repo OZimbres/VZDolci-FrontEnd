@@ -21,6 +21,7 @@ Desenvolvido com **React** seguindo princípios de **Clean Architecture**, **SOL
 - 🚀 SPA (Single Page Application) com React Router
 - 📊 Integração com Vercel Web Analytics para análise de visitantes
 - ⚡ Vercel Speed Insights para monitoramento de performance
+- 💳 Integração PIX via Mercado Pago (detalhes em [docs/PAYMENT_INTEGRATION.md](docs/PAYMENT_INTEGRATION.md))
 
 ## Tecnologias Utilizadas
 
@@ -157,6 +158,8 @@ O projeto utiliza variáveis de ambiente para armazenar informações sensíveis
 ### Deploy na Vercel
 
 O projeto está configurado para deploy na Vercel e inclui o arquivo `vercel.json` para garantir que o roteamento client-side funcione corretamente.
+
+Consulte o checklist de deploy da fase de pagamentos em [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md).
 
 #### Problema de Roteamento em SPAs
 Single Page Applications (SPAs) como esta usam client-side routing. Quando você acessa uma rota como `/produtos` diretamente ou atualiza a página (F5), o servidor precisa ser configurado para sempre retornar o arquivo `index.html`, permitindo que o React Router gerencie a navegação.

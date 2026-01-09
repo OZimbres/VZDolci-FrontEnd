@@ -2,6 +2,7 @@
 /* global process */
 import mercadopago from 'mercadopago';
 import { ensureConfigured } from './utils/config.js';
+import { logger } from '../utils/logger.js';
 
 const buildNotificationUrl = (req) => {
   const protocol = req.headers['x-forwarded-proto'] || 'https';
@@ -12,7 +13,7 @@ const buildNotificationUrl = (req) => {
 const isValidEmail = (value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/u.test(value);
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_MAX = 5;
 const requestCounters = new Map();
 
 const checkRateLimit = (req) => {
@@ -67,12 +68,17 @@ export default async function handler(req, res) {
   }
 
   if (!checkRateLimit(req)) {
-    return res.status(429).json({ error: 'Limite de requisições excedido, tente novamente em instantes' });
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({
+      error: 'Muitas tentativas. Aguarde 1 minuto antes de gerar um novo pagamento.',
+      retryAfter: 60
+    });
   }
 
   try {
     ensureConfigured();
   } catch (error) {
+    logger.error('Mercado Pago não configurado', { error: error.message });
     return res.status(500).json({ error: error.message });
   }
 
@@ -108,6 +114,11 @@ export default async function handler(req, res) {
   };
 
   try {
+    logger.info('Iniciando criação de pagamento Mercado Pago', {
+      orderId: paymentPayload.metadata.orderId,
+      amount: paymentPayload.transaction_amount,
+      payerEmail: paymentPayload.payer?.email
+    });
     const mpResponse = await mercadopago.payment.create(paymentPayload);
     const payment = mpResponse?.body ?? mpResponse;
 
@@ -122,6 +133,12 @@ export default async function handler(req, res) {
       expiresAt: payment?.date_of_expiration,
       metadata: payment?.metadata
     };
+
+    logger.info('Pagamento Mercado Pago criado com sucesso', {
+      paymentId: normalized.paymentId,
+      status: normalized.status,
+      orderId: normalized.metadata?.orderId
+    });
 
     return res.status(201).json({ payment: normalized });
   } catch (error) {
@@ -140,6 +157,12 @@ export default async function handler(req, res) {
         httpStatus = 502;
       }
     }
+
+    logger.error('Falha ao criar pagamento Mercado Pago', {
+      orderId: paymentPayload.metadata.orderId,
+      status: httpStatus,
+      message: safeDetails.message
+    });
 
     return res.status(httpStatus).json({ error: 'Falha ao criar pagamento', details: safeDetails });
   }

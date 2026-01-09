@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { CustomerInfo } from '../../../../domain/valueObjects/CustomerInfo';
 import './CustomerForm.css';
@@ -58,6 +58,7 @@ const validateCustomer = (payload) => {
  */
 export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChange }) {
   const [errors, setErrors] = useState({});
+  const [fieldStatus, setFieldStatus] = useState({});
   const data = useMemo(() => ({ ...EMPTY_CUSTOMER, ...value }), [value]);
   const lastValidityRef = useRef(null);
 
@@ -74,11 +75,73 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
     }
   }, [errors, onValidityChange, isValid]);
 
+  const validateField = useCallback((field, value) => {
+    const nextStatus = {};
+    if (field === 'cpf') {
+      const digits = CustomerInfo.normalizeCPF(value);
+      const remaining = Math.max(0, 11 - digits.length);
+      if (!digits) {
+        nextStatus.cpf = { state: 'empty', helper: 'Digite seu CPF', remaining: 11 };
+      } else if (remaining > 0) {
+        nextStatus.cpf = { state: 'typing', helper: `Faltam ${remaining} dígitos`, remaining };
+      } else {
+        const valid = CustomerInfo.isValidCPF(value);
+        nextStatus.cpf = {
+          state: valid ? 'valid' : 'invalid',
+          helper: valid ? 'CPF válido' : 'CPF inválido',
+          remaining: 0
+        };
+      }
+    }
+
+    if (field === 'email') {
+      if (!value) {
+        nextStatus.email = { state: 'empty', helper: 'Digite seu email' };
+      } else {
+        const valid = CustomerInfo.isValidEmail(value);
+        nextStatus.email = {
+          state: valid ? 'valid' : 'invalid',
+          helper: valid ? 'Email válido' : 'Email inválido'
+        };
+      }
+    }
+
+    if (field === 'phone') {
+      const digits = CustomerInfo.normalizePhone(value);
+      const remaining = Math.max(0, 11 - digits.length);
+      if (!digits) {
+        nextStatus.phone = { state: 'empty', helper: 'Digite seu telefone', remaining: 11 };
+      } else if (remaining > 0) {
+        nextStatus.phone = { state: 'typing', helper: `Faltam ${remaining} dígitos`, remaining };
+      } else {
+        const valid = CustomerInfo.isValidPhone(value);
+        nextStatus.phone = {
+          state: valid ? 'valid' : 'invalid',
+          helper: valid ? 'Telefone válido' : 'Telefone inválido',
+          remaining: 0
+        };
+      }
+    }
+
+    if (Object.keys(nextStatus).length > 0) {
+      setFieldStatus((prev) => ({ ...prev, ...nextStatus }));
+    }
+  }, []);
+
   const handleChange = (field, formatter) => (event) => {
     const formattedValue = formatter ? formatter(event.target.value) : event.target.value;
     const nextData = { ...data, [field]: formattedValue };
+    validateField(field, formattedValue);
     onChange?.(nextData);
   };
+
+  useEffect(() => {
+    validateField('cpf', data.cpf);
+    validateField('email', data.email);
+    validateField('phone', data.phone);
+    // validateField is stable (useCallback with empty deps)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.cpf, data.email, data.phone]);
 
   return (
     <div className="checkout-form-card" aria-label="Dados do cliente">
@@ -100,8 +163,16 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
           {errors.name && <span className="field-error">{errors.name}</span>}
         </label>
 
-        <label htmlFor="customer-email">
+        <label htmlFor="customer-email" className="field-wrapper">
           Email
+          <div className="field-status">
+            <span className={`status-icon ${fieldStatus.email?.state === 'valid' ? 'status-valid' : ''}`}>
+              {fieldStatus.email?.state === 'valid' ? '✓' : '•'}
+            </span>
+            <small className={`status-text ${fieldStatus.email?.state === 'invalid' ? 'status-error' : ''}`}>
+              {fieldStatus.email?.helper || 'Digite seu email'}
+            </small>
+          </div>
           <input
             id="customer-email"
             name="email"
@@ -115,8 +186,16 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
           {errors.email && <span className="field-error">{errors.email}</span>}
         </label>
 
-        <label htmlFor="customer-phone">
+        <label htmlFor="customer-phone" className="field-wrapper">
           Telefone
+          <div className="field-status">
+            <span className={`status-icon ${fieldStatus.phone?.state === 'valid' ? 'status-valid' : ''}`}>
+              {fieldStatus.phone?.state === 'valid' ? '✓' : '•'}
+            </span>
+            <small className={`status-text ${fieldStatus.phone?.state === 'invalid' ? 'status-error' : ''}`}>
+              {fieldStatus.phone?.helper || 'Digite seu telefone'}
+            </small>
+          </div>
           <input
             id="customer-phone"
             name="phone"
@@ -130,8 +209,23 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
           {errors.phone && <span className="field-error">{errors.phone}</span>}
         </label>
 
-        <label htmlFor="customer-cpf">
+        <label htmlFor="customer-cpf" className="field-wrapper">
           CPF
+          <div className="field-status">
+            <span className={`status-icon ${fieldStatus.cpf?.state === 'valid' ? 'status-valid' : ''}`}>
+              {fieldStatus.cpf?.state === 'valid' ? '✓' : '•'}
+            </span>
+            <div className="status-meta">
+              <small className={`status-text ${fieldStatus.cpf?.state === 'invalid' ? 'status-error' : ''}`}>
+                {fieldStatus.cpf?.helper || 'Digite seu CPF'}
+              </small>
+              {typeof fieldStatus.cpf?.remaining === 'number' && fieldStatus.cpf?.remaining > 0 && (
+                <span className="char-counter">
+                  {fieldStatus.cpf.remaining} dígitos restantes
+                </span>
+              )}
+            </div>
+          </div>
           <input
             id="customer-cpf"
             name="cpf"
