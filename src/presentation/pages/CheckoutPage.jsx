@@ -12,6 +12,7 @@ import './CheckoutPage.css';
 
 // Environment variables
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
+const TWO_DAYS_MS = 48 * 60 * 60 * 1000;
 const checkoutSeoProps = {
   title: 'Finalizar Pedido',
   description: 'Finalize seu pedido de doces artesanais premium da VZ Dolci.',
@@ -25,7 +26,7 @@ const checkoutSeoProps = {
  */
 const buildShippingData = () => {
   const deliveryDate = new Date();
-  deliveryDate.setTime(deliveryDate.getTime() + (48 * 60 * 60 * 1000));
+  deliveryDate.setTime(deliveryDate.getTime() + TWO_DAYS_MS);
 
   while (deliveryDate.getDay() === 0 || deliveryDate.getDay() === 6) {
     deliveryDate.setDate(deliveryDate.getDate() + 1);
@@ -121,6 +122,12 @@ export function CheckoutPage() {
     return message;
   }, [cart, customerData]);
 
+  const isPopupBlocked = (popupWindow) => !popupWindow || popupWindow.closed || typeof popupWindow.closed === 'undefined';
+
+  const generateOrderId = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+    ? crypto.randomUUID()
+    : `ORDER-${Date.now()}`;
+
   const handleWhatsAppCheckout = () => {
     setFeedbackMessage(null);
     if (cart.length === 0) {
@@ -139,7 +146,7 @@ export function CheckoutPage() {
     const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     try {
       const whatsappWindow = window.open(whatsappLink, '_blank');
-      if (!whatsappWindow || whatsappWindow.closed || typeof whatsappWindow.closed === 'undefined') {
+      if (isPopupBlocked(whatsappWindow)) {
         setFeedbackMessage('Não foi possível abrir o WhatsApp. Verifique se o bloqueio de pop-ups está ativo.');
         setPaymentMethod(null);
         return;
@@ -181,7 +188,7 @@ export function CheckoutPage() {
     let createdOrder;
     try {
       createdOrder = createOrderUseCase.execute({
-        id: (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : `ORDER-${Date.now()}`,
+        id: generateOrderId(),
         items: cart,
         customerData,
         shippingData: buildShippingData()

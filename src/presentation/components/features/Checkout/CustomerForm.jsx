@@ -65,13 +65,14 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
     setErrors(validateCustomer(data));
   }, [data]);
 
+  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
+
   useEffect(() => {
-    const isValid = Object.keys(errors).length === 0;
     if (lastValidityRef.current !== isValid) {
       lastValidityRef.current = isValid;
       onValidityChange?.(isValid);
     }
-  }, [errors, onValidityChange]);
+  }, [errors, onValidityChange, isValid]);
 
   const handleChange = (field, formatter) => (event) => {
     const formattedValue = formatter ? formatter(event.target.value) : event.target.value;
