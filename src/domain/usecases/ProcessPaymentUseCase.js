@@ -11,16 +11,16 @@ export class ProcessPaymentUseCase {
       throw new Error('PaymentGateway implementation is required');
     }
 
+    if (typeof paymentGateway.processPayment !== 'function') {
+      throw new Error('PaymentGateway must implement processPayment(order, paymentData)');
+    }
+
     this.paymentGateway = paymentGateway;
   }
 
   async execute(order, paymentData = {}) {
     if (!(order instanceof Order)) {
       throw new Error('Pedido inválido para processamento de pagamento');
-    }
-
-    if (typeof this.paymentGateway.processPayment !== 'function') {
-      throw new Error('PaymentGateway must implement processPayment');
     }
 
     let gatewayResponse;
@@ -30,8 +30,21 @@ export class ProcessPaymentUseCase {
         amount: paymentData?.amount ?? order.total
       });
     } catch (error) {
-      const wrappedError = new Error('Erro ao processar pagamento');
+      const contextParts = ['Erro ao processar pagamento'];
+
+      const orderId = order?.id || order?.orderId;
+      if (orderId) contextParts.push(`Pedido: ${orderId}`);
+
+      const paymentMethod = paymentData?.paymentMethod || paymentData?.method;
+      if (paymentMethod) contextParts.push(`Método: ${paymentMethod}`);
+
+      if (error?.message) contextParts.push(`Erro original: ${error.message}`);
+
+      const wrappedError = new Error(contextParts.join(' | '));
       wrappedError.originalError = error;
+      if (error?.stack) {
+        wrappedError.originalStack = error.stack;
+      }
       throw wrappedError;
     }
 

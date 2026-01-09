@@ -60,8 +60,8 @@ export class Order {
       }
 
       Order.validateItem(item);
-      const quantity = Number(item?.quantity ?? 1);
-      const price = Number(item?.price ?? item?.product?.price ?? 0);
+      const quantity = Number(item.quantity);
+      const price = Number(item?.price ?? item?.product?.price);
 
       return sum + price * quantity;
     }, 0);
@@ -69,6 +69,7 @@ export class Order {
 
   /**
    * Associa informações de pagamento ao pedido (efeito colateral intencional).
+    * Camadas superiores devem registrar evento/estado para auditoria.
    */
   setPaymentInfo(paymentInfo) {
     const info = paymentInfo instanceof PaymentInfo ? paymentInfo : new PaymentInfo(paymentInfo);
@@ -81,8 +82,12 @@ export class Order {
   }
 
   static validateItem(item) {
-    const quantity = Number(item?.quantity ?? 1);
-    const price = Number(item?.price ?? item?.product?.price ?? 0);
+    if (item?.quantity === undefined || item?.quantity === null) {
+      throw new Error('Quantidade do item é obrigatória');
+    }
+
+    const quantity = Number(item.quantity);
+    const price = Number(item?.price ?? item?.product?.price);
 
     if (!Number.isFinite(quantity) || quantity < 1) {
       throw new Error('Quantidade do item deve ser um número finito maior ou igual a 1');
@@ -90,6 +95,10 @@ export class Order {
 
     if (!Number.isFinite(price) || price < 0) {
       throw new Error('Preço do item deve ser um número finito maior ou igual a 0');
+    }
+
+    if (price === 0) {
+      throw new Error('Preço do item é obrigatório');
     }
   }
 }

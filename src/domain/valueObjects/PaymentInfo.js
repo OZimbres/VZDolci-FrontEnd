@@ -71,8 +71,8 @@ export class PaymentInfo {
   }
 
   isExpired(referenceDate = new Date()) {
-    // Considera expirado no instante exato de expiração (inclusivo)
-    return referenceDate.getTime() >= this.expiresAt.getTime();
+    // Considera expirado apenas após o instante de expiração (exclusivo)
+    return referenceDate.getTime() > this.expiresAt.getTime();
   }
 
   getTimeToExpire(referenceDate = new Date()) {

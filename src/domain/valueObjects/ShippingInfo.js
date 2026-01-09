@@ -92,6 +92,17 @@ export class ShippingInfo {
       return false;
     }
 
-    return true;
+    // Garante ao menos 1 dia útil entre hoje e a data de entrega
+    let businessDays = 0;
+    const cursor = new Date(now);
+    while (cursor < date) {
+      cursor.setDate(cursor.getDate() + 1);
+      const dow = cursor.getDay();
+      if (dow !== 0 && dow !== 6) {
+        businessDays += 1;
+      }
+    }
+
+    return businessDays >= 1;
   }
 }

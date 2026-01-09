@@ -43,7 +43,7 @@ export class CustomerInfo {
 
   static isValidPhone(value) {
     const digits = CustomerInfo.normalizePhone(value);
-    return digits.length >= 10 && digits.length <= 14;
+    return digits.length === 10 || digits.length === 11;
   }
 
   static isValidCPF(value) {
