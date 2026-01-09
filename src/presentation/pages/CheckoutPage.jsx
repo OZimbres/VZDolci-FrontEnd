@@ -304,12 +304,12 @@ export function CheckoutPage() {
 
   useEffect(() => {
     const MAX_CONSECUTIVE_FAILURES = 5;
-    const INITIAL_DELAY_MS = 5000;
+    const POLL_INTERVAL_MS = 5000;
     let consecutiveFailures = 0;
 
     const clearPolling = () => {
       if (pollingIntervalRef.current) {
-        clearTimeout(pollingIntervalRef.current);
+        clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
       }
       setIsPolling(false);
@@ -327,35 +327,28 @@ export function CheckoutPage() {
 
     setIsPolling(true);
 
-    const pollPaymentStatus = (delayMs = INITIAL_DELAY_MS) => {
-      pollingIntervalRef.current = setTimeout(async () => {
-        let nextDelayMs = delayMs;
-
-        try {
-          const response = await fetch(`/api/mercadopago/payment-status/${paymentInfo.paymentId}`);
-          const payload = await response.json().catch(() => ({}));
-          if (response.ok && payload?.payment) {
-            consecutiveFailures = 0;
-            setPaymentInfo((prev) => ({ ...prev, ...payload.payment }));
-          } else {
-            consecutiveFailures += 1;
-          }
-        } catch (error) {
-          console.warn('Erro ao consultar status do pagamento', error);
+    const pollPaymentStatus = async () => {
+      try {
+        const response = await fetch(`/api/mercadopago/payment-status/${paymentInfo.paymentId}`);
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && payload?.payment) {
+          consecutiveFailures = 0;
+          setPaymentInfo((prev) => ({ ...prev, ...payload.payment }));
+        } else {
           consecutiveFailures += 1;
         }
+      } catch (error) {
+        console.warn('Erro ao consultar status do pagamento', error);
+        consecutiveFailures += 1;
+      }
 
-        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES || !paymentInfo?.paymentId || !pixQrCode) {
-          clearPolling();
-          return;
-        }
-
-        nextDelayMs = Math.min(nextDelayMs * 2, 60000);
-        pollPaymentStatus(nextDelayMs);
-      }, delayMs);
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES || !paymentInfo?.paymentId || !pixQrCode) {
+        clearPolling();
+      }
     };
 
-    pollPaymentStatus(INITIAL_DELAY_MS);
+    pollingIntervalRef.current = setInterval(pollPaymentStatus, POLL_INTERVAL_MS);
+    pollPaymentStatus();
 
     return () => {
       clearPolling();
