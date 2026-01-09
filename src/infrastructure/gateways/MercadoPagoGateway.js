@@ -8,15 +8,14 @@ export class MercadoPagoGateway extends PaymentGateway {
   constructor({ apiBaseUrl = DEFAULT_API_BASE_URL } = {}) {
     super();
     this.apiBaseUrl = apiBaseUrl;
+    if (!MERCADO_PAGO_CONFIG.publicKey) {
+      throw new Error('Chave pública do Mercado Pago não configurada');
+    }
   }
 
   async processPayment(order, paymentData = {}) {
     if (!order) {
       throw new Error('Pedido é obrigatório para processar pagamento');
-    }
-
-    if (!MERCADO_PAGO_CONFIG.publicKey) {
-      throw new Error('Chave pública do Mercado Pago não configurada');
     }
 
     const response = await fetch(`${this.apiBaseUrl}/create-payment`, {
@@ -65,7 +64,7 @@ export class MercadoPagoGateway extends PaymentGateway {
         ?? payment?.qr_code_base64
         ?? payment?.point_of_interaction?.transaction_data?.qr_code_base64
         ?? null,
-      expiresAt: payment?.expiresAt ?? payment?.date_of_expiration ?? payment?.date_created ?? null,
+      expiresAt: payment?.expiresAt ?? payment?.date_of_expiration ?? null,
       metadata: payment?.metadata ?? {
         orderId: order?.id ?? order?.orderId
       }

@@ -1,14 +1,7 @@
 /* eslint-env node */
 /* global process */
 import mercadopago from 'mercadopago';
-
-const ensureConfigured = () => {
-  const token = process.env.MP_ACCESS_TOKEN;
-  if (!token) {
-    throw new Error('MP_ACCESS_TOKEN não configurado');
-  }
-  mercadopago.configure({ access_token: token });
-};
+import { ensureConfigured } from '../utils/config.js';
 
 const extractId = (req) => req.query?.id ?? req?.params?.id;
 

@@ -1,14 +1,6 @@
 /* eslint-env node */
 /* global process */
-import mercadopago from 'mercadopago';
-
-const ensureConfigured = () => {
-  const token = process.env.MP_ACCESS_TOKEN;
-  if (!token) {
-    throw new Error('MP_ACCESS_TOKEN não configurado');
-  }
-  mercadopago.configure({ access_token: token });
-};
+import { ensureConfigured } from '../mercadopago/utils/config.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -23,15 +15,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!req.headers['x-request-id'] || !req.headers['x-signature']) {
+      return res.status(400).json({ error: 'Assinatura do webhook ausente' });
+    }
+
     const { type, data } = req.body ?? {};
     // Apenas confirma recebimento para notificações que não sejam de pagamento
     if (type !== 'payment' || !data?.id) {
       return res.status(200).json({ received: true });
     }
 
-    // Consulta o pagamento para registrar status atualizado; a resposta não é usada
-    // pois o Mercado Pago apenas exige um 200 OK para considerar a notificação entregue
-    await mercadopago.payment.findById(data.id);
     return res.status(200).json({ received: true });
   } catch (error) {
     console.error('Erro no webhook Mercado Pago', error);

@@ -1,19 +1,23 @@
 /* eslint-env node */
 /* global process */
 import mercadopago from 'mercadopago';
+import { ensureConfigured } from './utils/config.js';
 
-const ensureConfigured = () => {
-  const token = process.env.MP_ACCESS_TOKEN;
-  if (!token) {
-    throw new Error('MP_ACCESS_TOKEN não configurado');
-  }
-  mercadopago.configure({ access_token: token });
+const requireAuth = (req) => {
+  const expectedKey = process.env.MP_REFUND_API_KEY;
+  if (!expectedKey) return false;
+  const provided = req.headers['x-api-key'];
+  return provided === expectedKey;
 };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  if (!requireAuth(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { paymentId, amount } = req.body ?? {};
@@ -28,13 +32,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    let mpResponse;
+    const payload = { payment_id: paymentId };
     if (amount) {
-      const payload = { payment_id: paymentId, amount: Number(amount) };
-      mpResponse = await mercadopago.refund.create(payload);
-    } else {
-      mpResponse = await mercadopago.payment.refund(paymentId);
+      payload.amount = Number(amount);
     }
+
+    const mpResponse = await mercadopago.refund.create(payload);
 
     const refund = mpResponse?.body ?? mpResponse;
     return res.status(200).json({ refund });

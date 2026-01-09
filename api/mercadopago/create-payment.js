@@ -1,19 +1,34 @@
 /* eslint-env node */
 /* global process */
 import mercadopago from 'mercadopago';
-
-const ensureConfigured = () => {
-  const token = process.env.MP_ACCESS_TOKEN;
-  if (!token) {
-    throw new Error('MP_ACCESS_TOKEN não configurado');
-  }
-  mercadopago.configure({ access_token: token });
-};
+import { ensureConfigured } from './utils/config.js';
 
 const buildNotificationUrl = (req) => {
   const protocol = req.headers['x-forwarded-proto'] || 'https';
   const host = req.headers.host;
   return `${protocol}://${host}/api/webhooks/mercadopago`;
+};
+
+const isValidEmail = (value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/u.test(value);
+
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 30;
+const requestCounters = new Map();
+
+const checkRateLimit = (req) => {
+  const key = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+  const now = Date.now();
+  const current = requestCounters.get(key) ?? { count: 0, expires: now + RATE_LIMIT_WINDOW_MS };
+
+  if (now > current.expires) {
+    current.count = 0;
+    current.expires = now + RATE_LIMIT_WINDOW_MS;
+  }
+
+  current.count += 1;
+  requestCounters.set(key, current);
+
+  return current.count <= RATE_LIMIT_MAX;
 };
 
 const mapPayer = (order, paymentData) => {
@@ -32,8 +47,10 @@ const mapPayer = (order, paymentData) => {
 
   const cpf = payerInput.documentNumber ?? payerInput.cpf ?? customer.cpf;
 
+  const email = payerInput.email ?? customer.email;
+
   return {
-    email: payerInput.email ?? customer.email,
+    email,
     first_name: resolvedFirstName,
     last_name: resolvedLastName,
     identification: cpf ? {
@@ -49,6 +66,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!checkRateLimit(req)) {
+    return res.status(429).json({ error: 'Limite de requisições excedido, tente novamente em instantes' });
+  }
+
   try {
     ensureConfigured();
   } catch (error) {
@@ -56,9 +77,19 @@ export default async function handler(req, res) {
   }
 
   const { order, paymentData = {} } = req.body ?? {};
+
+  if (!order || typeof order !== 'object') {
+    return res.status(400).json({ error: 'Pedido inválido' });
+  }
+
   const amount = Number(paymentData?.amount ?? order?.total);
   if (!Number.isFinite(amount) || amount <= 0) {
     return res.status(400).json({ error: 'Valor do pagamento inválido' });
+  }
+
+  const email = paymentData?.payer?.email ?? order?.customerInfo?.email;
+  if (!email || !isValidEmail(email)) {
+    return res.status(400).json({ error: 'Email do pagador é obrigatório e deve ser válido' });
   }
 
   const description = paymentData?.description
@@ -95,7 +126,21 @@ export default async function handler(req, res) {
     return res.status(201).json({ payment: normalized });
   } catch (error) {
     console.error('Erro ao criar pagamento Mercado Pago', error);
-    const details = error?.response?.body ?? { message: error?.message };
-    return res.status(502).json({ error: 'Falha ao criar pagamento', details });
+    const rawDetails = error?.response?.body;
+    const safeDetails = {
+      message: rawDetails?.message || error?.message || 'Erro ao processar pagamento'
+    };
+
+    const mpStatus = error?.status ?? error?.response?.status;
+    let httpStatus = 502;
+    if (typeof mpStatus === 'number') {
+      if (mpStatus >= 400 && mpStatus < 500) {
+        httpStatus = 400;
+      } else if (mpStatus >= 500 && mpStatus < 600) {
+        httpStatus = 502;
+      }
+    }
+
+    return res.status(httpStatus).json({ error: 'Falha ao criar pagamento', details: safeDetails });
   }
 }
