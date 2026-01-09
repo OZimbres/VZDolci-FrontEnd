@@ -17,6 +17,8 @@ const RATE_LIMIT_MAX = 5;
 const requestCounters = new Map();
 
 const checkRateLimit = (req) => {
+  // Nota: este limitador é in-memory e por instância (serverless). Para ambientes distribuídos,
+  // use armazenamento compartilhado (ex.: Redis/Vercel KV).
   const key = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
   const now = Date.now();
   const current = requestCounters.get(key) ?? { count: 0, expires: now + RATE_LIMIT_WINDOW_MS };
@@ -142,7 +144,13 @@ export default async function handler(req, res) {
 
     return res.status(201).json({ payment: normalized });
   } catch (error) {
-    logger.error('Erro ao criar pagamento Mercado Pago', { error });
+    const safeError = {
+      message: error?.message,
+      code: error?.code,
+      name: error?.name,
+      status: error?.status ?? error?.response?.status
+    };
+    logger.error('Erro ao criar pagamento Mercado Pago', { error: safeError });
     const rawDetails = error?.response?.body;
     const safeDetails = {
       message: rawDetails?.message || error?.message || 'Erro ao processar pagamento'

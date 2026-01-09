@@ -2,6 +2,15 @@ import { PaymentGateway } from '../../domain/interfaces/PaymentGateway';
 import { PaymentInfo } from '../../domain/valueObjects/PaymentInfo';
 import { MERCADO_PAGO_CONFIG } from '../config/mercadopago.config';
 
+class PaymentGatewayError extends Error {
+  constructor(message, status, details) {
+    super(message);
+    this.name = 'PaymentGatewayError';
+    this.status = status;
+    this.details = details;
+  }
+}
+
 const DEFAULT_API_BASE_URL = '/api/mercadopago';
 
 export class MercadoPagoGateway extends PaymentGateway {
@@ -29,9 +38,7 @@ export class MercadoPagoGateway extends PaymentGateway {
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
       const message = errorBody?.error || 'Falha ao criar pagamento no servidor';
-      const error = new Error(message);
-      error.status = response.status;
-      error.details = errorBody;
+      const error = new PaymentGatewayError(message, response.status, errorBody);
       throw error;
     }
 

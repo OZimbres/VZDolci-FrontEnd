@@ -589,16 +589,22 @@
   color: var(--accent-color);
 }
 
+.payment-status-indicator {
+  --status-pulse-color: #fcd34d;
+  --status-success-color: #027a48;
+  --status-warning-color: #92400e;
+}
+
 .status-pulse {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #fcd34d;
+  background: var(--status-pulse-color);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .status-success {
-  color: #027a48;
+  color: var(--status-success-color);
   font-weight: 700;
 }
 
@@ -620,7 +626,7 @@
   background: #fffaeb;
   border-radius: 8px;
   text-align: center;
-  color: #92400e;
+  color: var(--status-warning-color);
 }
 
 .qr-code-timer strong {

@@ -8,9 +8,9 @@ O checkout utiliza **Mercado Pago** para pagamentos via **PIX**. O frontend (Rea
 sequenceDiagram
   participant Cliente
   participant Frontend
-  participant API as /api/mercadopago
+  participant API as "/api/mercadopago"
   participant MP as Mercado Pago
-  participant Webhook as /api/webhooks/mercadopago
+  participant Webhook as "/api/webhooks/mercadopago"
 
   Cliente->>Frontend: Escolhe PIX e envia dados
   Frontend->>API: POST /create-payment (pedido, dados do cliente)
@@ -38,7 +38,7 @@ sequenceDiagram
 - `POST /api/mercadopago/refund` – estorno protegido por `x-api-key` (`MP_REFUND_API_KEY`).
 - Webhook: `POST /api/webhooks/mercadopago` – recebe notificações oficiais.
 
-### Exemplo (create-payment)
+### Exemplo (create-payment) — comando completo
 ```bash
 curl -X POST https://<host>/api/mercadopago/create-payment \
   -H "Content-Type: application/json" \
@@ -55,7 +55,7 @@ curl -X POST https://<host>/api/mercadopago/create-payment \
 - **Frontend**: mostra estados de carregamento, polling automático e timer de expiração do QR Code.
 
 ## Troubleshooting
-- **429 Muitas tentativas**: aguarde 60s e tente novamente (frontend exibe botão de fallback para WhatsApp).
+- **429 Muitas tentativas**: aguarde 60 segundos e tente novamente (frontend exibe botão de fallback para WhatsApp).
 - **QR Code expirado**: contador chega a 00:00 → gere novo QR Code.
 - **Sem chave pública**: certifique-se de preencher `VITE_MP_PUBLIC_KEY` no ambiente da Vercel e no `.env` local (apenas teste).
 - **Webhook não dispara**: verifique URL pública configurada no app do Mercado Pago e credenciais de produção.

@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 # Script para testar endpoint de estorno localmente
 
 API_URL="http://localhost:3000/api/mercadopago/refund"
-API_KEY="${API_KEY:-sua-chave-secreta-aqui}"
+API_KEY="${API_KEY:-INSIRA_SUA_CHAVE_SECRETA_AQUI}"
 PAYMENT_ID="${PAYMENT_ID:-1}"
 
 echo "==> Teste 1: Sem API Key"

@@ -234,7 +234,11 @@ export function CheckoutPage() {
       } catch (error) {
         console.warn('Erro ao processar pagamento', error);
         const isRateLimited = error?.status === 429 || /aguarde 1 minuto/i.test(error?.message ?? '');
-        const retryAfter = error?.details?.retryAfter;
+        const retryAfterRaw = error?.details?.retryAfter;
+        const retryAfterNumber = Number(retryAfterRaw);
+        const retryAfter = Number.isFinite(retryAfterNumber) && retryAfterNumber > 0 && retryAfterNumber < 3600
+          ? Math.round(retryAfterNumber)
+          : null;
         let errorMessage = 'Não foi possível processar o pagamento via PIX. Tente novamente ou escolha outra forma.';
 
         if (isRateLimited) {
@@ -299,27 +303,64 @@ export function CheckoutPage() {
   }, [customerData.cpf]);
 
   useEffect(() => {
-    stopPolling();
+    const MAX_CONSECUTIVE_FAILURES = 5;
+    const INITIAL_DELAY_MS = 5000;
+    let consecutiveFailures = 0;
 
-    if (paymentInfo?.paymentId && pixQrCode && paymentInfo.status === 'pending') {
-      setIsPolling(true);
-      pollingIntervalRef.current = setInterval(async () => {
+    const clearPolling = () => {
+      if (pollingIntervalRef.current) {
+        clearTimeout(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      setIsPolling(false);
+    };
+
+    if (!paymentInfo?.paymentId || !pixQrCode) {
+      clearPolling();
+      return undefined;
+    }
+
+    if (paymentInfo.status !== 'pending') {
+      clearPolling();
+      return undefined;
+    }
+
+    setIsPolling(true);
+
+    const pollPaymentStatus = (delayMs = INITIAL_DELAY_MS) => {
+      pollingIntervalRef.current = setTimeout(async () => {
+        let nextDelayMs = delayMs;
+
         try {
           const response = await fetch(`/api/mercadopago/payment-status/${paymentInfo.paymentId}`);
           const payload = await response.json().catch(() => ({}));
           if (response.ok && payload?.payment) {
+            consecutiveFailures = 0;
             setPaymentInfo((prev) => ({ ...prev, ...payload.payment }));
+          } else {
+            consecutiveFailures += 1;
           }
         } catch (error) {
           console.warn('Erro ao consultar status do pagamento', error);
+          consecutiveFailures += 1;
         }
-      }, 5000);
-    }
+
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES || !paymentInfo?.paymentId || !pixQrCode) {
+          clearPolling();
+          return;
+        }
+
+        nextDelayMs = Math.min(nextDelayMs * 2, 60000);
+        pollPaymentStatus(nextDelayMs);
+      }, delayMs);
+    };
+
+    pollPaymentStatus(INITIAL_DELAY_MS);
 
     return () => {
-      stopPolling();
+      clearPolling();
     };
-  }, [paymentInfo, pixQrCode, stopPolling]);
+  }, [paymentInfo, pixQrCode]);
 
   useEffect(() => {
     if (!paymentInfo) return undefined;
@@ -336,6 +377,9 @@ export function CheckoutPage() {
     if (['rejected', 'cancelled', 'refunded', 'charged_back'].includes(paymentInfo.status)) {
       stopPolling();
       setFeedbackMessage('Pagamento não concluído. Você pode tentar novamente ou escolher outra forma.');
+       setPixQrCode(null);
+       setPaymentInfo(null);
+       setTimeRemaining(null);
     }
 
     return undefined;
@@ -347,6 +391,8 @@ export function CheckoutPage() {
       return undefined;
     }
 
+    const EXPIRY_WARNING_THRESHOLD_MS = 5 * 60 * 1000;
+
     const expiration = paymentInfo.expiresAt instanceof Date
       ? paymentInfo.expiresAt
       : new Date(paymentInfo.expiresAt);
@@ -356,17 +402,21 @@ export function CheckoutPage() {
       return undefined;
     }
 
+    let intervalId;
     const updateTime = () => {
       const total = Math.max(0, expiration.getTime() - Date.now());
       const minutes = Math.floor(total / 60000);
       const seconds = Math.floor((total % 60000) / 1000);
-      setTimeRemaining({ total, minutes, seconds });
+      setTimeRemaining({ total, minutes, seconds, warning: total <= EXPIRY_WARNING_THRESHOLD_MS });
       if (total === 0) {
         stopPolling();
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
       }
     };
 
-    const intervalId = setInterval(updateTime, 1000);
+    intervalId = setInterval(updateTime, 1000);
     updateTime();
     return () => clearInterval(intervalId);
   }, [paymentInfo, stopPolling]);
@@ -519,9 +569,9 @@ export function CheckoutPage() {
                         <div className="pix-form">
                           <h4>Pagamento via PIX</h4>
                           <p>Confirme os dados e gere o QR Code com o valor total do pedido.</p>
-                          {isProcessingPayment && (
+                          {isProcessingPayment ? (
                             <LoadingSpinner message="Gerando QR Code PIX... Aguarde" />
-                          )}
+                          ) : null}
                           <div className="pix-form-actions">
                             <button 
                               type="button"
@@ -601,7 +651,7 @@ export function CheckoutPage() {
                             )}
                           </div>
                           {timeRemaining && timeRemaining.total > 0 && (
-                            <div className={`qr-code-timer ${timeRemaining.total <= 300000 ? 'timer-warning' : ''}`}>
+                            <div className={`qr-code-timer ${timeRemaining.warning ? 'timer-warning' : ''}`}>
                               <p>
                                 ⏱️ Tempo restante:{' '}
                                 <strong>
@@ -609,7 +659,7 @@ export function CheckoutPage() {
                                   {String(timeRemaining.seconds).padStart(2, '0')}
                                 </strong>
                               </p>
-                              {timeRemaining.total <= 300000 && (
+                              {timeRemaining.warning && (
                                 <small>QR Code expirando em breve!</small>
                               )}
                             </div>

@@ -141,7 +141,7 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
     validateField('phone', data.phone);
     // validateField is stable (useCallback with empty deps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.cpf, data.email, data.phone]);
+  }, []);
 
   return (
     <div className="checkout-form-card" aria-label="Dados do cliente">
@@ -166,7 +166,10 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
         <label htmlFor="customer-email" className="field-wrapper">
           Email
           <div className="field-status">
-            <span className={`status-icon ${fieldStatus.email?.state === 'valid' ? 'status-valid' : ''}`}>
+            <span
+              className={`status-icon ${fieldStatus.email?.state === 'valid' ? 'status-valid' : ''}`}
+              aria-label={fieldStatus.email?.state === 'valid' ? 'Email válido' : 'Email em preenchimento'}
+            >
               {fieldStatus.email?.state === 'valid' ? '✓' : '•'}
             </span>
             <small className={`status-text ${fieldStatus.email?.state === 'invalid' ? 'status-error' : ''}`}>
@@ -189,7 +192,10 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
         <label htmlFor="customer-phone" className="field-wrapper">
           Telefone
           <div className="field-status">
-            <span className={`status-icon ${fieldStatus.phone?.state === 'valid' ? 'status-valid' : ''}`}>
+            <span
+              className={`status-icon ${fieldStatus.phone?.state === 'valid' ? 'status-valid' : ''}`}
+              aria-label={fieldStatus.phone?.state === 'valid' ? 'Telefone válido' : 'Telefone em preenchimento'}
+            >
               {fieldStatus.phone?.state === 'valid' ? '✓' : '•'}
             </span>
             <small className={`status-text ${fieldStatus.phone?.state === 'invalid' ? 'status-error' : ''}`}>
@@ -212,7 +218,10 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
         <label htmlFor="customer-cpf" className="field-wrapper">
           CPF
           <div className="field-status">
-            <span className={`status-icon ${fieldStatus.cpf?.state === 'valid' ? 'status-valid' : ''}`}>
+            <span
+              className={`status-icon ${fieldStatus.cpf?.state === 'valid' ? 'status-valid' : ''}`}
+              aria-label={fieldStatus.cpf?.state === 'valid' ? 'CPF válido' : 'CPF em preenchimento'}
+            >
               {fieldStatus.cpf?.state === 'valid' ? '✓' : '•'}
             </span>
             <div className="status-meta">
