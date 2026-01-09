@@ -23,10 +23,17 @@ export class ProcessPaymentUseCase {
       throw new Error('PaymentGateway must implement processPayment');
     }
 
-    const gatewayResponse = await this.paymentGateway.processPayment(order, {
-      ...paymentData,
-      amount: paymentData?.amount ?? order.total
-    });
+    let gatewayResponse;
+    try {
+      gatewayResponse = await this.paymentGateway.processPayment(order, {
+        ...paymentData,
+        amount: paymentData?.amount ?? order.total
+      });
+    } catch (error) {
+      const wrappedError = new Error('Erro ao processar pagamento');
+      wrappedError.originalError = error;
+      throw wrappedError;
+    }
 
     const paymentInfo = gatewayResponse instanceof PaymentInfo
       ? gatewayResponse
@@ -35,6 +42,7 @@ export class ProcessPaymentUseCase {
           amount: gatewayResponse?.amount ?? order.total
         });
 
+    // Side effect: associa o pagamento ao pedido para rastreio
     order.setPaymentInfo(paymentInfo);
     return paymentInfo;
   }

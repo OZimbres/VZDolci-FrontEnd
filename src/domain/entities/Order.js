@@ -3,7 +3,8 @@ import { PaymentInfo } from '../valueObjects/PaymentInfo';
 /**
  * Order Entity
  * Represents a customer order in the VZ Dolci system
- * * @follows Clean Architecture - Domain Layer
+ * @follows Clean Architecture - Domain Layer
+ * Mutable por design para permitir anexar pagamento/status.
  */
 export class Order {
   constructor({
@@ -16,19 +17,19 @@ export class Order {
     createdAt = new Date()
   }) {
     if (!id) {
-      throw new Error('Order id is required');
+      throw new Error('Identificador do pedido é obrigatório');
     }
 
     if (!Array.isArray(items) || items.length === 0) {
-      throw new Error('Order must include at least one item');
+      throw new Error('Pedido precisa de pelo menos um item');
     }
 
     if (!customerInfo) {
-      throw new Error('Customer information is required');
+      throw new Error('Informações do cliente são obrigatórias');
     }
 
     if (!shippingInfo) {
-      throw new Error('Shipping information is required');
+      throw new Error('Informações de entrega são obrigatórias');
     }
 
     this.id = id;
@@ -38,12 +39,12 @@ export class Order {
     this.status = status;
     this.createdAt = createdAt instanceof Date ? createdAt : new Date(createdAt);
     if (Number.isNaN(this.createdAt.getTime())) {
-      throw new Error('Invalid order creation date');
+      throw new Error('Data de criação do pedido inválida');
     }
 
     this.total = this.calculateTotal();
     if (Number.isNaN(this.total) || this.total <= 0) {
-      throw new Error('Order total must be positive');
+      throw new Error('Total do pedido deve ser positivo');
     }
 
     this.paymentInfo = null;
@@ -58,12 +59,17 @@ export class Order {
         return sum + Number(item.getTotal());
       }
 
+      Order.validateItem(item);
       const quantity = Number(item?.quantity ?? 1);
       const price = Number(item?.price ?? item?.product?.price ?? 0);
+
       return sum + price * quantity;
     }, 0);
   }
 
+  /**
+   * Associa informações de pagamento ao pedido (efeito colateral intencional).
+   */
   setPaymentInfo(paymentInfo) {
     const info = paymentInfo instanceof PaymentInfo ? paymentInfo : new PaymentInfo(paymentInfo);
     this.paymentInfo = info;
@@ -72,5 +78,18 @@ export class Order {
 
   isPaid() {
     return this.paymentInfo?.status === 'approved';
+  }
+
+  static validateItem(item) {
+    const quantity = Number(item?.quantity ?? 1);
+    const price = Number(item?.price ?? item?.product?.price ?? 0);
+
+    if (!Number.isFinite(quantity) || quantity < 1) {
+      throw new Error('Quantidade do item deve ser um número finito maior ou igual a 1');
+    }
+
+    if (!Number.isFinite(price) || price < 0) {
+      throw new Error('Preço do item deve ser um número finito maior ou igual a 0');
+    }
   }
 }

@@ -1,7 +1,7 @@
 /**
  * ShippingInfo Value Object
  * Encapsulates shipping/delivery data
- * * @immutable
+ * @immutable
  */
 export class ShippingInfo {
   constructor({
@@ -45,7 +45,7 @@ export class ShippingInfo {
 
     const parsedDeliveryDate = ShippingInfo.parseDate(deliveryDate);
     if (!ShippingInfo.hasMinimumLeadTime(parsedDeliveryDate)) {
-      throw new Error('A entrega precisa de no mínimo 24h de antecedência');
+      throw new Error('Entrega indisponível para a data informada (mínimo 24h e sem finais de semana)');
     }
 
     this.street = street.trim();
@@ -79,8 +79,19 @@ export class ShippingInfo {
   }
 
   static hasMinimumLeadTime(date) {
-    const diffMs = date.getTime() - Date.now();
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
     const minMs = 24 * 60 * 60 * 1000;
-    return diffMs >= minMs;
+
+    if (diffMs < minMs) {
+      return false;
+    }
+
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return false;
+    }
+
+    return true;
   }
 }

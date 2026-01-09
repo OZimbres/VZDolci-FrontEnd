@@ -1,7 +1,7 @@
 /**
  * CustomerInfo Value Object
  * Encapsulates customer data with validations
- * * @immutable
+ * @immutable
  */
 export class CustomerInfo {
   constructor({ name, email, phone, cpf }) {
@@ -38,7 +38,7 @@ export class CustomerInfo {
   }
 
   static isValidEmail(value) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/u.test(value);
   }
 
   static isValidPhone(value) {

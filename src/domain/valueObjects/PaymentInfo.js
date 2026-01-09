@@ -1,7 +1,7 @@
 /**
  * PaymentInfo Value Object
  * Encapsulates payment data from Mercado Pago
- * * @immutable
+ * @immutable
  */
 export class PaymentInfo {
   constructor({
@@ -71,6 +71,7 @@ export class PaymentInfo {
   }
 
   isExpired(referenceDate = new Date()) {
+    // Considera expirado no instante exato de expiração (inclusivo)
     return referenceDate.getTime() >= this.expiresAt.getTime();
   }
 
