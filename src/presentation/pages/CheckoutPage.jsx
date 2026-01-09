@@ -126,7 +126,7 @@ export function CheckoutPage() {
     }
 
     if (!isCustomerValid) {
-      alert('Preencha os dados do cliente para finalizar via WhatsApp.');
+      alert('Complete os dados do cliente para finalizar via WhatsApp.');
       return;
     }
 
@@ -311,7 +311,7 @@ export function CheckoutPage() {
                   </div>
                 </div>
 
-                 {/* Payment Options */}
+                {/* Payment Options */}
                 <div className="checkout-payment">
                   <CustomerForm
                     value={customerData}

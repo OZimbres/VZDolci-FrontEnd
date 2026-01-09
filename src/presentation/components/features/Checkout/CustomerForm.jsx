@@ -30,6 +30,29 @@ const formatCPF = (value) => {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 };
 
+const validateCustomer = (payload) => {
+  const errors = {};
+  const name = payload.name?.trim() ?? '';
+  const email = payload.email?.trim() ?? '';
+  const phone = payload.phone?.trim() ?? '';
+  const cpf = payload.cpf?.trim() ?? '';
+
+  if (!name) errors.name = 'Nome do cliente é obrigatório';
+  if (!email || !CustomerInfo.isValidEmail(email)) errors.email = 'Email inválido';
+  if (!phone || !CustomerInfo.isValidPhone(phone)) errors.phone = 'Telefone inválido';
+  if (!cpf || !CustomerInfo.isValidCPF(cpf)) errors.cpf = 'CPF inválido';
+
+  if (Object.keys(errors).length === 0) {
+    try {
+      new CustomerInfo(payload);
+    } catch (error) {
+      return { general: error.message };
+    }
+  }
+
+  return errors;
+};
+
 /**
  * Customer Form Component
  */
@@ -38,18 +61,12 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
   const data = useMemo(() => ({ ...EMPTY_CUSTOMER, ...value }), [value]);
 
   useEffect(() => {
-    const newErrors = {};
-    try {
-      new CustomerInfo(data);
-    } catch (error) {
-      if (error.message.includes('Nome')) newErrors.name = error.message;
-      if (error.message.includes('Email')) newErrors.email = error.message;
-      if (error.message.includes('Telefone')) newErrors.phone = error.message;
-      if (error.message.includes('CPF')) newErrors.cpf = error.message;
-    }
-    setErrors(newErrors);
-    onValidityChange?.(Object.keys(newErrors).length === 0);
-  }, [data, onValidityChange]);
+    setErrors(validateCustomer(data));
+  }, [data]);
+
+  useEffect(() => {
+    onValidityChange?.(Object.keys(errors).length === 0);
+  }, [errors, onValidityChange]);
 
   const handleChange = (field, formatter) => (event) => {
     const formattedValue = formatter ? formatter(event.target.value) : event.target.value;

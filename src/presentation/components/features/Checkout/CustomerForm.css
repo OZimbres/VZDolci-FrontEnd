@@ -10,7 +10,7 @@
 .checkout-form-card h3 {
   margin: 0 0 0.5rem 0;
   color: var(--primary-color);
-  font-family: 'Palatino, Times New Roman, serif';
+  font-family: Palatino, 'Times New Roman', serif;
 }
 
 .form-helper {
