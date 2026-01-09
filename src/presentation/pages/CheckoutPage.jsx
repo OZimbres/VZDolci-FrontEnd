@@ -70,6 +70,10 @@ export function CheckoutPage() {
   const [timeRemaining, setTimeRemaining] = useState(null);
   const pollingIntervalRef = useRef(null);
   const confirmationTimeoutRef = useRef(null);
+  const latestPaymentInfoRef = useRef(null);
+  const latestPixQrCodeRef = useRef(null);
+  const isPollingRequestInFlightRef = useRef(false);
+  const startPollingTimeoutRef = useRef(null);
 
   const createOrderUseCase = useMemo(() => new CreateOrderUseCase(), []);
 
@@ -95,10 +99,15 @@ export function CheckoutPage() {
 
   const stopPolling = useCallback(() => {
     setIsPolling(false);
+    if (startPollingTimeoutRef.current) {
+      clearTimeout(startPollingTimeoutRef.current);
+      startPollingTimeoutRef.current = null;
+    }
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
+    isPollingRequestInFlightRef.current = false;
   }, []);
 
   const handleQuantityChange = useCallback((productId, newQuantity) => {
@@ -303,33 +312,40 @@ export function CheckoutPage() {
   }, [customerData.cpf]);
 
   useEffect(() => {
+    latestPaymentInfoRef.current = paymentInfo;
+    latestPixQrCodeRef.current = pixQrCode;
     const MAX_CONSECUTIVE_FAILURES = 5;
     const POLL_INTERVAL_MS = 5000;
     let consecutiveFailures = 0;
 
-    const clearPolling = () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
-      }
-      setIsPolling(false);
+    const shouldStopPolling = () => {
+      const currentPaymentInfo = latestPaymentInfoRef.current;
+      const currentPixQrCode = latestPixQrCodeRef.current;
+      return !currentPaymentInfo?.paymentId
+        || !currentPixQrCode
+        || currentPaymentInfo.status !== 'pending';
     };
 
-    if (!paymentInfo?.paymentId || !pixQrCode) {
-      clearPolling();
-      return undefined;
-    }
-
-    if (paymentInfo.status !== 'pending') {
-      clearPolling();
+    if (shouldStopPolling()) {
+      stopPolling();
       return undefined;
     }
 
     setIsPolling(true);
 
     const pollPaymentStatus = async () => {
+      if (shouldStopPolling()) {
+        stopPolling();
+        return;
+      }
+
+      const currentPaymentInfo = latestPaymentInfoRef.current;
+      const currentPixQrCode = latestPixQrCodeRef.current;
+
+      if (isPollingRequestInFlightRef.current) return;
+      isPollingRequestInFlightRef.current = true;
       try {
-        const response = await fetch(`/api/mercadopago/payment-status/${paymentInfo.paymentId}`);
+        const response = await fetch(`/api/mercadopago/payment-status/${currentPaymentInfo.paymentId}`);
         const payload = await response.json().catch(() => ({}));
         if (response.ok && payload?.payment) {
           consecutiveFailures = 0;
@@ -340,20 +356,25 @@ export function CheckoutPage() {
       } catch (error) {
         console.warn('Erro ao consultar status do pagamento', error);
         consecutiveFailures += 1;
+      } finally {
+        isPollingRequestInFlightRef.current = false;
       }
 
-      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES || !paymentInfo?.paymentId || !pixQrCode) {
-        clearPolling();
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES || shouldStopPolling()) {
+        stopPolling();
+        return;
       }
     };
 
-    pollingIntervalRef.current = setInterval(pollPaymentStatus, POLL_INTERVAL_MS);
-    pollPaymentStatus();
+    startPollingTimeoutRef.current = setTimeout(() => {
+      pollingIntervalRef.current = setInterval(pollPaymentStatus, POLL_INTERVAL_MS);
+      pollPaymentStatus();
+    }, POLL_INTERVAL_MS);
 
     return () => {
-      clearPolling();
+      stopPolling();
     };
-  }, [paymentInfo, pixQrCode]);
+  }, [paymentInfo, pixQrCode, stopPolling]);
 
   useEffect(() => {
     if (!paymentInfo) return undefined;
