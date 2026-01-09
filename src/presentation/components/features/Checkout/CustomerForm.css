@@ -52,6 +52,51 @@
   font-size: 0.85rem;
 }
 
+.field-wrapper {
+  position: relative;
+}
+
+.field-status {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--accent-color);
+}
+
+.status-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.status-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--light-bg);
+  color: var(--text-dark);
+  font-weight: bold;
+}
+
+.status-valid {
+  background: #ecfdf3;
+  color: #027a48;
+  border: 1px solid #a6f4c5;
+}
+
+.status-text.status-error {
+  color: #b42318;
+}
+
+.char-counter {
+  font-size: 0.8rem;
+  color: var(--accent-color);
+}
+
 @media (max-width: 640px) {
   .checkout-form-card {
     padding: 1.25rem;
