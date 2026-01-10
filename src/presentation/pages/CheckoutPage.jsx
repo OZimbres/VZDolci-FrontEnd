@@ -158,9 +158,19 @@ export function CheckoutPage() {
 
   const isPopupBlocked = (popupWindow) => !popupWindow || popupWindow.closed || typeof popupWindow.closed === 'undefined';
 
-  const generateOrderId = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-    ? crypto.randomUUID()
-    : `ORDER-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const generateOrderId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    // Fallback: Use crypto.getRandomValues for better entropy if available
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const array = new Uint32Array(2);
+      crypto.getRandomValues(array);
+      return `ORDER-${Date.now()}-${array[0].toString(36)}${array[1].toString(36)}`;
+    }
+    // Last resort fallback for older browsers
+    return `ORDER-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  };
 
   const handleWhatsAppCheckout = () => {
     setFeedbackMessage(null);
@@ -280,13 +290,13 @@ export function CheckoutPage() {
     }
 
     // Fallback QR code should only be used in development/testing
-    if (!payment?.qrCode && !payment?.qrCodeBase64) {
+    if ((!payment?.qrCode || payment.qrCode === '') && (!payment?.qrCodeBase64 || payment.qrCodeBase64 === '')) {
       setFeedbackMessage('Erro ao gerar código PIX. Tente novamente ou escolha outra forma de pagamento.');
       setIsProcessingPayment(false);
       return;
     }
     
-    const pixCode = payment.qrCode ?? payment.qrCodeBase64;
+    const pixCode = payment.qrCode || payment.qrCodeBase64;
 
     setPixQrCode(pixCode);
     setPaymentInfo(payment);

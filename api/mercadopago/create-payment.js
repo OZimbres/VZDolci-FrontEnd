@@ -26,27 +26,36 @@ const checkRateLimit = (req) => {
   const key = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
   const now = Date.now();
   
-  // Periodic cleanup to prevent memory leaks
-  if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
-    for (const [k, v] of requestCounters.entries()) {
-      if (now > v.expires) {
-        requestCounters.delete(k);
-      }
-    }
-    lastCleanup = now;
+  // Lazy cleanup: remove expired entry when accessed
+  const current = requestCounters.get(key);
+  if (current && now > current.expires) {
+    requestCounters.delete(key);
   }
   
-  const current = requestCounters.get(key) ?? { count: 0, expires: now + RATE_LIMIT_WINDOW_MS };
+  // Periodic cleanup in background (non-blocking)
+  if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
+    lastCleanup = now;
+    // Async cleanup to avoid blocking request
+    setImmediate(() => {
+      for (const [k, v] of requestCounters.entries()) {
+        if (Date.now() > v.expires) {
+          requestCounters.delete(k);
+        }
+      }
+    });
+  }
+  
+  const entry = requestCounters.get(key) ?? { count: 0, expires: now + RATE_LIMIT_WINDOW_MS };
 
-  if (now > current.expires) {
-    current.count = 0;
-    current.expires = now + RATE_LIMIT_WINDOW_MS;
+  if (now > entry.expires) {
+    entry.count = 0;
+    entry.expires = now + RATE_LIMIT_WINDOW_MS;
   }
 
-  current.count += 1;
-  requestCounters.set(key, current);
+  entry.count += 1;
+  requestCounters.set(key, entry);
 
-  return current.count <= RATE_LIMIT_MAX;
+  return entry.count <= RATE_LIMIT_MAX;
 };
 
 const mapPayer = (order, paymentData) => {
