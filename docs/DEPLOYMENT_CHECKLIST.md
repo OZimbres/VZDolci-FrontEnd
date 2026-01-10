@@ -3,7 +3,7 @@
 ## Pré-Deploy
 - [ ] Credenciais de **PRODUÇÃO** do Mercado Pago obtidas (Public Key e Access Token).
 - [ ] Variáveis configuradas na Vercel:
-  - [ ] `VITE_MP_PUBLIC_KEY` (Production/Preview/Development)
+  - [ ] `VITE_MP_PUBLIC_KEY` (Production/Preview/Development) — prefixo `VITE_` é obrigatório para expor ao frontend
   - [ ] `MP_ACCESS_TOKEN` (Production only)
   - [ ] `MP_REFUND_API_KEY` (Production only)
 - [ ] `.env` local com chaves de **TEST** preenchidas (não commitar).

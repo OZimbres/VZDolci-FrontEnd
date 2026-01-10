@@ -18,7 +18,7 @@ export class MercadoPagoGateway extends PaymentGateway {
     super();
     this.apiBaseUrl = apiBaseUrl;
     if (!MERCADO_PAGO_CONFIG.publicKey) {
-      throw new Error('Chave pública do Mercado Pago não configurada');
+      throw new Error('Chave pública do Mercado Pago não configurada. Defina VITE_MP_PUBLIC_KEY nas variáveis de ambiente (diferente de MP_ACCESS_TOKEN).');
     }
   }
 
