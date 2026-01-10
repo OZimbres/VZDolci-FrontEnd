@@ -340,7 +340,6 @@ export function CheckoutPage() {
       }
 
       const currentPaymentInfo = latestPaymentInfoRef.current;
-      const currentPixQrCode = latestPixQrCodeRef.current;
 
       if (isPollingRequestInFlightRef.current) return;
       isPollingRequestInFlightRef.current = true;
