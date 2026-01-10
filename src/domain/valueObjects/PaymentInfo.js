@@ -3,6 +3,10 @@
  * Encapsulates payment data from Mercado Pago
  * @immutable
  */
+
+// Default payment expiration time in milliseconds (30 minutes)
+const DEFAULT_PAYMENT_EXPIRATION_MS = 30 * 60 * 1000;
+
 export class PaymentInfo {
   constructor({
     paymentId,
@@ -13,6 +17,8 @@ export class PaymentInfo {
     qrCode = null,
     qrCodeBase64 = null,
     expiresAt = null,
+    // createdAt should use the gateway's timestamp when reconstructing from API responses.
+    // The default of new Date() should only apply when creating new payment records.
     createdAt = new Date(),
     metadata = {}
   }) {
@@ -66,8 +72,7 @@ export class PaymentInfo {
     if (expiresAt) {
       return expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
     }
-    const thirtyMinutes = 30 * 60 * 1000;
-    return new Date(createdAt.getTime() + thirtyMinutes);
+    return new Date(createdAt.getTime() + DEFAULT_PAYMENT_EXPIRATION_MS);
   }
 
   isExpired(referenceDate = new Date()) {

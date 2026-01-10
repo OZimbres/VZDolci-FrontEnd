@@ -14,13 +14,28 @@ const isValidEmail = (value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
+const CLEANUP_INTERVAL_MS = 5 * 60_000; // Clean up every 5 minutes
 const requestCounters = new Map();
+let lastCleanup = Date.now();
 
+// NOTE: Rate limiting implementation is in-memory and per-instance (serverless).
+// This is NOT suitable for production distributed environments.
+// For production, implement a proper distributed rate limiter backed by shared storage
+// (e.g., Redis, Vercel KV) and enforce limits according to your security requirements.
 const checkRateLimit = (req) => {
-  // Nota: este limitador é in-memory e por instância (serverless). Para ambientes distribuídos,
-  // use armazenamento compartilhado (ex.: Redis/Vercel KV).
   const key = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
   const now = Date.now();
+  
+  // Periodic cleanup to prevent memory leaks
+  if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
+    for (const [k, v] of requestCounters.entries()) {
+      if (now > v.expires) {
+        requestCounters.delete(k);
+      }
+    }
+    lastCleanup = now;
+  }
+  
   const current = requestCounters.get(key) ?? { count: 0, expires: now + RATE_LIMIT_WINDOW_MS };
 
   if (now > current.expires) {

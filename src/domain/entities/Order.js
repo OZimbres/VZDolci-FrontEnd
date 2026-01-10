@@ -4,7 +4,11 @@ import { PaymentInfo } from '../valueObjects/PaymentInfo';
  * Order Entity
  * Represents a customer order in the VZ Dolci system
  * @follows Clean Architecture - Domain Layer
+ * 
  * Mutable por design para permitir anexar pagamento/status.
+ * Note: While this violates strict immutability principles, it's an intentional design choice
+ * to allow attaching payment info after order creation. Consider refactoring to return
+ * a new Order instance with updated payment info for better functional programming practices.
  */
 export class Order {
   constructor({
