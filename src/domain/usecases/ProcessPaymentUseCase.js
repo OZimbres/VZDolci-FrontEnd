@@ -45,6 +45,12 @@ export class ProcessPaymentUseCase {
       if (error?.stack) {
         wrappedError.originalStack = error.stack;
       }
+      if (typeof error?.status !== 'undefined') {
+        wrappedError.status = error.status;
+      }
+      if (typeof error?.details !== 'undefined') {
+        wrappedError.details = error.details;
+      }
       throw wrappedError;
     }
 

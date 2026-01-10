@@ -48,6 +48,7 @@ export class CustomerInfo {
 
   static isValidCPF(value) {
     const cpf = CustomerInfo.normalizeCPF(value);
+    // cpf is normalized to digits-only above, so this regex correctly rejects CPFs with all identical digits
     if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) {
       return false;
     }

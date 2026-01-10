@@ -15,6 +15,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // TODO: Implement proper webhook signature validation using Mercado Pago's HMAC algorithm
+    // For now, we check for required headers but don't validate the signature
+    // This is a security risk and should be fixed before production use
     if (!req.headers['x-request-id'] || !req.headers['x-signature']) {
       return res.status(400).json({ error: 'Assinatura do webhook ausente' });
     }
