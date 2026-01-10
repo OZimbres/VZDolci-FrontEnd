@@ -35,8 +35,9 @@ const checkRateLimit = (req) => {
   // Periodic cleanup in background (non-blocking)
   if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
     lastCleanup = now;
-    // Async cleanup to avoid blocking request
-    setImmediate(() => {
+    // Async cleanup to avoid blocking request (use setTimeout for broader compatibility)
+    const cleanupFn = typeof setImmediate !== 'undefined' ? setImmediate : (fn) => setTimeout(fn, 0);
+    cleanupFn(() => {
       for (const [k, v] of requestCounters.entries()) {
         if (Date.now() > v.expires) {
           requestCounters.delete(k);

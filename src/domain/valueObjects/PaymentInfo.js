@@ -17,8 +17,10 @@ export class PaymentInfo {
     qrCode = null,
     qrCodeBase64 = null,
     expiresAt = null,
-    // createdAt should use the gateway's timestamp when reconstructing from API responses.
-    // The default of new Date() should only apply when creating new payment records.
+    // createdAt should use the gateway's timestamp when reconstructing from API responses
+    // (e.g., when receiving payment data from Mercado Pago webhook or polling endpoint).
+    // The default of new Date() should only apply when creating new payment records locally
+    // before sending to the gateway.
     createdAt = new Date(),
     metadata = {}
   }) {
