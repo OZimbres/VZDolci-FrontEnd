@@ -573,6 +573,110 @@
   color: var(--secondary-color);
 }
 
+.payment-status-indicator {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 2px dashed var(--light-bg);
+  text-align: center;
+}
+
+.status-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--accent-color);
+}
+
+.payment-status-indicator {
+  --status-pulse-color: #fcd34d;
+  --status-success-color: #027a48;
+  --status-warning-color: #92400e;
+}
+
+.status-pulse {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--status-pulse-color);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-success {
+  color: var(--status-success-color);
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.6); opacity: 0.3; }
+  100% { transform: scale(1); opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-pulse {
+    animation: none;
+  }
+}
+
+.qr-code-timer {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fffaeb;
+  border-radius: 8px;
+  text-align: center;
+  color: var(--status-warning-color);
+}
+
+.qr-code-timer strong {
+  margin-left: 0.35rem;
+}
+
+.qr-code-timer.timer-warning {
+  border: 1px solid #f59e0b;
+}
+
+.qr-code-expired {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b42318;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.error-with-fallback {
+  padding: 1.5rem;
+  background: #fef3f2;
+  border: 2px solid #f04438;
+  border-radius: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.error-message {
+  margin: 0;
+  color: #b42318;
+  font-weight: 700;
+}
+
+.retry-hint {
+  margin: 0;
+  color: var(--accent-color);
+}
+
+.whatsapp-fallback-btn {
+  background: #25D366;
+  color: #fff;
+  border: none;
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;

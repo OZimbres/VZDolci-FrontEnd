@@ -1,0 +1,104 @@
+/* Customer Form Styles */
+.checkout-form-card {
+  background: #FFFFFF;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 8px 24px rgba(90, 42, 131, 0.08);
+  margin-bottom: 1.5rem;
+}
+
+.checkout-form-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--primary-color);
+  font-family: Palatino, 'Times New Roman', serif;
+}
+
+.form-helper {
+  margin: 0 0 1.25rem 0;
+  color: var(--accent-color);
+  font-size: 0.95rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.checkout-form-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.checkout-form-card input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--light-bg);
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.checkout-form-card input:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+}
+
+.field-error {
+  color: #b42318;
+  font-size: 0.85rem;
+}
+
+.field-wrapper {
+  position: relative;
+}
+
+.field-status {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--accent-color);
+}
+
+.status-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.status-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--light-bg);
+  color: var(--text-dark);
+  font-weight: bold;
+}
+
+.status-valid {
+  background: #ecfdf3;
+  color: #027a48;
+  border: 1px solid #a6f4c5;
+}
+
+.status-text.status-error {
+  color: #b42318;
+}
+
+.char-counter {
+  font-size: 0.8rem;
+  color: var(--accent-color);
+}
+
+@media (max-width: 640px) {
+  .checkout-form-card {
+    padding: 1.25rem;
+  }
+}
