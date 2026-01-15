@@ -103,12 +103,6 @@ export function CheckoutPage() {
     }
   }, [paymentInfo, pixQrCode, showPixForm, paymentMethod, gatewayError, isProcessingPayment]);
 
-  useEffect(() => {
-    if (paymentInfo?.paymentId && paymentInfo.paymentId !== paymentId) {
-      setPaymentId(paymentInfo.paymentId);
-    }
-  }, [paymentInfo, paymentId]);
-
   const stopPolling = useCallback(() => {
     setIsPolling(false);
     if (startPollingTimeoutRef.current) {
@@ -652,6 +646,11 @@ export function CheckoutPage() {
                                 src={pixQrCodeBase64 || paymentInfo?.qrCodeBase64}
                                 alt="QR Code PIX para pagamento"
                                 className="qrcode-image"
+                                onLoad={() => setFeedbackMessage(null)}
+                                onError={() => {
+                                  setFeedbackMessage('Falha ao carregar o QR Code PIX. Gere novamente.');
+                                  setPixQrCodeBase64(null);
+                                }}
                               />
                             </div>
                           ) : (
@@ -667,7 +666,7 @@ export function CheckoutPage() {
                             </div>
                           )}
                           <div className="pix-code-copy">
-                            <p>Código PIX (Pix Copia e Cola):</p>
+                            <p>Código PIX (PIX Copie e Cole):</p>
                             <div className="code-box">
                               <code>{pixQrCode.substring(0, 50)}...</code>
                               <button 

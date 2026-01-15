@@ -4,14 +4,16 @@ import { Payment } from 'mercadopago';
 import { ensureConfigured } from './utils/config.js';
 import { logger } from '../utils/logger.js';
 
+const WEBHOOK_PATH = '/api/mercadopago-webhook';
+
 const buildNotificationUrl = (req) => {
   const siteUrl = process.env.SITE_URL?.replace(/\/$/, '');
   if (siteUrl) {
-    return `${siteUrl}/api/mercadopago-webhook`;
+    return `${siteUrl}${WEBHOOK_PATH}`;
   }
   const protocol = req.headers['x-forwarded-proto'] || 'https';
   const host = req.headers.host;
-  return `${protocol}://${host}/api/webhooks/mercadopago`;
+  return `${protocol}://${host}${WEBHOOK_PATH}`;
 };
 
 const isValidEmail = (value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/u.test(value);

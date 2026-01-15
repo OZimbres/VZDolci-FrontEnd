@@ -18,7 +18,7 @@ export const ensureConfigured = () => {
   const token = process.env.MP_ACCESS_TOKEN || process.env.MERCADO_PAGO_ACCESS_TOKEN;
   
   if (!token) {
-    throw new Error('MP_ACCESS_TOKEN (ou MERCADO_PAGO_ACCESS_TOKEN) não configurado');
+    throw new Error('MP_ACCESS_TOKEN ou MERCADO_PAGO_ACCESS_TOKEN não configurados');
   }
   
   // Cria instância apenas na primeira chamada (Singleton Pattern)
