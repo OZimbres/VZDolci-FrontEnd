@@ -5,6 +5,10 @@ import { ensureConfigured } from './utils/config.js';
 import { logger } from '../utils/logger.js';
 
 const buildNotificationUrl = (req) => {
+  const siteUrl = process.env.SITE_URL?.replace(/\/$/, '');
+  if (siteUrl) {
+    return `${siteUrl}/api/mercadopago-webhook`;
+  }
   const protocol = req.headers['x-forwarded-proto'] || 'https';
   const host = req.headers.host;
   return `${protocol}://${host}/api/webhooks/mercadopago`;

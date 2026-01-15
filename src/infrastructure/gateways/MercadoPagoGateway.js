@@ -11,7 +11,7 @@ class PaymentGatewayError extends Error {
   }
 }
 
-const DEFAULT_API_BASE_URL = '/api/mercadopago';
+const DEFAULT_API_BASE_URL = '/api';
 
 export class MercadoPagoGateway extends PaymentGateway {
   constructor({ apiBaseUrl = DEFAULT_API_BASE_URL } = {}) {
@@ -27,7 +27,7 @@ export class MercadoPagoGateway extends PaymentGateway {
       throw new Error('Pedido é obrigatório para processar pagamento');
     }
 
-    const response = await fetch(`${this.apiBaseUrl}/create-payment`, {
+    const response = await fetch(`${this.apiBaseUrl}/create-pix-payment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
