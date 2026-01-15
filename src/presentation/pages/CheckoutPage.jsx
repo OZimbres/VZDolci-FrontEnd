@@ -475,6 +475,29 @@ export function CheckoutPage() {
   return (
     <>
       <SEO {...checkoutSeoProps} />
+      {isProcessingPayment && pixQrCode && (
+        <div className="payment-processing-overlay">
+          <div className="processing-card">
+            <div className="spinner"></div>
+            <h3>Aguardando Pagamento...</h3>
+            <p>Escaneie o QR Code ou cole o código PIX no app do seu banco</p>
+            <div className="processing-steps">
+              <div className="step active">
+                <span className="step-icon">✓</span>
+                <span>QR Code gerado</span>
+              </div>
+              <div className="step active">
+                <span className="step-icon">⏳</span>
+                <span>Aguardando pagamento</span>
+              </div>
+              <div className="step">
+                <span className="step-icon">⏱️</span>
+                <span>Confirmando...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {cart.length === 0 ? (
         <main id="main-content" tabIndex="-1">
           <section className="section checkout-section">

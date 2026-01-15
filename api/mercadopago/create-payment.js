@@ -6,14 +6,28 @@ import { logger } from '../utils/logger.js';
 
 const WEBHOOK_PATH = '/api/mercadopago-webhook';
 
-const buildNotificationUrl = (req) => {
+const getSiteBaseUrl = (req) => {
   const siteUrl = process.env.SITE_URL?.replace(/\/$/, '');
   if (siteUrl) {
-    return `${siteUrl}${WEBHOOK_PATH}`;
+    return siteUrl;
   }
   const protocol = req.headers['x-forwarded-proto'] || 'https';
   const host = req.headers.host;
-  return `${protocol}://${host}${WEBHOOK_PATH}`;
+  return `${protocol}://${host}`;
+};
+
+const buildNotificationUrl = (req) => {
+  const baseUrl = getSiteBaseUrl(req);
+  return `${baseUrl}${WEBHOOK_PATH}`;
+};
+
+const buildBackUrls = (req) => {
+  const baseUrl = getSiteBaseUrl(req);
+  return {
+    success: `${baseUrl}/checkout/success`,
+    failure: `${baseUrl}/checkout/failure`,
+    pending: `${baseUrl}/checkout/pending`
+  };
 };
 
 const isValidEmail = (value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/u.test(value);
@@ -136,6 +150,8 @@ export default async function handler(req, res) {
     payment_method_id: paymentData?.paymentMethod ?? paymentData?.method ?? 'pix',
     description,
     notification_url: buildNotificationUrl(req),
+    back_urls: buildBackUrls(req),
+    auto_return: 'approved',
     payer: mapPayer(order, paymentData),
     metadata: {
       orderId: order?.id ?? order?.orderId,
