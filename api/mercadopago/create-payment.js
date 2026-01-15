@@ -46,12 +46,8 @@ const checkRateLimit = (req) => {
     });
   }
   
+  // After lazy cleanup, get entry or create fresh one
   const entry = requestCounters.get(key) ?? { count: 0, expires: now + RATE_LIMIT_WINDOW_MS };
-
-  if (now > entry.expires) {
-    entry.count = 0;
-    entry.expires = now + RATE_LIMIT_WINDOW_MS;
-  }
 
   entry.count += 1;
   requestCounters.set(key, entry);
