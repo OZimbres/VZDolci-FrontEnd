@@ -3,7 +3,10 @@
 import mercadopago from 'mercadopago';
 import { ensureConfigured } from '../utils/config.js';
 
-const extractId = (req) => req.query?.id ?? req?.params?.id;
+const extractId = (req) => req.query?.id
+  ?? req.query?.paymentId
+  ?? req?.params?.id
+  ?? req?.params?.paymentId;
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {

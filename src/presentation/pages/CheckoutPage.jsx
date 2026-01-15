@@ -60,6 +60,7 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [showPixForm, setShowPixForm] = useState(false);
   const [pixQrCode, setPixQrCode] = useState(null);
+  const [pixQrCodeBase64, setPixQrCodeBase64] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [customerData, setCustomerData] = useState({ name: '', email: '', phone: '', cpf: '' });
@@ -70,6 +71,7 @@ export function CheckoutPage() {
   const [processPaymentUseCase, setProcessPaymentUseCase] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [orderId, setOrderId] = useState(null);
+  const [paymentId, setPaymentId] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const pollingIntervalRef = useRef(null);
@@ -299,6 +301,8 @@ export function CheckoutPage() {
     const pixCode = payment.qrCode || payment.qrCodeBase64;
 
     setPixQrCode(pixCode);
+    setPixQrCodeBase64(payment.qrCodeBase64 ?? null);
+    setPaymentId(payment.paymentId ?? payment.id ?? null);
     setPaymentInfo(payment);
     setShowConfirmationModal(true);
     setIsProcessingPayment(false);
@@ -318,11 +322,13 @@ export function CheckoutPage() {
     setIsProcessingPayment(false);
     setShowPixForm(false);
     setPixQrCode(null);
+    setPixQrCodeBase64(null);
     setPaymentMethod(null);
     setCustomerData({ name: '', email: '', phone: '', cpf: '' });
     setPaymentInfo(null);
     // Reset orderId to ensure fresh ID for next transaction
     setOrderId(null);
+    setPaymentId(null);
     setShowConfirmationModal(false);
   }, [clearCart, stopPolling]);
 
@@ -363,7 +369,7 @@ export function CheckoutPage() {
       if (isPollingRequestInFlightRef.current) return;
       isPollingRequestInFlightRef.current = true;
       try {
-        const response = await fetch(`/api/mercadopago/payment-status/${latestPaymentInfoRef.current.paymentId}`);
+        const response = await fetch(`/api/payment-status/${latestPaymentInfoRef.current.paymentId}`);
         const payload = await response.json().catch(() => ({}));
         if (response.ok && payload?.payment) {
           consecutiveFailures = 0;
@@ -413,8 +419,10 @@ export function CheckoutPage() {
       stopPolling();
       setFeedbackMessage('Pagamento não concluído. Você pode tentar novamente ou escolher outra forma.');
        setPixQrCode(null);
+       setPixQrCodeBase64(null);
        setPaymentInfo(null);
        setTimeRemaining(null);
+       setPaymentId(null);
     }
 
     return undefined;
@@ -632,18 +640,33 @@ export function CheckoutPage() {
                       ) : (
                         <div className="pix-qrcode-section">
                           <h4>QR Code PIX</h4>
-                          <div className="qrcode-placeholder">
-                            <div className="qrcode-box">
-                              <div className="qrcode-pattern">
-                                <div></div><div></div><div></div>
-                                <div></div><div></div><div></div>
-                                <div></div><div></div><div></div>
-                              </div>
-                              <p className="qrcode-label">QR CODE PIX</p>
+                          {pixQrCodeBase64 || paymentInfo?.qrCodeBase64 ? (
+                            <div className="qrcode-container">
+                              <img
+                                src={pixQrCodeBase64 || paymentInfo?.qrCodeBase64}
+                                alt="QR Code PIX para pagamento"
+                                className="qrcode-image"
+                                onLoad={() => setFeedbackMessage(null)}
+                                onError={() => {
+                                  setFeedbackMessage('Falha ao carregar o QR Code PIX. Gere novamente.');
+                                  setPixQrCodeBase64(null);
+                                }}
+                              />
                             </div>
-                          </div>
+                          ) : (
+                            <div className="qrcode-placeholder">
+                              <div className="qrcode-box">
+                                <div className="qrcode-pattern">
+                                  <div></div><div></div><div></div>
+                                  <div></div><div></div><div></div>
+                                  <div></div><div></div><div></div>
+                                </div>
+                                <p className="qrcode-label">QR CODE PIX</p>
+                              </div>
+                            </div>
+                          )}
                           <div className="pix-code-copy">
-                            <p>Código PIX:</p>
+                            <p>Código PIX (PIX Copie e Cole):</p>
                             <div className="code-box">
                               <code>{pixQrCode.substring(0, 50)}...</code>
                               <button 
@@ -653,7 +676,7 @@ export function CheckoutPage() {
                                   alert('Código PIX copiado!');
                                 }}
                               >
-                                📋 Copiar
+                                📋 Copiar código completo
                               </button>
                             </div>
                           </div>
@@ -672,6 +695,9 @@ export function CheckoutPage() {
                               <br /><strong>Telefone:</strong> {customerData.phone}
                               <br /><strong>CPF:</strong> {maskedCpf}
                             </p>
+                            <p className="payment-monitoring">
+                              ⏳ Aguardando confirmação do pagamento...
+                            </p>
                           </div>
                           <div className="payment-status-indicator">
                             {isPolling && paymentInfo?.status === 'pending' && (
@@ -679,6 +705,9 @@ export function CheckoutPage() {
                                 <div className="status-pulse"></div>
                                 <p>Aguardando pagamento...</p>
                                 <small>Atualizando automaticamente</small>
+                                {paymentId && (
+                                  <small>ID do pagamento: {paymentId}</small>
+                                )}
                               </div>
                             )}
                             {paymentInfo?.status === 'approved' && (
@@ -708,8 +737,10 @@ export function CheckoutPage() {
                                 onClick={() => {
                                   stopPolling();
                                   setPixQrCode(null);
+                                  setPixQrCodeBase64(null);
                                   setPaymentInfo(null);
                                   setTimeRemaining(null);
+                                  setPaymentId(null);
                                   setIsProcessingPayment(false);
                                 }}
                               >
