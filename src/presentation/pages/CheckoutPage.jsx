@@ -475,7 +475,7 @@ export function CheckoutPage() {
   return (
     <>
       <SEO {...checkoutSeoProps} />
-      {isProcessingPayment && pixQrCode && (
+      {isProcessingPayment && (
         <div className="payment-processing-overlay">
           <div className="processing-card">
             <div className="spinner"></div>

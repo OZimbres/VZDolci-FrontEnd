@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SEO } from '../components/common/SEO';
+import { openWhatsAppWithMessage } from '../utils/whatsapp';
 import './CheckoutResultPage.css';
 
 export function CheckoutPendingPage() {
@@ -56,9 +57,8 @@ export function CheckoutPendingPage() {
                 <button
                   className="btn btn-secondary"
                   onClick={() => {
-                    const whatsapp = import.meta.env.VITE_WHATSAPP_NUMBER;
                     const message = `Olá! Meu pagamento (ID: ${paymentId ?? 'N/A'}) está pendente. Gostaria de verificar o status.`;
-                    window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
+                    openWhatsAppWithMessage(message);
                   }}
                 >
                   Falar no WhatsApp

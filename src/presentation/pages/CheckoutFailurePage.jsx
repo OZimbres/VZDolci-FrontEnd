@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SEO } from '../components/common/SEO';
+import { openWhatsAppWithMessage } from '../utils/whatsapp';
 import './CheckoutResultPage.css';
 
 export function CheckoutFailurePage() {
@@ -56,9 +57,8 @@ export function CheckoutFailurePage() {
                 <button
                   className="btn btn-secondary"
                   onClick={() => {
-                    const whatsapp = import.meta.env.VITE_WHATSAPP_NUMBER;
                     const message = 'Olá! Tive problemas com o pagamento e gostaria de finalizar meu pedido.';
-                    window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
+                    openWhatsAppWithMessage(message);
                   }}
                 >
                   Pagar via WhatsApp

@@ -10,7 +10,6 @@ export function CheckoutSuccessPage() {
   const { clearCart } = useCart();
 
   const paymentId = searchParams.get('payment_id');
-  const status = searchParams.get('status');
   const merchantOrderId = searchParams.get('merchant_order_id');
 
   useEffect(() => {
@@ -42,9 +41,6 @@ export function CheckoutSuccessPage() {
                   <p><strong>ID do Pagamento:</strong> {paymentId}</p>
                   {merchantOrderId && (
                     <p><strong>Número do Pedido:</strong> {merchantOrderId}</p>
-                  )}
-                  {status && (
-                    <p><strong>Status:</strong> {status}</p>
                   )}
                 </div>
               )}
