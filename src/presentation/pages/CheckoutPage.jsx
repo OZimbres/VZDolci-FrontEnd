@@ -24,6 +24,10 @@ const checkoutSeoProps = {
 /**
  * Monta um payload de entrega provisório respeitando tempo mínimo
  * e evitando finais de semana. Endereço definitivo é combinado após pagamento.
+ * 
+ * Note: This creates an Order with provisional/incomplete shipping information.
+ * The ShippingInfo value object will accept these values, but they are placeholders.
+ * Final address details should be collected and confirmed after payment.
  */
 const buildShippingData = () => {
   const deliveryDate = new Date();
@@ -154,9 +158,19 @@ export function CheckoutPage() {
 
   const isPopupBlocked = (popupWindow) => !popupWindow || popupWindow.closed || typeof popupWindow.closed === 'undefined';
 
-  const generateOrderId = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-    ? crypto.randomUUID()
-    : `ORDER-${Date.now()}`;
+  const generateOrderId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    // Fallback: Use crypto.getRandomValues for better entropy if available
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const array = new Uint32Array(2);
+      crypto.getRandomValues(array);
+      return `ORDER-${Date.now()}-${array[0].toString(36)}${array[1].toString(36)}`;
+    }
+    // Last resort fallback for older browsers
+    return `ORDER-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  };
 
   const handleWhatsAppCheckout = () => {
     setFeedbackMessage(null);
@@ -254,6 +268,7 @@ export function CheckoutPage() {
           errorMessage = 'Muitas tentativas. Aguarde 1 minuto antes de gerar um novo pagamento.';
         }
 
+        // Preserve orderId state for retry attempts
         setOrderId(orderId ?? resolvedOrderId);
 
         setFeedbackMessage(
@@ -274,9 +289,14 @@ export function CheckoutPage() {
       }
     }
 
-    const pixCode = payment?.qrCode
-      ?? payment?.qrCodeBase64
-      ?? `00020126580014BR.GOV.BCB.PIX0136${Date.now()}520400005303986540${total.toFixed(2)}5802BR5913VZ Dolci6009SAO PAULO62070503***6304`;
+    // Fallback QR code should only be used in development/testing
+    if ((!payment?.qrCode || payment.qrCode === '') && (!payment?.qrCodeBase64 || payment.qrCodeBase64 === '')) {
+      setFeedbackMessage('Erro ao gerar código PIX. Tente novamente ou escolha outra forma de pagamento.');
+      setIsProcessingPayment(false);
+      return;
+    }
+    
+    const pixCode = payment.qrCode || payment.qrCodeBase64;
 
     setPixQrCode(pixCode);
     setPaymentInfo(payment);
@@ -301,6 +321,7 @@ export function CheckoutPage() {
     setPaymentMethod(null);
     setCustomerData({ name: '', email: '', phone: '', cpf: '' });
     setPaymentInfo(null);
+    // Reset orderId to ensure fresh ID for next transaction
     setOrderId(null);
     setShowConfirmationModal(false);
   }, [clearCart, stopPolling]);
@@ -339,16 +360,17 @@ export function CheckoutPage() {
         return;
       }
 
-      const currentPaymentInfo = latestPaymentInfoRef.current;
-
       if (isPollingRequestInFlightRef.current) return;
       isPollingRequestInFlightRef.current = true;
       try {
-        const response = await fetch(`/api/mercadopago/payment-status/${currentPaymentInfo.paymentId}`);
+        const response = await fetch(`/api/mercadopago/payment-status/${latestPaymentInfoRef.current.paymentId}`);
         const payload = await response.json().catch(() => ({}));
         if (response.ok && payload?.payment) {
           consecutiveFailures = 0;
-          setPaymentInfo((prev) => ({ ...prev, ...payload.payment }));
+          // Check shouldStopPolling again after async operation completes
+          if (!shouldStopPolling()) {
+            setPaymentInfo((prev) => ({ ...prev, ...payload.payment }));
+          }
         } else {
           consecutiveFailures += 1;
         }

@@ -33,8 +33,12 @@ export default async function handler(req, res) {
 
   try {
     const payload = { payment_id: paymentId };
-    if (amount) {
-      payload.amount = Number(amount);
+    if (amount !== undefined && amount !== null && amount !== '') {
+      const numericAmount = Number(amount);
+      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        return res.status(400).json({ error: 'amount deve ser um número positivo' });
+      }
+      payload.amount = numericAmount;
     }
 
     const mpResponse = await mercadopago.refund.create(payload);

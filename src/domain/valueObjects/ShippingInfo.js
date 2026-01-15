@@ -45,7 +45,7 @@ export class ShippingInfo {
 
     const parsedDeliveryDate = ShippingInfo.parseDate(deliveryDate);
     if (!ShippingInfo.hasMinimumLeadTime(parsedDeliveryDate)) {
-      throw new Error('Entrega indisponível para a data informada (mínimo 24h e sem finais de semana)');
+      throw new Error('Entrega indisponível para a data informada (mínimo 24h de antecedência, ao menos 1 dia útil e sem finais de semana)');
     }
 
     this.street = street.trim();

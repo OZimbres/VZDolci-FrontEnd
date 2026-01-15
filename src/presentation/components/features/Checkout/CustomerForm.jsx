@@ -139,9 +139,9 @@ export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChang
     validateField('cpf', data.cpf);
     validateField('email', data.email);
     validateField('phone', data.phone);
-    // validateField is stable (useCallback with empty deps)
+    // validateField is memoized with useCallback and empty deps, so it's stable and omitted here
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [data.cpf, data.email, data.phone]);
 
   return (
     <div className="checkout-form-card" aria-label="Dados do cliente">

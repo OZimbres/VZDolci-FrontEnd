@@ -14,24 +14,45 @@ const isValidEmail = (value) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
+const CLEANUP_INTERVAL_MS = 5 * 60_000; // Clean up every 5 minutes
 const requestCounters = new Map();
+let lastCleanup = Date.now();
 
+// NOTE: Rate limiting implementation is in-memory and per-instance (serverless).
+// This is NOT suitable for production distributed environments.
+// For production, implement a proper distributed rate limiter backed by shared storage
+// (e.g., Redis, Vercel KV) and enforce limits according to your security requirements.
 const checkRateLimit = (req) => {
-  // Nota: este limitador é in-memory e por instância (serverless). Para ambientes distribuídos,
-  // use armazenamento compartilhado (ex.: Redis/Vercel KV).
   const key = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
   const now = Date.now();
-  const current = requestCounters.get(key) ?? { count: 0, expires: now + RATE_LIMIT_WINDOW_MS };
-
-  if (now > current.expires) {
-    current.count = 0;
-    current.expires = now + RATE_LIMIT_WINDOW_MS;
+  
+  // Lazy cleanup: remove expired entry when accessed
+  const current = requestCounters.get(key);
+  if (current && now > current.expires) {
+    requestCounters.delete(key);
   }
+  
+  // Periodic cleanup in background (non-blocking)
+  if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
+    lastCleanup = now;
+    // Async cleanup to avoid blocking request (use setTimeout for broader compatibility)
+    const cleanupFn = typeof setImmediate !== 'undefined' ? setImmediate : (fn) => setTimeout(fn, 0);
+    cleanupFn(() => {
+      for (const [k, v] of requestCounters.entries()) {
+        if (Date.now() > v.expires) {
+          requestCounters.delete(k);
+        }
+      }
+    });
+  }
+  
+  // After lazy cleanup, get entry or create fresh one
+  const entry = requestCounters.get(key) ?? { count: 0, expires: now + RATE_LIMIT_WINDOW_MS };
 
-  current.count += 1;
-  requestCounters.set(key, current);
+  entry.count += 1;
+  requestCounters.set(key, entry);
 
-  return current.count <= RATE_LIMIT_MAX;
+  return entry.count <= RATE_LIMIT_MAX;
 };
 
 const mapPayer = (order, paymentData) => {
