@@ -1,255 +1,215 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { CustomerInfo } from '../../../../domain/valueObjects/CustomerInfo';
+import { useEffect, useState } from 'react';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
 import './CustomerForm.css';
 
-const EMPTY_CUSTOMER = {
-  name: '',
-  email: '',
-  phone: '',
-  cpf: ''
-};
-
-const formatPhone = (value) => {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
-};
-
-const formatCPF = (value) => {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-  if (digits.length <= 9) {
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-  }
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-};
-
-const validateCustomer = (payload) => {
-  const errors = {};
-  const name = payload.name?.trim() ?? '';
-  const email = payload.email?.trim() ?? '';
-  const phone = payload.phone?.trim() ?? '';
-  const cpf = payload.cpf?.trim() ?? '';
-
-  if (!name) errors.name = 'Nome do cliente é obrigatório';
-  if (!email || !CustomerInfo.isValidEmail(email)) errors.email = 'Email inválido';
-  if (!phone || !CustomerInfo.isValidPhone(phone)) errors.phone = 'Telefone inválido';
-  if (!cpf || !CustomerInfo.isValidCPF(cpf)) errors.cpf = 'CPF inválido';
-
-  if (Object.keys(errors).length === 0) {
-    try {
-      new CustomerInfo(payload);
-    } catch (error) {
-      return { general: error.message };
-    }
-  }
-
-  return errors;
-};
-
 /**
- * Customer Form Component
+ * CustomerForm Component
+ * Formulário de dados do cliente com validação inteligente
+ * 
+ * Regras de validação:
+ * - Nome:  OBRIGATÓRIO (mínimo 3 caracteres)
+ * - Email: OPCIONAL (mas se preenchido, deve ser válido)
+ * - Telefone: OPCIONAL (mas se preenchido, deve ter ≥10 dígitos)
+ * - CPF: TOTALMENTE OPCIONAL (mas se preenchido, deve ter 11 dígitos)
+ * - REGRA PRINCIPAL: Nome + (Email OU Telefone válido)
  */
-export function CustomerForm({ value = EMPTY_CUSTOMER, onChange, onValidityChange }) {
-  const [errors, setErrors] = useState({});
-  const [fieldStatus, setFieldStatus] = useState({});
-  const data = useMemo(() => ({ ...EMPTY_CUSTOMER, ...value }), [value]);
-  const lastValidityRef = useRef(null);
+export function CustomerForm({ value, onChange, onValidityChange }) {
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    phone: false,
+    cpf: false
+  });
 
+  const [validation, setValidation] = useState({
+    isNameValid: false,
+    isEmailValid: true,
+    isPhoneValid: true,
+    isCpfValid: true,
+    hasEmail: false,
+    hasPhone: false,
+    hasAtLeastOneContact: false
+  });
+
+  // Validação em tempo real
   useEffect(() => {
-    setErrors(validateCustomer(data));
-  }, [data]);
+    // Nome:  obrigatório, mínimo 3 caracteres
+    const nameValue = value.name?.trim() || '';
+    const isNameValid = nameValue.length >= 3;
 
-  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
+    // Email: opcional, mas se preenchido deve ser válido
+    const emailValue = value.email?.trim() || '';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isEmailValid = emailValue.length === 0 || emailRegex.test(emailValue);
+    const hasEmail = emailValue.length > 0 && emailRegex.test(emailValue);
 
-  useEffect(() => {
-    if (lastValidityRef.current !== isValid) {
-      lastValidityRef.current = isValid;
-      onValidityChange?.(isValid);
-    }
-  }, [errors, onValidityChange, isValid]);
+    // Telefone: opcional, mas se preenchido deve ter ≥10 dígitos
+    const phoneDigits = value.phone?.replace(/\D/g, '') || '';
+    const isPhoneValid = phoneDigits.length === 0 || phoneDigits.length >= 10;
+    const hasPhone = phoneDigits.length >= 10;
 
-  const validateField = useCallback((field, value) => {
-    const nextStatus = {};
-    if (field === 'cpf') {
-      const digits = CustomerInfo.normalizeCPF(value);
-      const remaining = Math.max(0, 11 - digits.length);
-      if (!digits) {
-        nextStatus.cpf = { state: 'empty', helper: 'Digite seu CPF', remaining: 11 };
-      } else if (remaining > 0) {
-        nextStatus.cpf = { state: 'typing', helper: `Faltam ${remaining} dígitos`, remaining };
-      } else {
-        const valid = CustomerInfo.isValidCPF(value);
-        nextStatus.cpf = {
-          state: valid ? 'valid' : 'invalid',
-          helper: valid ? 'CPF válido' : 'CPF inválido',
-          remaining: 0
-        };
-      }
-    }
+    // CPF: totalmente opcional, mas se preenchido deve ter 11 dígitos
+    const cpfDigits = value.cpf?.replace(/\D/g, '') || '';
+    const isCpfValid = cpfDigits.length === 0 || cpfDigits.length === 11;
 
-    if (field === 'email') {
-      if (!value) {
-        nextStatus.email = { state: 'empty', helper: 'Digite seu email' };
-      } else {
-        const valid = CustomerInfo.isValidEmail(value);
-        nextStatus.email = {
-          state: valid ? 'valid' : 'invalid',
-          helper: valid ? 'Email válido' : 'Email inválido'
-        };
-      }
-    }
+    // Deve ter ao menos um contato válido (email OU telefone)
+    const hasAtLeastOneContact = hasEmail || hasPhone;
 
-    if (field === 'phone') {
-      const digits = CustomerInfo.normalizePhone(value);
-      const remaining = Math.max(0, 11 - digits.length);
-      if (!digits) {
-        nextStatus.phone = { state: 'empty', helper: 'Digite seu telefone', remaining: 11 };
-      } else if (remaining > 0) {
-        nextStatus.phone = { state: 'typing', helper: `Faltam ${remaining} dígitos`, remaining };
-      } else {
-        const valid = CustomerInfo.isValidPhone(value);
-        nextStatus.phone = {
-          state: valid ? 'valid' : 'invalid',
-          helper: valid ? 'Telefone válido' : 'Telefone inválido',
-          remaining: 0
-        };
-      }
-    }
+    // Validação final
+    const isValid = isNameValid &&
+                    hasAtLeastOneContact &&
+                    isEmailValid &&
+                    isPhoneValid &&
+                    isCpfValid;
 
-    if (Object.keys(nextStatus).length > 0) {
-      setFieldStatus((prev) => ({ ...prev, ...nextStatus }));
-    }
-  }, []);
+    setValidation({
+      isNameValid,
+      isEmailValid,
+      isPhoneValid,
+      isCpfValid,
+      hasEmail,
+      hasPhone,
+      hasAtLeastOneContact
+    });
 
-  const handleChange = (field, formatter) => (event) => {
-    const formattedValue = formatter ? formatter(event.target.value) : event.target.value;
-    const nextData = { ...data, [field]: formattedValue };
-    validateField(field, formattedValue);
-    onChange?.(nextData);
+    onValidityChange(isValid);
+  }, [value, onValidityChange]);
+
+  const handleBlur = (field) => {
+    setTouched({ ...touched, [field]: true });
   };
 
-  useEffect(() => {
-    validateField('cpf', data.cpf);
-    validateField('email', data.email);
-    validateField('phone', data.phone);
-    // validateField is memoized with useCallback and empty deps, so it's stable and omitted here
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.cpf, data.email, data.phone]);
+  const formatCpf = (cpf) => {
+    const digits = cpf.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+  };
+
+  const handleCpfChange = (e) => {
+    const formatted = formatCpf(e.target.value);
+    onChange({ ...value, cpf: formatted });
+  };
 
   return (
-    <div className="checkout-form-card" aria-label="Dados do cliente">
+    <div className="customer-form">
       <h3>Dados do Cliente</h3>
-      <p className="form-helper">Preencha todas as informações para avançar para o pagamento.</p>
-      <div className="form-grid">
+      <p className="form-instructions">
+        Preencha seu nome e ao menos <strong>um contato</strong> (email ou telefone)
+      </p>
+
+      {/* Nome Completo - OBRIGATÓRIO */}
+      <div className="form-field">
         <label htmlFor="customer-name">
-          Nome completo
-          <input
-            id="customer-name"
-            name="name"
-            type="text"
-            value={data.name}
-            onChange={handleChange('name')}
-            placeholder="Digite seu nome completo"
-            autoComplete="name"
-            required
-          />
-          {errors.name && <span className="field-error">{errors.name}</span>}
+          Nome completo <span className="required">*</span>
         </label>
-
-        <label htmlFor="customer-email" className="field-wrapper">
-          Email
-          <div className="field-status">
-            <span
-              className={`status-icon ${fieldStatus.email?.state === 'valid' ? 'status-valid' : ''}`}
-              aria-label={fieldStatus.email?.state === 'valid' ? 'Email válido' : 'Email em preenchimento'}
-            >
-              {fieldStatus.email?.state === 'valid' ? '✓' : '•'}
-            </span>
-            <small className={`status-text ${fieldStatus.email?.state === 'invalid' ? 'status-error' : ''}`}>
-              {fieldStatus.email?.helper || 'Digite seu email'}
-            </small>
-          </div>
-          <input
-            id="customer-email"
-            name="email"
-            type="email"
-            value={data.email}
-            onChange={handleChange('email')}
-            placeholder="seuemail@dominio.com"
-            autoComplete="email"
-            required
-          />
-          {errors.email && <span className="field-error">{errors.email}</span>}
-        </label>
-
-        <label htmlFor="customer-phone" className="field-wrapper">
-          Telefone
-          <div className="field-status">
-            <span
-              className={`status-icon ${fieldStatus.phone?.state === 'valid' ? 'status-valid' : ''}`}
-              aria-label={fieldStatus.phone?.state === 'valid' ? 'Telefone válido' : 'Telefone em preenchimento'}
-            >
-              {fieldStatus.phone?.state === 'valid' ? '✓' : '•'}
-            </span>
-            <small className={`status-text ${fieldStatus.phone?.state === 'invalid' ? 'status-error' : ''}`}>
-              {fieldStatus.phone?.helper || 'Digite seu telefone'}
-            </small>
-          </div>
-          <input
-            id="customer-phone"
-            name="phone"
-            type="tel"
-            value={data.phone}
-            onChange={handleChange('phone', formatPhone)}
-            placeholder="(11) 91234-5678"
-            autoComplete="tel"
-            required
-          />
-          {errors.phone && <span className="field-error">{errors.phone}</span>}
-        </label>
-
-        <label htmlFor="customer-cpf" className="field-wrapper">
-          CPF
-          <div className="field-status">
-            <span
-              className={`status-icon ${fieldStatus.cpf?.state === 'valid' ? 'status-valid' : ''}`}
-              aria-label={fieldStatus.cpf?.state === 'valid' ? 'CPF válido' : 'CPF em preenchimento'}
-            >
-              {fieldStatus.cpf?.state === 'valid' ? '✓' : '•'}
-            </span>
-            <div className="status-meta">
-              <small className={`status-text ${fieldStatus.cpf?.state === 'invalid' ? 'status-error' : ''}`}>
-                {fieldStatus.cpf?.helper || 'Digite seu CPF'}
-              </small>
-              {typeof fieldStatus.cpf?.remaining === 'number' && fieldStatus.cpf?.remaining > 0 && (
-                <span className="char-counter">
-                  {fieldStatus.cpf.remaining} dígitos restantes
-                </span>
-              )}
-            </div>
-          </div>
-          <input
-            id="customer-cpf"
-            name="cpf"
-            type="text"
-            value={data.cpf}
-            onChange={handleChange('cpf', formatCPF)}
-            placeholder="000.000.000-00"
-            inputMode="numeric"
-            autoComplete="off"
-            required
-          />
-          {errors.cpf && <span className="field-error">{errors.cpf}</span>}
-        </label>
+        <input
+          type="text"
+          id="customer-name"
+          name="name"
+          placeholder="Digite seu nome completo"
+          value={value.name}
+          onChange={(e) => onChange({ ...value, name: e.target.value })}
+          onBlur={() => handleBlur('name')}
+          required
+          aria-required="true"
+          aria-invalid={touched.name && !validation.isNameValid}
+          autoComplete="name"
+        />
+        {touched.name && !validation.isNameValid && value.name && (
+          <span className="field-error" role="alert">
+            Nome deve ter ao menos 3 caracteres
+          </span>
+        )}
       </div>
-      {errors.general && <span className="field-error">{errors.general}</span>}
+
+      {/* Email - OPCIONAL */}
+      <div className="form-field">
+        <label htmlFor="customer-email">
+          Email <span className="optional">(opcional)</span>
+        </label>
+        <input
+          type="email"
+          id="customer-email"
+          name="email"
+          placeholder="seuemail@dominio.com"
+          value={value.email}
+          onChange={(e) => onChange({ ...value, email: e.target.value })}
+          onBlur={() => handleBlur('email')}
+          aria-required="false"
+          aria-invalid={touched.email && !validation.isEmailValid}
+          autoComplete="email"
+        />
+        {touched.email && !validation.isEmailValid && value.email && (
+          <span className="field-error" role="alert">
+            Email inválido
+          </span>
+        )}
+      </div>
+
+      {/* Telefone - OPCIONAL */}
+      <div className="form-field">
+        <label htmlFor="customer-phone">
+          Telefone <span className="optional">(opcional)</span>
+        </label>
+        <PhoneInput
+          defaultCountry="br"
+          placeholder="(11) 91234-5678"
+          value={value.phone}
+          onChange={(phone) => onChange({ ...value, phone })}
+          onBlur={() => handleBlur('phone')}
+          inputProps={{
+            id: 'customer-phone',
+            name: 'phone',
+            'aria-required': 'false',
+            'aria-invalid': touched.phone && !validation.isPhoneValid,
+            autoComplete: 'tel'
+          }}
+        />
+        {touched.phone && !validation.isPhoneValid && value.phone && (
+          <span className="field-error" role="alert">
+            Telefone deve ter ao menos 10 dígitos
+          </span>
+        )}
+      </div>
+
+      {/* Aviso:  precisa de ao menos um contato */}
+      {touched.email && touched.phone && !validation.hasAtLeastOneContact && (value.email || value.phone) && (
+        <div className="warning-message" role="alert">
+          ⚠️ Preencha ao menos um contato válido (email ou telefone) para continuar
+        </div>
+      )}
+
+      {/* CPF - TOTALMENTE OPCIONAL */}
+      <div className="form-field">
+        <label htmlFor="customer-cpf">
+          CPF <span className="optional">(opcional - para nota fiscal)</span>
+        </label>
+        <input
+          type="text"
+          id="customer-cpf"
+          name="cpf"
+          placeholder="000.000.000-00"
+          value={value.cpf}
+          onChange={handleCpfChange}
+          onBlur={() => handleBlur('cpf')}
+          maxLength="14"
+          aria-required="false"
+          aria-invalid={touched.cpf && !validation.isCpfValid}
+          autoComplete="off"
+        />
+        {touched.cpf && !validation.isCpfValid && value.cpf && (
+          <span className="field-error" role="alert">
+            CPF deve ter 11 dígitos
+          </span>
+        )}
+        <small className="field-hint">
+          O CPF é opcional.  Informe apenas se precisar de nota fiscal.
+        </small>
+      </div>
     </div>
   );
 }
@@ -263,4 +223,10 @@ CustomerForm.propTypes = {
   }),
   onChange: PropTypes.func,
   onValidityChange: PropTypes.func
+};
+
+CustomerForm.defaultProps = {
+  value: { name: '', email: '', phone: '', cpf: '' },
+  onChange: () => {},
+  onValidityChange: () => {}
 };

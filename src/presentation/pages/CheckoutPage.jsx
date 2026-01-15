@@ -180,7 +180,7 @@ export function CheckoutPage() {
     }
 
     if (!isCustomerValid) {
-      setFeedbackMessage('Complete os dados do cliente para finalizar via WhatsApp. Verifique nome, email, telefone e CPF.');
+      setFeedbackMessage('Complete os dados do cliente:  nome completo e ao menos um contato (email ou telefone válido).');
       return;
     }
 
@@ -214,7 +214,7 @@ export function CheckoutPage() {
     }
 
     if (!isCustomerValid) {
-      setFeedbackMessage('Complete os dados do cliente (nome, email, telefone e CPF válidos) antes de gerar o PIX.');
+      setFeedbackMessage('Complete os dados do cliente: nome completo e ao menos um contato (email ou telefone válido) antes de gerar o PIX.');
       return;
     }
 
