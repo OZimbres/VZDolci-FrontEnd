@@ -47,11 +47,6 @@
   border-color: var(--secondary-color);
 }
 
-.field-error {
-  color: #b42318;
-  font-size: 0.85rem;
-}
-
 .field-wrapper {
   position: relative;
 }
@@ -100,5 +95,144 @@
 @media (max-width: 640px) {
   .checkout-form-card {
     padding: 1.25rem;
+  }
+}
+
+/* Customer Form Styles */
+.customer-form {
+  margin-bottom: 2rem;
+}
+
+.customer-form h3 {
+  color: var(--primary-color, #5a2a83);
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.form-instructions {
+  color: var(--accent-color, #5a2a83);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.form-instructions strong {
+  color: var(--secondary-color, #d4af37);
+  font-weight: 600;
+}
+
+/* Form Fields */
+.form-field {
+  margin-bottom: 1.5rem;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color, #5a2a83);
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.form-field input[type="text"],
+.form-field input[type="email"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  font-family: inherit;
+}
+
+.form-field input:focus {
+  outline: none;
+  border-color: var(--secondary-color, #d4af37);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.form-field input[aria-invalid="true"] {
+  border-color: #d32f2f;
+}
+
+/* Phone Input Wrapper */
+.form-field .react-international-phone-input-container {
+  width: 100%;
+}
+
+.form-field .react-international-phone-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-field .react-international-phone-input:focus {
+  outline: none;
+  border-color: var(--secondary-color, #d4af37);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+/* Field Indicators */
+.required {
+  color: #d32f2f;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.optional {
+  color: #757575;
+  font-size: 0.875rem;
+  font-weight: normal;
+  margin-left: 4px;
+}
+
+/* Field Messages */
+.field-error {
+  display: block;
+  color: #d32f2f;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.field-hint {
+  display: block;
+  color: #757575;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+/* Warning Message */
+.warning-message {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 12px 16px;
+  margin: 12px 0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #856404;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .customer-form h3 {
+    font-size: 1.25rem;
+  }
+
+  .form-instructions {
+    font-size: 0.875rem;
+  }
+
+  .form-field input[type="text"],
+  .form-field input[type="email"],
+  .form-field .react-international-phone-input {
+    font-size: 0.9375rem;
   }
 }
