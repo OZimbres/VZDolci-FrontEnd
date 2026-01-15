@@ -1,6 +1,6 @@
 /* eslint-env node */
 /* global process */
-import mercadopago from 'mercadopago';
+import { Payment } from 'mercadopago';
 import { ensureConfigured } from './utils/config.js';
 import { logger } from '../utils/logger.js';
 
@@ -98,8 +98,9 @@ export default async function handler(req, res) {
     });
   }
 
+  let client;
   try {
-    ensureConfigured();
+    client = ensureConfigured();
   } catch (error) {
     logger.error('Mercado Pago não configurado', { error: error.message });
     return res.status(500).json({ error: error.message });
@@ -142,8 +143,12 @@ export default async function handler(req, res) {
       amount: paymentPayload.transaction_amount,
       payerEmail: paymentPayload.payer?.email
     });
-    const mpResponse = await mercadopago.payment.create(paymentPayload);
-    const payment = mpResponse?.body ?? mpResponse;
+    
+    // Cria instância do Payment client usando o client configurado
+    const paymentClient = new Payment(client);
+    
+    // Na versão 2.x do SDK, o payload vai dentro de { body: ... }
+    const payment = await paymentClient.create({ body: paymentPayload });
 
     const normalized = {
       paymentId: payment?.id,
@@ -162,22 +167,24 @@ export default async function handler(req, res) {
       status: normalized.status,
       orderId: normalized.metadata?.orderId
     });
-
+    
     return res.status(201).json({ payment: normalized });
   } catch (error) {
     const safeError = {
       message: error?.message,
       code: error?.code,
       name: error?.name,
-      status: error?.status ?? error?.response?.status
+      status: error?.status ?? error?.statusCode ?? error?.response?.status
     };
     logger.error('Erro ao criar pagamento Mercado Pago', { error: safeError });
-    const rawDetails = error?.response?.body;
+    
+    // Na versão 2.x, erros vêm em error.cause ou error.response
+    const rawDetails = error?.cause ?? error?.response;
     const safeDetails = {
       message: rawDetails?.message || error?.message || 'Erro ao processar pagamento'
     };
 
-    const mpStatus = error?.status ?? error?.response?.status;
+    const mpStatus = safeError.status;
     let httpStatus = 502;
     if (typeof mpStatus === 'number') {
       if (mpStatus >= 400 && mpStatus < 500) {
