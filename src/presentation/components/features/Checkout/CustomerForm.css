@@ -47,11 +47,6 @@
   border-color: var(--secondary-color);
 }
 
-.field-error {
-  color: #b42318;
-  font-size: 0.85rem;
-}
-
 .field-wrapper {
   position: relative;
 }

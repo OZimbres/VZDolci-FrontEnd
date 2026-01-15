@@ -180,7 +180,7 @@ export function CheckoutPage() {
     }
 
     if (!isCustomerValid) {
-      setFeedbackMessage('Complete os dados do cliente:  nome completo e ao menos um contato (email ou telefone válido).');
+      setFeedbackMessage('Complete os dados do cliente: nome completo e ao menos um contato (email ou telefone válido).');
       return;
     }
 

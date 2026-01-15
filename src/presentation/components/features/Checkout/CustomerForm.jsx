@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
 import './CustomerForm.css';
@@ -16,6 +16,7 @@ import './CustomerForm.css';
  * - REGRA PRINCIPAL: Nome + (Email OU Telefone válido)
  */
 export function CustomerForm({ value, onChange, onValidityChange }) {
+  const onValidityChangeRef = useRef(onValidityChange);
   const [touched, setTouched] = useState({
     name: false,
     email: false,
@@ -33,9 +34,13 @@ export function CustomerForm({ value, onChange, onValidityChange }) {
     hasAtLeastOneContact: false
   });
 
+  useEffect(() => {
+    onValidityChangeRef.current = onValidityChange;
+  }, [onValidityChange]);
+
   // Validação em tempo real
   useEffect(() => {
-    // Nome:  obrigatório, mínimo 3 caracteres
+    // Nome: obrigatório, mínimo 3 caracteres
     const nameValue = value.name?.trim() || '';
     const isNameValid = nameValue.length >= 3;
 
@@ -74,8 +79,8 @@ export function CustomerForm({ value, onChange, onValidityChange }) {
       hasAtLeastOneContact
     });
 
-    onValidityChange(isValid);
-  }, [value, onValidityChange]);
+    onValidityChangeRef.current?.(isValid);
+  }, [value]);
 
   const handleBlur = (field) => {
     setTouched({ ...touched, [field]: true });
@@ -176,7 +181,7 @@ export function CustomerForm({ value, onChange, onValidityChange }) {
         )}
       </div>
 
-      {/* Aviso:  precisa de ao menos um contato */}
+      {/* Aviso: precisa de ao menos um contato */}
       {touched.email && touched.phone && !validation.hasAtLeastOneContact && (value.email || value.phone) && (
         <div className="warning-message" role="alert">
           ⚠️ Preencha ao menos um contato válido (email ou telefone) para continuar
@@ -207,7 +212,7 @@ export function CustomerForm({ value, onChange, onValidityChange }) {
           </span>
         )}
         <small className="field-hint">
-          O CPF é opcional.  Informe apenas se precisar de nota fiscal.
+          O CPF é opcional. Informe apenas se precisar de nota fiscal.
         </small>
       </div>
     </div>
