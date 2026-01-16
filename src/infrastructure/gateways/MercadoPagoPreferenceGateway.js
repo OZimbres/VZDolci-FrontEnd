@@ -20,7 +20,7 @@ export class MercadoPagoPreferenceGateway {
 
   async createPreference(order) {
     if (!order) {
-      throw new Error('Pedido é obrigatório para criar preference');
+      throw new Error('Pedido é obrigatório');
     }
 
     if (!order.items || order.items.length === 0) {
@@ -85,11 +85,13 @@ export class MercadoPagoPreferenceGateway {
       return {};
     }
 
+    const sanitizedCpf = (customerInfo.cpf || '').replace(/\s+/g, '');
+
     return {
       name: customerInfo.name || '',
       email: customerInfo.email || '',
       phone: customerInfo.phone || '',
-      cpf: customerInfo.cpf || ''
+      cpf: sanitizedCpf
     };
   }
 }

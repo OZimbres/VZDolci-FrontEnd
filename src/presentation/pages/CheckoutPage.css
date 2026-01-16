@@ -874,3 +874,47 @@
     flex-direction: column;
   }
 }
+
+/* Checkout PRO Option */
+.checkout-pro-option {
+  background: linear-gradient(135deg, #009ee3 0%, #00b1ea 100%);
+  border-color: #009ee3;
+}
+
+.checkout-pro-option:hover {
+  background: linear-gradient(135deg, #0088cc 0%, #009ee3 100%);
+  border-color: #0088cc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 158, 227, 0.3);
+}
+
+.checkout-pro-option .payment-option-content h4,
+.checkout-pro-option .payment-option-content p {
+  color: white;
+}
+
+.checkout-pro-option .payment-icon {
+  filter: brightness(0) invert(1);
+}
+
+/* Checkout PRO Section */
+.checkout-pro-section {
+  animation: fadeIn 0.3s ease-in;
+  padding: 1rem 0;
+}
+
+.checkout-pro-section h4 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.checkout-pro-section > p {
+  color: var(--accent-color);
+  margin-bottom: 1.5rem;
+}
+
+.checkout-pro-section .btn-secondary {
+  margin-top: 1rem;
+  width: 100%;
+}

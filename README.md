@@ -153,6 +153,46 @@ O projeto utiliza variáveis de ambiente para armazenar informações sensíveis
 - `VITE_PHONE_DISPLAY`: Número de telefone formatado para exibição (ex: (11) 99999-9999)
 - `VITE_STORE_ADDRESS`: Endereço da loja física (opcional)
 
+### Integração Mercado Pago - Checkout PRO
+
+O projeto utiliza o **Checkout PRO do Mercado Pago** para processar pagamentos.  Esta integração oferece:
+
+- ✅ Cartão de crédito/débito
+- ✅ PIX
+- ✅ Boleto bancário
+- ✅ Saldo em conta Mercado Pago
+- ✅ Parcelamento
+
+#### Configuração
+
+1. **Obtenha suas credenciais** no [painel de desenvolvedores do Mercado Pago](https://www.mercadopago.com.br/developers/panel/app)
+
+2. **Configure as variáveis de ambiente**: 
+   ```env
+   VITE_MP_PUBLIC_KEY=sua-chave-publica
+   MP_ACCESS_TOKEN=seu-access-token
+   SITE_URL=https://seu-dominio.com
+   ```
+
+3. **Para ambiente de teste**, use as credenciais de sandbox (começam com `TEST-`)
+
+#### Fluxo de Pagamento
+
+1. Cliente preenche dados e escolhe "Cartão, PIX ou Boleto"
+2. Sistema cria uma Preference no backend
+3. SDK do Mercado Pago renderiza o botão de pagamento
+4. Cliente é redirecionado para o Mercado Pago
+5. Após pagamento, cliente retorna para `/checkout/retorno`
+6. Sistema processa o resultado e exibe feedback
+
+#### Arquivos Principais
+
+- `src/infrastructure/gateways/MercadoPagoPreferenceGateway.js` - Gateway de comunicação
+- `src/domain/usecases/CreateCheckoutPreferenceUseCase.js` - Use case de criação
+- `src/presentation/components/features/Checkout/MercadoPagoCheckoutButton.jsx` - Componente do botão
+- `src/presentation/pages/CheckoutReturnPage.jsx` - Página de retorno
+- `api/mercadopago/create-preference.js` - Endpoint serverless
+
 ## Deploy
 
 ### Deploy na Vercel
