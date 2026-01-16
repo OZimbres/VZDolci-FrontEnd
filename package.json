@@ -8,11 +8,14 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "test": "vitest run",
     "optimize-images": "node scripts/optimize-images.js"
   },
   "dependencies": {
+    "@mercadopago/sdk-react": "^0.0.19",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "mercadopago": "^2.0.15",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -33,6 +36,7 @@
     "sharp": "^0.34.5",
     "terser": "^5.44.1",
     "vite": "^5.0.8",
-    "vite-plugin-image-optimizer": "^2.0.3"
+    "vite-plugin-image-optimizer": "^2.0.3",
+    "vitest": "^1.6.0"
   }
 }

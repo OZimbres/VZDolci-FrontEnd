@@ -14,6 +14,10 @@ import { AboutPage } from './presentation/pages/AboutPage';
 import { FAQPage } from './presentation/pages/FAQPage';
 import { ContactPage } from './presentation/pages/ContactPage';
 import { CheckoutPage } from './presentation/pages/CheckoutPage';
+import { CheckoutSuccessPage } from './presentation/pages/CheckoutSuccessPage';
+import { CheckoutFailurePage } from './presentation/pages/CheckoutFailurePage';
+import { CheckoutPendingPage } from './presentation/pages/CheckoutPendingPage';
+import { CheckoutReturnPage } from './presentation/pages/CheckoutReturnPage';
 import './presentation/styles/global.css';
 
 /**
@@ -42,6 +46,10 @@ function App() {
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/contato" element={<ContactPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+          <Route path="/checkout/failure" element={<CheckoutFailurePage />} />
+          <Route path="/checkout/pending" element={<CheckoutPendingPage />} />
+          <Route path="/checkout/retorno" element={<CheckoutReturnPage />} />
         </Routes>
         <Footer />
         <SideCart ref={sideCartRef} />

@@ -1,0 +1,205 @@
+/* Checkout Result Pages Styles */
+
+.checkout-result-page {
+  min-height: 80vh;
+  background: var(--light-bg);
+  display: flex;
+  align-items: center;
+  padding: 3rem 0;
+}
+
+.result-section {
+  width: 100%;
+}
+
+.result-card {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #FFFFFF;
+  padding: 3rem 2rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(90, 42, 131, 0.15);
+  text-align: center;
+}
+
+/* Icons */
+.result-icon {
+  font-size: 5rem;
+  margin-bottom: 1.5rem;
+  animation: fadeInScale 0.5s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.success-icon {
+  filter: drop-shadow(0 4px 8px rgba(76, 175, 80, 0.3));
+}
+
+.failure-icon {
+  filter: drop-shadow(0 4px 8px rgba(244, 67, 54, 0.3));
+}
+
+.pending-icon {
+  filter: drop-shadow(0 4px 8px rgba(255, 152, 0, 0.3));
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Titles and Messages */
+.result-title {
+  color: var(--primary-color);
+  font-family: 'Palatino', 'Times New Roman', serif;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.result-message {
+  font-size: 1.2rem;
+  color: var(--text-dark);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+/* Payment Details */
+.payment-details {
+  background: var(--light-bg);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+  border-left: 4px solid var(--secondary-color);
+}
+
+.payment-details p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+}
+
+.payment-details strong {
+  color: var(--primary-color);
+}
+
+/* Info Sections */
+.result-info {
+  text-align: left;
+  background: #F8F4FF;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+.result-info p {
+  margin-bottom: 0.75rem;
+  color: var(--primary-color);
+}
+
+.result-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.result-info li {
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  color: var(--text-dark);
+}
+
+.result-info li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--secondary-color);
+  font-weight: bold;
+}
+
+.error-info {
+  background: #FFEBEE;
+}
+
+.error-info li::before {
+  content: '⚠️';
+}
+
+.pending-info {
+  background: #FFF8E1;
+}
+
+.pending-info li::before {
+  content: '⏱️';
+}
+
+/* Actions */
+.result-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+.result-actions .btn {
+  min-width: 200px;
+}
+
+/* Contact Info */
+.contact-info {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--light-bg);
+  font-size: 0.95rem;
+  color: var(--accent-color);
+}
+
+.whatsapp-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.whatsapp-link:hover {
+  color: var(--secondary-color);
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .result-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .result-icon {
+    font-size: 4rem;
+  }
+
+  .result-title {
+    font-size: 2rem;
+  }
+
+  .result-actions {
+    flex-direction: column;
+  }
+
+  .result-actions .btn {
+    width: 100%;
+  }
+}
