@@ -1,0 +1,38 @@
+/* Mercado Pago Checkout Button Styles */
+
+.mp-checkout-button-container {
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.mp-checkout-error {
+  background: #fff5f5;
+  border: 1px solid #dc3545;
+  border-radius: 10px;
+  padding: 1.5rem;
+  color: #dc3545;
+}
+
+.mp-checkout-error p {
+  margin-bottom: 1rem;
+}
+
+.mp-checkout-waiting {
+  color: var(--accent-color);
+  font-style: italic;
+  padding: 1rem;
+  background: var(--light-bg);
+  border-radius: 10px;
+}
+
+.mp-checkout-hint {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--accent-color);
+}
+
+.mp-checkout-button-container [class*="wallet"] {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
