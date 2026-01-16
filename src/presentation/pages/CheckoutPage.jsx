@@ -253,8 +253,9 @@ export function CheckoutPage() {
   };
 
   const handlePreferenceCreated = (preferenceData) => {
-    console.log('Preference criada:', preferenceData);
-    // Opcional: salvar referência do pedido
+    if (preferenceData?.externalReference) {
+      setOrderId((prev) => prev ?? preferenceData.externalReference);
+    }
   };
 
   const handleCheckoutProError = (error) => {

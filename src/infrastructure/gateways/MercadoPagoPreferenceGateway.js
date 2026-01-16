@@ -85,13 +85,16 @@ export class MercadoPagoPreferenceGateway {
       return {};
     }
 
-    const sanitizedCpf = (customerInfo.cpf || '').replace(/\s+/g, '');
+    const digitsOnlyCpf = (customerInfo.cpf || '').replace(/\D/g, '');
+    const formattedCpf = digitsOnlyCpf.length === 11
+      ? `${digitsOnlyCpf.slice(0, 3)}.${digitsOnlyCpf.slice(3, 6)}.${digitsOnlyCpf.slice(6, 9)}-${digitsOnlyCpf.slice(9)}`
+      : digitsOnlyCpf;
 
     return {
       name: customerInfo.name || '',
       email: customerInfo.email || '',
       phone: customerInfo.phone || '',
-      cpf: sanitizedCpf
+      cpf: formattedCpf
     };
   }
 }
