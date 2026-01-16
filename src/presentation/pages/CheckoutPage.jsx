@@ -9,6 +9,7 @@ import { CustomerForm } from '../components/features/Checkout/CustomerForm';
 import { OptimizedImage } from '../components/common/OptimizedImage';
 import { SEO } from '../components/common/SEO';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { MercadoPagoCheckoutButton } from '../components/features/Checkout/MercadoPagoCheckoutButton';
 import './CheckoutPage.css';
 
 // Environment variables
@@ -59,6 +60,7 @@ export function CheckoutPage() {
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [showPixForm, setShowPixForm] = useState(false);
+  const [showCheckoutPro, setShowCheckoutPro] = useState(false);
   const [pixQrCode, setPixQrCode] = useState(null);
   const [pixQrCodeBase64, setPixQrCodeBase64] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -186,6 +188,8 @@ export function CheckoutPage() {
       return;
     }
 
+    setShowCheckoutPro(false);
+    setShowPixForm(false);
     setPaymentMethod('whatsapp');
 
     const resolvedOrderId = orderId ?? generateOrderId();
@@ -200,6 +204,7 @@ export function CheckoutPage() {
         return;
       }
     } catch (error) {
+      console.error('Erro ao abrir WhatsApp:', error);
       setFeedbackMessage('Ocorreu um erro ao abrir o WhatsApp. Tente novamente ou ajuste o bloqueio de pop-ups.');
       setPaymentMethod(null);
       return;
@@ -227,6 +232,35 @@ export function CheckoutPage() {
 
     setPaymentMethod('pix');
     setShowPixForm(true);
+    setShowCheckoutPro(false);
+  };
+
+  const handleCheckoutProClick = () => {
+    setFeedbackMessage(null);
+    if (cart.length === 0) {
+      setFeedbackMessage('Seu carrinho está vazio! ');
+      return;
+    }
+
+    if (!isCustomerValid) {
+      setFeedbackMessage('Complete os dados do cliente antes de prosseguir com o pagamento.');
+      return;
+    }
+
+    setPaymentMethod('checkout-pro');
+    setShowPixForm(false);
+    setShowCheckoutPro(true);
+  };
+
+  const handlePreferenceCreated = (preferenceData) => {
+    if (preferenceData?.externalReference) {
+      setOrderId((prev) => prev ?? preferenceData.externalReference);
+    }
+  };
+
+  const handleCheckoutProError = (error) => {
+    console.error('Erro no Checkout PRO:', error);
+    setFeedbackMessage('Erro ao preparar pagamento. Tente novamente.');
   };
 
   const handlePixPaymentConfirm = async () => {
@@ -321,6 +355,7 @@ export function CheckoutPage() {
     }
     setIsProcessingPayment(false);
     setShowPixForm(false);
+    setShowCheckoutPro(false);
     setPixQrCode(null);
     setPixQrCodeBase64(null);
     setPaymentMethod(null);
@@ -625,13 +660,25 @@ export function CheckoutPage() {
                           <p>Pague agora com PIX e receba confirmação</p>
                         </div>
                       </button>
+
+                      <button 
+                        className="payment-option checkout-pro-option"
+                        onClick={handleCheckoutProClick}
+                        disabled={isProcessingPayment || !isCustomerValid}
+                      >
+                        <span className="payment-icon">🛒</span>
+                        <div className="payment-option-content">
+                          <h4>Cartão, PIX ou Boleto</h4>
+                          <p>Pague com Mercado Pago - todas as formas de pagamento</p>
+                        </div>
+                      </button>
                       {gatewayError && (
                         <p className="field-error" role="alert">{gatewayError}</p>
                       )}
                     </div>
-                  ) : (
-                    <div className="pix-payment-section">
-                      {!pixQrCode ? (
+                   ) : (
+                     <div className="pix-payment-section">
+                       {!pixQrCode ? (
                         <div className="pix-form">
                           <h4>Pagamento via PIX</h4>
                           <p>Confirme os dados e gere o QR Code com o valor total do pedido.</p>
@@ -771,8 +818,33 @@ export function CheckoutPage() {
                               </button>
                             </div>
                           )}
-                        </div>
-                      )}
+                       </div>
+                     )}
+                   </div>
+                  )}
+                  {showCheckoutPro && (
+                    <div className="checkout-pro-section">
+                      <h4>Finalizar com Mercado Pago</h4>
+                      <p>Escolha sua forma de pagamento preferida</p>
+                      
+                      <MercadoPagoCheckoutButton
+                        items={cart}
+                        customerData={customerData}
+                        onPreferenceCreated={handlePreferenceCreated}
+                        onError={handleCheckoutProError}
+                        disabled={!isCustomerValid}
+                      />
+                      
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setShowCheckoutPro(false);
+                          setPaymentMethod(null);
+                        }}
+                      >
+                        Voltar
+                      </button>
                     </div>
                   )}
                 </div>
@@ -792,7 +864,9 @@ export function CheckoutPage() {
                 <p>
                   {paymentMethod === 'whatsapp' 
                     ? 'Você finalizou a compra via WhatsApp?' 
-                    : 'Você concluiu o pagamento via PIX?'}
+                    : paymentMethod === 'checkout-pro'
+                      ? 'Você concluiu o pagamento pelo Mercado Pago?'
+                      : 'Você concluiu o pagamento via PIX?'}
                 </p>
                 <div className="modal-actions">
                   <button 

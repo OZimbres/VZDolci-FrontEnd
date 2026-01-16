@@ -20,7 +20,7 @@ export class MercadoPagoPreferenceGateway {
 
   async createPreference(order) {
     if (!order) {
-      throw new Error('Pedido é obrigatório para criar preference');
+      throw new Error('Pedido é obrigatório');
     }
 
     if (!order.items || order.items.length === 0) {
@@ -85,11 +85,16 @@ export class MercadoPagoPreferenceGateway {
       return {};
     }
 
+    const digitsOnlyCpf = (customerInfo.cpf || '').replace(/\D/g, '');
+    const formattedCpf = digitsOnlyCpf.length === 11
+      ? `${digitsOnlyCpf.slice(0, 3)}.${digitsOnlyCpf.slice(3, 6)}.${digitsOnlyCpf.slice(6, 9)}-${digitsOnlyCpf.slice(9)}`
+      : digitsOnlyCpf;
+
     return {
       name: customerInfo.name || '',
       email: customerInfo.email || '',
       phone: customerInfo.phone || '',
-      cpf: customerInfo.cpf || ''
+      cpf: formattedCpf
     };
   }
 }
