@@ -137,7 +137,7 @@ O projeto utiliza variáveis de ambiente para armazenar informações sensíveis
 
 2. Edite o arquivo `.env` e preencha com suas informações reais:
    ```env
-   VITE_MP_PUBLIC_KEY=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   VITE_MERCADO_PAGO_PUBLIC_KEY=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
    VITE_WHATSAPP_NUMBER=5511999999999
    VITE_PHONE_DISPLAY=(11) 99999-9999
    VITE_STORE_ADDRESS=Rua Exemplo, 123 - São Paulo, SP
