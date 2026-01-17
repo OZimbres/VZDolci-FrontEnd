@@ -137,7 +137,7 @@ O projeto utiliza variáveis de ambiente para armazenar informações sensíveis
 
 2. Edite o arquivo `.env` e preencha com suas informações reais:
    ```env
-   VITE_MP_PUBLIC_KEY=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   VITE_MERCADO_PAGO_PUBLIC_KEY=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
    VITE_WHATSAPP_NUMBER=5511999999999
    VITE_PHONE_DISPLAY=(11) 99999-9999
    VITE_STORE_ADDRESS=Rua Exemplo, 123 - São Paulo, SP
@@ -149,17 +149,141 @@ O projeto utiliza variáveis de ambiente para armazenar informações sensíveis
 
 #### Variáveis Disponíveis
 
-- `VITE_MP_PUBLIC_KEY`: Chave pública do Mercado Pago (use uma chave que comece com `TEST-` em sandbox). É a única credencial que pode ficar no frontend e deve sempre ter prefixo `VITE_`.
+- `VITE_MERCADO_PAGO_PUBLIC_KEY`: Chave pública do Mercado Pago (use uma chave que comece com `TEST-` em sandbox). É a única credencial que pode ficar no frontend e deve sempre ter prefixo `VITE_`.
+- `MERCADO_PAGO_ACCESS_TOKEN`: Access Token do Mercado Pago (SEM prefixo `VITE_`). Usado apenas no backend, nunca deve ser exposta no frontend.
 - `VITE_WHATSAPP_NUMBER`: Número do WhatsApp no formato internacional (ex: 5511999999999)
 - `VITE_PHONE_DISPLAY`: Número de telefone formatado para exibição (ex: (11) 99999-9999)
 - `VITE_STORE_ADDRESS`: Endereço da loja física (opcional)
 
-#### Credenciais Mercado Pago
+---
 
-- **Chave Pública (Public Key)**: Pode ser usada no frontend e exposta no código. Formato típico: `APP_USR-xxxx...` (produção) ou `TEST-xxxx...` (sandbox). Exemplo de uso seguro: `initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY)`.
-- **Access Token**: Fica **apenas no backend** (sem prefixo `VITE_`) e nunca deve ser colocado no frontend ou em variáveis iniciadas com `VITE_`.
-- **Sandbox vs Produção**: Para desenvolvimento utilize credenciais de teste que começam com `TEST-`. Para produção, substitua apenas a `VITE_MP_PUBLIC_KEY` por uma que comece com `APP_USR-` e mantenha o Access Token no backend.
-- **Git Ignore**: O arquivo `.env` já está no `.gitignore`; mantenha as credenciais fora do controle de versão.
+## 💳 Integração Mercado Pago - Fase 1: Fundação
+
+Esta seção documenta a configuração inicial do Mercado Pago para o sistema de pagamentos do VZ Dolci.
+
+### 📚 Conceitos Fundamentais
+
+#### 🔑 Tipos de Credenciais do Mercado Pago
+
+O Mercado Pago usa um sistema de **dois tipos de chaves** para segurança:
+
+| Credencial | Onde Usar | Segurança | Função |
+|------------|-----------|-----------|--------|
+| **Public Key** | Frontend (navegador do usuário) | ✅ Pode ser exposta publicamente | Inicializa o SDK React, renderiza componentes visuais de pagamento |
+| **Access Token** | Backend (servidor) | ⚠️ SECRETA - NUNCA expor | Cria preferências de pagamento, processa transações, acessa dados sensíveis |
+
+**Analogia:**
+- **Public Key** = Chave da porta da loja (qualquer um pode ver, serve apenas para entrar)
+- **Access Token** = Chave do cofre (só o dono tem, permite movimentar dinheiro)
+
+#### 🧪 Ambientes: Sandbox vs Produção
+
+| Ambiente | Quando Usar | Dinheiro Real? |
+|----------|-------------|----------------|
+| **Sandbox (Teste)** | Durante desenvolvimento | ❌ Não - usa cartões de teste |
+| **Produção (Production)** | Quando o site está pronto | ✅ Sim - transações reais |
+
+**Importante:**
+- Você terá **4 credenciais no total**: 2 para Sandbox + 2 para Produção
+- Para desenvolvimento, use credenciais de **Sandbox** (começam com `TEST-`)
+- Para produção, use credenciais de **Produção** (começam com `APP_USR-`)
+
+### 🚀 Configuração Inicial (Fase 1)
+
+#### Passo 1: Criar/Acessar Conta Mercado Pago
+
+1. Se você **JÁ tem conta no Mercado Pago**:
+   - Acesse: https://www.mercadopago.com.br/developers/panel
+   - Faça login com suas credenciais
+
+2. Se você **NÃO tem conta**:
+   - Acesse: https://www.mercadopago.com.br/hub/registration/landing
+   - Crie uma conta (use e-mail e CPF reais)
+   - Confirme o e-mail
+   - Depois acesse: https://www.mercadopago.com.br/developers/panel
+
+#### Passo 2: Criar uma Aplicação
+
+1. No painel de desenvolvedor, procure por **"Suas integrações"** ou **"Criar aplicação"**
+2. Clique em **"Criar aplicação"**
+3. Preencha os dados:
+
+| Campo | O que colocar | Exemplo |
+|-------|---------------|---------|
+| **Nome da aplicação** | Nome do seu site | `VZ Dolci - Loja de Doces` |
+| **Solução de pagamento** | Selecione: **"Checkout API"** | (Não confundir com Checkout Pro) |
+| **Modelo de integração** | Selecione: **"Pagamentos online"** | |
+| **URL do site** | URL de produção ou temporário | `https://vz-dolci.vercel.app` |
+
+4. Salve/Confirme
+
+#### Passo 3: Obter Credenciais de Sandbox
+
+1. Dentro da aplicação criada, procure por **"Credenciais"** ou **"Credentials"**
+2. Procure pela seção **"Credenciais de teste"** / **"Test credentials"**
+3. Você verá duas credenciais:
+   - **Public Key**: começa com `TEST-` (~50 caracteres)
+   - **Access Token**: começa com `TEST-` (~70 caracteres, geralmente maior)
+
+#### Passo 4: Configurar Variáveis de Ambiente
+
+1. Copie o arquivo `.env.example` para `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edite o arquivo `.env` e adicione suas credenciais:
+   ```env
+   # Public Key (Frontend) - Sandbox
+   VITE_MERCADO_PAGO_PUBLIC_KEY=TEST-xxxxxxxx-xxxxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+   # Access Token (Backend) - Sandbox
+   MERCADO_PAGO_ACCESS_TOKEN=TEST-xxxxxxxxxxxx-xxxxxx-xxxxxxxxxxxxxxxx-xxxxxxxx
+
+   # Outras variáveis...
+   VITE_WHATSAPP_NUMBER=5511999999999
+   VITE_PHONE_DISPLAY=(11) 99999-9999
+   VITE_STORE_ADDRESS=Seu endereço aqui
+   ```
+
+3. **Importante:**
+   - `VITE_MERCADO_PAGO_PUBLIC_KEY` tem prefixo `VITE_` porque será usada no frontend
+   - `MERCADO_PAGO_ACCESS_TOKEN` NÃO tem prefixo `VITE_` para protegê-la (só backend)
+
+#### Passo 5: Validar Configuração
+
+Para testar se as variáveis estão configuradas corretamente:
+
+1. Pare o servidor de desenvolvimento (`Ctrl + C`)
+2. Reinicie o servidor: `npm run dev`
+3. Importe temporariamente o arquivo de teste no `App.jsx`:
+   ```javascript
+   // IMPORT TEMPORÁRIO - REMOVER DEPOIS
+   import './test-mercadopago-env.js';
+   ```
+4. Abra o Console do navegador (`F12` → aba "Console")
+5. Verifique a saída - você deve ver:
+   ```
+   === TESTE DE VARIÁVEIS DE AMBIENTE ===
+   Public Key: TEST-xxxxxxxx-xxxxxx-xxxx-xxxx-xxxxxxxxxxxx
+   ✅ Public Key de Sandbox configurada corretamente!
+   ✅ Access Token protegida (não acessível no frontend)
+   ```
+6. Remova o import do teste e delete o arquivo `src/test-mercadopago-env.js`
+
+### ⚠️ Segurança
+
+- ✅ `.env` está no `.gitignore` - suas credenciais não vão para o GitHub
+- ✅ Apenas variáveis com prefixo `VITE_` são expostas no frontend
+- ✅ Access Token permanece protegida no servidor
+- ⚠️ NUNCA faça commit do arquivo `.env` (apenas do `.env.example`)
+- ⚠️ NUNCA compartilhe suas credenciais de produção publicamente
+
+### 📚 Referências
+
+- [Painel de Desenvolvedor Mercado Pago](https://www.mercadopago.com.br/developers/panel)
+- [Documentação de Credenciais](https://www.mercadopago.com.br/developers/pt/docs/checkout-api/additional-content/your-integrations/credentials)
+- [Vite - Variáveis de Ambiente](https://vitejs.dev/guide/env-and-mode.html)
 
 ## Deploy
 
