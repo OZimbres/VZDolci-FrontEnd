@@ -137,6 +137,7 @@ O projeto utiliza variáveis de ambiente para armazenar informações sensíveis
 
 2. Edite o arquivo `.env` e preencha com suas informações reais:
    ```env
+   VITE_MP_PUBLIC_KEY=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
    VITE_WHATSAPP_NUMBER=5511999999999
    VITE_PHONE_DISPLAY=(11) 99999-9999
    VITE_STORE_ADDRESS=Rua Exemplo, 123 - São Paulo, SP
@@ -148,9 +149,17 @@ O projeto utiliza variáveis de ambiente para armazenar informações sensíveis
 
 #### Variáveis Disponíveis
 
+- `VITE_MP_PUBLIC_KEY`: Chave pública do Mercado Pago (use uma chave que comece com `TEST-` em sandbox). É a única credencial que pode ficar no frontend e deve sempre ter prefixo `VITE_`.
 - `VITE_WHATSAPP_NUMBER`: Número do WhatsApp no formato internacional (ex: 5511999999999)
 - `VITE_PHONE_DISPLAY`: Número de telefone formatado para exibição (ex: (11) 99999-9999)
 - `VITE_STORE_ADDRESS`: Endereço da loja física (opcional)
+
+#### Credenciais Mercado Pago
+
+- **Chave Pública (Public Key)**: Pode ser usada no frontend e exposta no código. Formato típico: `APP_USR-xxxx...` (produção) ou `TEST-xxxx...` (sandbox). Exemplo de uso seguro: `initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY)`.
+- **Access Token**: Fica **apenas no backend** (sem prefixo `VITE_`) e nunca deve ser colocado no frontend ou em variáveis iniciadas com `VITE_`.
+- **Sandbox vs Produção**: Para desenvolvimento utilize credenciais de teste que começam com `TEST-`. Para produção, substitua apenas a `VITE_MP_PUBLIC_KEY` por uma que comece com `APP_USR-` e mantenha o Access Token no backend.
+- **Git Ignore**: O arquivo `.env` já está no `.gitignore`; mantenha as credenciais fora do controle de versão.
 
 ## Deploy
 
