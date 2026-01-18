@@ -1,5 +1,6 @@
 /* eslint-env node */
 /* global process */
+import crypto from 'crypto';
 import mercadopago from 'mercadopago';
 
 const { MercadoPagoConfig, Payment, MerchantOrder } = mercadopago;
@@ -14,7 +15,7 @@ export default async function handler(req, res) {
 
     if (!accessToken) {
       console.error('Webhook configuration error');
-      return res.status(200).json({
+      return res.status(500).json({
         success: false,
         error: 'Configuration error',
       });
@@ -26,9 +27,16 @@ export default async function handler(req, res) {
 
     const { type, data } = req.body || {};
 
+    const isSignatureValid = verifySignature(req.headers, data?.id);
+
+    if (!isSignatureValid) {
+      console.error('Invalid webhook signature');
+      return res.status(401).json({ success: false, error: 'Invalid signature' });
+    }
+
     console.log('=== WEBHOOK RECEBIDO ===');
     console.log('Tipo:', type);
-    console.log('Data:', data);
+    console.log('Data ID:', data?.id);
 
     if (type === 'payment' && data?.id) {
       const paymentClient = new Payment(client);
@@ -37,8 +45,6 @@ export default async function handler(req, res) {
       console.log('=== DETALHES DO PAGAMENTO ===');
       console.log('ID:', paymentData.id);
       console.log('Status:', paymentData.status);
-      console.log('Valor:', paymentData.transaction_amount);
-      console.log('Email:', paymentData.payer?.email);
       console.log('External Reference:', paymentData.external_reference);
 
       switch (paymentData.status) {
@@ -77,9 +83,9 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Erro no webhook:', error);
 
-    return res.status(200).json({
+    return res.status(500).json({
       success: false,
-      error: error.message,
+      error: 'Internal Server Error',
     });
   }
 }
@@ -109,4 +115,32 @@ async function handleRejectedPayment(paymentData) {
 async function handleCancelledPayment(paymentData) {
   console.log('📝 TODO (Fase 3): Marcar pedido como cancelado');
   console.log('Pagamento cancelado ID:', paymentData?.id);
+}
+
+function verifySignature(headers, resourceId) {
+  const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+  if (!secret || !resourceId) return true;
+
+  const signatureHeader = headers['x-signature'];
+  const requestId = headers['x-request-id'];
+
+  if (!signatureHeader || !requestId) return false;
+
+  const parts = signatureHeader.split(',').reduce((acc, part) => {
+    const [key, value] = part.split('=');
+    acc[key] = value;
+    return acc;
+  }, {});
+
+  const ts = parts.t;
+  const v1 = parts.v1;
+
+  if (!ts || !v1) return false;
+
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(`${resourceId}.${ts}`)
+    .digest('hex');
+
+  return expected === v1;
 }

@@ -36,13 +36,24 @@ export default async function handler(req, res) {
       });
     }
 
-    const hasInvalidValues = items.some(
-      (item) =>
-        Number.isNaN(Number(item.price)) ||
-        Number.isNaN(Number(item.quantity)) ||
-        Number(item.price) <= 0 ||
-        Number(item.quantity) <= 0,
-    );
+    const pricePattern = /^\d+(\.\d{1,2})?$/;
+    const hasInvalidValues = items.some((item) => {
+      const price = Number(item.price);
+      const quantity = Number(item.quantity);
+      const hasName = typeof item.name === 'string' && item.name.trim().length > 0;
+
+      return (
+        !hasName ||
+        !Number.isFinite(price) ||
+        !Number.isFinite(quantity) ||
+        price <= 0 ||
+        quantity <= 0 ||
+        quantity > 1000 ||
+        price > 1000000 ||
+        !Number.isInteger(quantity) ||
+        !pricePattern.test(String(item.price))
+      );
+    });
 
     if (hasInvalidValues) {
       return res.status(400).json({
@@ -64,9 +75,30 @@ export default async function handler(req, res) {
     const baseUrl =
       process.env.APP_URL ||
       process.env.VITE_APP_URL ||
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000');
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    if (!baseUrl && isProduction) {
+      console.error('Base URL não configurada em produção');
+      return res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message:
+          'URL base da aplicação não configurada. Verifique APP_URL, VITE_APP_URL ou VERCEL_URL.',
+      });
+    }
+
+    const resolvedBaseUrl = baseUrl || 'http://localhost:3000';
+
+    if (isProduction && !resolvedBaseUrl.startsWith('https://')) {
+      console.error('Base URL deve usar HTTPS em produção');
+      return res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: 'URL base inválida para produção. Use HTTPS.',
+      });
+    }
 
     const preferenceBody = {
       items: preferenceItems,
@@ -83,11 +115,11 @@ export default async function handler(req, res) {
           }
         : undefined,
       back_urls: {
-        success: `${baseUrl}/payment/success`,
-        failure: `${baseUrl}/payment/failure`,
-        pending: `${baseUrl}/payment/pending`,
+        success: `${resolvedBaseUrl}/payment/success`,
+        failure: `${resolvedBaseUrl}/payment/failure`,
+        pending: `${resolvedBaseUrl}/payment/pending`,
       },
-      notification_url: `${baseUrl}/api/webhook`,
+      notification_url: `${resolvedBaseUrl}/api/webhook`,
       auto_return: 'approved',
       payment_methods: {
         excluded_payment_types: [],
@@ -118,7 +150,9 @@ export default async function handler(req, res) {
       success: false,
       error: 'Internal Server Error',
       message: 'Erro ao criar preferência de pagamento',
-      ...(isDevelopment ? { details: error.message } : {}),
+      ...(isDevelopment
+        ? { details: 'Erro interno. Consulte os logs do servidor para mais detalhes.' }
+        : {}),
     });
   }
 }

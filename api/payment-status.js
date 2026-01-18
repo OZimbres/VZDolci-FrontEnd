@@ -33,6 +33,13 @@ export default async function handler(req, res) {
       });
     }
 
+    if (typeof paymentId !== 'string' || !/^[0-9]+$/.test(paymentId)) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'payment_id deve ser uma string numérica válida',
+      });
+    }
+
     const paymentClient = new Payment(client);
     const payment = await paymentClient.get({ id: paymentId });
 
