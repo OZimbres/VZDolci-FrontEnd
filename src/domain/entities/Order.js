@@ -99,12 +99,7 @@ export class Order {
   }
 
   getTotalAmount() {
-    return this.#items.reduce((total, item) => {
-      if (typeof item.getTotal === 'function') {
-        return total + item.getTotal();
-      }
-      return total + (item.total || 0);
-    }, 0);
+    return this.#items.reduce((total, item) => total + this.#getItemTotal(item), 0);
   }
 
   getItemsCount() {
@@ -154,6 +149,21 @@ export class Order {
       updatedAt: data.updatedAt,
       notes: data.notes
     });
+  }
+
+  #getItemTotal(item) {
+    if (typeof item.getTotal === 'function') {
+      return item.getTotal();
+    }
+
+    if (typeof item.total === 'number') {
+      return item.total;
+    }
+
+    const price = item.price ?? item.product?.price ?? 0;
+    const quantity = item.quantity ?? 1;
+
+    return price * quantity;
   }
 
   #touch() {

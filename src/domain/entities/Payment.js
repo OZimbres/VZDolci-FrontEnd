@@ -7,6 +7,17 @@
 import { PaymentStatus } from '../value-objects/PaymentStatus.js';
 import { PaymentMethod } from '../value-objects/PaymentMethod.js';
 
+const PAYMENT_PROCESSING_FEE_RATES = {
+  [PaymentMethod.CREDIT_CARD.id]: 0.0499,
+  [PaymentMethod.DEBIT_CARD.id]: 0.0349,
+  [PaymentMethod.PIX.id]: 0.0099,
+  [PaymentMethod.BOLETO.id]: 0.0349,
+  [PaymentMethod.ACCOUNT_MONEY.id]: 0,
+  [PaymentMethod.WHATSAPP.id]: 0
+};
+
+const BOLETO_EXPIRATION_DAYS = 3;
+
 export class Payment {
   #id;
 
@@ -173,16 +184,7 @@ export class Payment {
   }
 
   calculateProcessingFee() {
-    const feeRates = {
-      [PaymentMethod.CREDIT_CARD.id]: 0.0499,
-      [PaymentMethod.DEBIT_CARD.id]: 0.0349,
-      [PaymentMethod.PIX.id]: 0.0099,
-      [PaymentMethod.BOLETO.id]: 0.0349,
-      [PaymentMethod.ACCOUNT_MONEY.id]: 0,
-      [PaymentMethod.WHATSAPP.id]: 0
-    };
-
-    const rate = feeRates[this.#paymentMethod.id] || 0.05;
+    const rate = PAYMENT_PROCESSING_FEE_RATES[this.#paymentMethod.id] ?? 0.05;
     return this.#amount * rate;
   }
 
@@ -199,10 +201,9 @@ export class Payment {
       return false;
     }
 
-    const expirationDays = 3;
     const now = new Date();
     const expirationDate = new Date(this.#dateCreated);
-    expirationDate.setDate(expirationDate.getDate() + expirationDays);
+    expirationDate.setDate(expirationDate.getDate() + BOLETO_EXPIRATION_DAYS);
 
     return now > expirationDate && this.#status.isPending();
   }
