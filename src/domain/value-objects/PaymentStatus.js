@@ -146,7 +146,7 @@ export class PaymentStatus {
     const status = statusMap[code];
 
     if (!status) {
-      throw new Error(`Status de pagamento inválido: ${code}`);
+      throw new Error(`Código de status de pagamento inválido: ${code}`);
     }
 
     return status;

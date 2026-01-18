@@ -35,7 +35,7 @@ export class Order {
     notes = ''
   }) {
     if (!id) {
-      throw new Error('Order ID é obrigatório');
+      throw new Error('ID do pedido é obrigatório');
     }
 
     this.#id = id;

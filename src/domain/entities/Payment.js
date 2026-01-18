@@ -81,15 +81,15 @@ export class Payment {
 
   #validateConstructorParams({ id, amount, paymentMethod }) {
     if (!id) {
-      throw new Error('Payment ID é obrigatório');
+      throw new Error('ID do pagamento é obrigatório');
     }
 
     if (typeof amount !== 'number' || amount <= 0) {
-      throw new Error('Amount deve ser um número positivo');
+      throw new Error('O valor do pagamento deve ser um número positivo');
     }
 
     if (!paymentMethod) {
-      throw new Error('Payment Method é obrigatório');
+      throw new Error('Método de pagamento é obrigatório');
     }
   }
 

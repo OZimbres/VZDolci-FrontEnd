@@ -147,7 +147,7 @@ export class PaymentMethod {
     const method = methodMap[id];
 
     if (!method) {
-      throw new Error(`Método de pagamento inválido: ${id}`);
+      throw new Error(`Identificador de método de pagamento inválido: ${id}`);
     }
 
     return method;
