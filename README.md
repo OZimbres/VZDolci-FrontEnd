@@ -150,7 +150,7 @@ O projeto utiliza variáveis de ambiente para armazenar informações sensíveis
 #### Variáveis Disponíveis
 
 - `VITE_MERCADO_PAGO_PUBLIC_KEY`: Chave pública do Mercado Pago (use uma chave que comece com `TEST-` em sandbox). É a única credencial que pode ficar no frontend e deve sempre ter prefixo `VITE_`.
-- `MERCADO_PAGO_ACCESS_TOKEN`: Access Token do Mercado Pago (SEM prefixo `VITE_`). Usado apenas no backend, nunca deve ser exposta no frontend.
+- `MERCADO_PAGO_ACCESS_TOKEN`: Access Token do Mercado Pago (SEM prefixo `VITE_`). **Não é utilizado neste repositório, que contém apenas o frontend.** Deve ser configurado apenas em um serviço de backend separado (não incluído aqui) responsável por criar/gerenciar pagamentos no Mercado Pago, e nunca deve ser exposto no frontend.
 - `VITE_WHATSAPP_NUMBER`: Número do WhatsApp no formato internacional (ex: 5511999999999)
 - `VITE_PHONE_DISPLAY`: Número de telefone formatado para exibição (ex: (11) 99999-9999)
 - `VITE_STORE_ADDRESS`: Endereço da loja física (opcional)
