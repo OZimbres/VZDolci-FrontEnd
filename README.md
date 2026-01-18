@@ -170,11 +170,11 @@ O Mercado Pago usa um sistema de **dois tipos de chaves** para segurança:
 | Credencial | Onde Usar | Segurança | Função |
 |------------|-----------|-----------|--------|
 | **Public Key** | Frontend (navegador do usuário) | ✅ Pode ser exposta publicamente | Inicializa o SDK React, renderiza componentes visuais de pagamento |
-| **Access Token** | Backend (servidor) | ⚠️ SECRETA - NUNCA expor | Cria preferências de pagamento, processa transações, acessa dados sensíveis |
+| **Access Token** | Backend (servidor) – uso em fases futuras; não utilizado na Fase 1 (somente frontend) | ⚠️ SECRETA - NUNCA expor | Usado em um backend para criar preferências de pagamento, processar transações e acessar dados sensíveis |
 
 **Analogia:**
 - **Public Key** = Chave da porta da loja (qualquer um pode ver, serve apenas para entrar)
-- **Access Token** = Chave do cofre (só o dono tem, permite movimentar dinheiro)
+- **Access Token** = Chave do cofre (só o dono tem, permite movimentar dinheiro; será usada apenas quando houver um backend seguro, não na Fase 1)
 
 #### 🧪 Ambientes: Sandbox vs Produção
 
