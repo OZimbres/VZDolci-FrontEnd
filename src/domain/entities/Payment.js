@@ -284,18 +284,26 @@ export class Payment {
     });
   }
 
-  static fromMercadoPago(mercadoPagoPayment) {
+  static fromMercadoPago(mercadoPagoPayment, { orderId = null } = {}) {
     const paymentMethodId = mercadoPagoPayment.payment_method_id;
 
     if (!paymentMethodId) {
       throw new Error('Método de pagamento ausente na resposta do Mercado Pago');
     }
 
-    const paymentMethod = PaymentMethod.fromId(paymentMethodId);
+    let paymentMethod;
+
+    try {
+      paymentMethod = PaymentMethod.fromId(paymentMethodId);
+    } catch (error) {
+      throw new Error(
+        `Método de pagamento não suportado: ${paymentMethodId}. Erro: ${error.message}`
+      );
+    }
 
     return new Payment({
       id: mercadoPagoPayment.id.toString(),
-      orderId: null,
+      orderId,
       amount: mercadoPagoPayment.transaction_amount,
       currency: mercadoPagoPayment.currency_id,
       status: mercadoPagoPayment.status,

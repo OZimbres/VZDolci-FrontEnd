@@ -144,7 +144,10 @@ export class Order {
       items: data.items,
       customer: data.customer,
       status: data.status,
-      payments: data.payments?.map(payment => Payment.fromJSON(payment)) || [],
+      payments:
+        data.payments?.map(payment =>
+          payment instanceof Payment ? payment : Payment.fromJSON(payment)
+        ) || [],
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       notes: data.notes
