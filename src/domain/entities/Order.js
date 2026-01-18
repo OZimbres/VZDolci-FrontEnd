@@ -160,11 +160,15 @@ export class Order {
     const quantity = this.#getItemQuantity(item);
     const unitPrice = this.#getItemUnitPrice(item);
 
+    if (unitPrice > 0) {
+      return unitPrice * quantity;
+    }
+
     if (typeof item.total === 'number') {
       return item.total;
     }
 
-    return unitPrice * quantity;
+    return 0;
   }
 
   #getItemQuantity(item) {

@@ -171,7 +171,9 @@ export class Payment {
       newStatus instanceof PaymentStatus ? newStatus : PaymentStatus.fromCode(newStatus);
 
     if (this.#status.isSuccessful() && !targetStatus.isReversed()) {
-      throw new Error('Não é possível alterar status de pagamento aprovado (exceto estorno)');
+      throw new Error(
+        'Não é possível alterar status de pagamento aprovado (apenas estornos são permitidos)'
+      );
     }
 
     if (this.#status.isFailed() && targetStatus.isSuccessful()) {
@@ -270,13 +272,19 @@ export class Payment {
   }
 
   static fromMercadoPago(mercadoPagoPayment) {
+    const paymentMethodId = mercadoPagoPayment.payment_method_id;
+
+    if (!paymentMethodId) {
+      throw new Error('Método de pagamento ausente na resposta do Mercado Pago');
+    }
+
     return new Payment({
       id: mercadoPagoPayment.id.toString(),
       orderId: null,
       amount: mercadoPagoPayment.transaction_amount,
       currency: mercadoPagoPayment.currency_id,
       status: mercadoPagoPayment.status,
-      paymentMethod: mercadoPagoPayment.payment_method_id || 'credit_card',
+      paymentMethod: paymentMethodId,
       preferenceId: mercadoPagoPayment.preference_id || null,
       externalReference: mercadoPagoPayment.external_reference,
       payerEmail: mercadoPagoPayment.payer?.email || null,
