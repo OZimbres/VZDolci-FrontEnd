@@ -103,7 +103,7 @@ export class Order {
   }
 
   getItemsCount() {
-    return this.#items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    return this.#items.reduce((sum, item) => sum + this.#getItemQuantity(item), 0);
   }
 
   getLatestPayment() {
@@ -152,18 +152,35 @@ export class Order {
   }
 
   #getItemTotal(item) {
+    // Suporta CartItem (com getTotal) ou objetos simples contendo preço e quantidade
     if (typeof item.getTotal === 'function') {
       return item.getTotal();
     }
+
+    const quantity = this.#getItemQuantity(item);
+    const unitPrice = this.#getItemUnitPrice(item);
 
     if (typeof item.total === 'number') {
       return item.total;
     }
 
-    const price = item.price ?? item.product?.price ?? 0;
-    const quantity = item.quantity ?? 1;
+    return unitPrice * quantity;
+  }
 
-    return price * quantity;
+  #getItemQuantity(item) {
+    return item?.quantity ?? 1;
+  }
+
+  #getItemUnitPrice(item) {
+    if (typeof item?.price === 'number') {
+      return item.price;
+    }
+
+    if (typeof item?.product?.price === 'number') {
+      return item.product.price;
+    }
+
+    return 0;
   }
 
   #touch() {

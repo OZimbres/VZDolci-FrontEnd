@@ -16,7 +16,9 @@ const PAYMENT_PROCESSING_FEE_RATES = {
   [PaymentMethod.WHATSAPP.id]: 0
 };
 
-const BOLETO_EXPIRATION_DAYS = 3;
+const DEFAULT_PROCESSING_FEE_FALLBACK = 0.05;
+
+const DEFAULT_BOLETO_EXPIRATION_DAYS = 3;
 
 export class Payment {
   #id;
@@ -184,7 +186,8 @@ export class Payment {
   }
 
   calculateProcessingFee() {
-    const rate = PAYMENT_PROCESSING_FEE_RATES[this.#paymentMethod.id] ?? 0.05;
+    const rate =
+      PAYMENT_PROCESSING_FEE_RATES[this.#paymentMethod.id] ?? DEFAULT_PROCESSING_FEE_FALLBACK;
     return this.#amount * rate;
   }
 
@@ -203,7 +206,7 @@ export class Payment {
 
     const now = new Date();
     const expirationDate = new Date(this.#dateCreated);
-    expirationDate.setDate(expirationDate.getDate() + BOLETO_EXPIRATION_DAYS);
+    expirationDate.setDate(expirationDate.getDate() + DEFAULT_BOLETO_EXPIRATION_DAYS);
 
     return now > expirationDate && this.#status.isPending();
   }
