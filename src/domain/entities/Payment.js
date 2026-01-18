@@ -170,6 +170,17 @@ export class Payment {
     const targetStatus =
       newStatus instanceof PaymentStatus ? newStatus : PaymentStatus.fromCode(newStatus);
 
+    const isAuthorizedToApproved =
+      this.#status.equals(PaymentStatus.AUTHORIZED) && targetStatus.equals(PaymentStatus.APPROVED);
+
+    if (isAuthorizedToApproved) {
+      this.#status = targetStatus;
+      if (!this.#dateApproved) {
+        this.#dateApproved = new Date();
+      }
+      return;
+    }
+
     if (this.#status.isSuccessful() && !targetStatus.isReversed()) {
       throw new Error(
         'Não é possível alterar status de pagamento aprovado (apenas estornos são permitidos)'
@@ -206,9 +217,11 @@ export class Payment {
       return false;
     }
 
+    const expirationDays =
+      this.#paymentMethod.metadata.expirationDays ?? DEFAULT_BOLETO_EXPIRATION_DAYS;
     const now = new Date();
     const expirationDate = new Date(this.#dateCreated);
-    expirationDate.setDate(expirationDate.getDate() + DEFAULT_BOLETO_EXPIRATION_DAYS);
+    expirationDate.setDate(expirationDate.getDate() + expirationDays);
 
     return now > expirationDate && this.#status.isPending();
   }
@@ -278,13 +291,15 @@ export class Payment {
       throw new Error('Método de pagamento ausente na resposta do Mercado Pago');
     }
 
+    const paymentMethod = PaymentMethod.fromId(paymentMethodId);
+
     return new Payment({
       id: mercadoPagoPayment.id.toString(),
       orderId: null,
       amount: mercadoPagoPayment.transaction_amount,
       currency: mercadoPagoPayment.currency_id,
       status: mercadoPagoPayment.status,
-      paymentMethod: paymentMethodId,
+      paymentMethod,
       preferenceId: mercadoPagoPayment.preference_id || null,
       externalReference: mercadoPagoPayment.external_reference,
       payerEmail: mercadoPagoPayment.payer?.email || null,

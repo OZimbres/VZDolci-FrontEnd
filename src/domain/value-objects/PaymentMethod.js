@@ -41,7 +41,8 @@ export class PaymentMethod {
   static BOLETO = new PaymentMethod('boleto', 'Boleto Bancário', '🧾', {
     allowsInstallments: false,
     requiresProcessing: false,
-    hasExpirationDate: true
+    hasExpirationDate: true,
+    expirationDays: 3
   });
 
   /**

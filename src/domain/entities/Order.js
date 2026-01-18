@@ -110,7 +110,7 @@ export class Order {
     if (this.#payments.length === 0) {
       return null;
     }
-    return this.#payments[this.#payments.length - 1];
+    return [...this.#payments].sort((a, b) => b.dateCreated - a.dateCreated)[0];
   }
 
   getPaymentStatus() {
