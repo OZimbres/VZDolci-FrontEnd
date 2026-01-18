@@ -17,9 +17,9 @@ if (import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY) {
   console.log('❌ Public Key NÃO encontrada! Verifique o .env');
 }
 
-// A Access Token NÃO deve aparecer aqui (é apenas para backend)
+// A Access Token NÃO deve aparecer aqui neste frontend (será usada apenas em um backend futuro)
 if (import.meta.env.MERCADO_PAGO_ACCESS_TOKEN) {
-  console.log('⚠️ ERRO DE SEGURANÇA: Access Token está exposta no frontend!');
+  console.log('⚠️ Access Token encontrada no ambiente do frontend. Em um app apenas frontend (Fase 1), ela NÃO deve estar aqui.');
 } else {
-  console.log('✅ Access Token protegida (não acessível no frontend)');
+  console.log('✅ Nenhuma Access Token encontrada no frontend. Guarde-a para uso apenas em um backend futuro.');
 }
