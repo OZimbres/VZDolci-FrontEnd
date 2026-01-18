@@ -235,10 +235,10 @@ O Mercado Pago usa um sistema de **dois tipos de chaves** para segurança:
 2. Edite o arquivo `.env` e adicione suas credenciais:
    ```env
    # Public Key (Frontend) - Sandbox
-   VITE_MERCADO_PAGO_PUBLIC_KEY=TEST-xxxxxxxx-xxxxxx-xxxx-xxxx-xxxxxxxxxxxx
+   VITE_MERCADO_PAGO_PUBLIC_KEY=TEST-{50-caracteres-aqui}
 
    # Access Token (Backend) - Sandbox
-   MERCADO_PAGO_ACCESS_TOKEN=TEST-xxxxxxxxxxxx-xxxxxx-xxxxxxxxxxxxxxxx-xxxxxxxx
+   MERCADO_PAGO_ACCESS_TOKEN=TEST-{70-caracteres-aqui}
 
    # Outras variáveis...
    VITE_WHATSAPP_NUMBER=5511999999999
