@@ -36,6 +36,21 @@ export default async function handler(req, res) {
       });
     }
 
+    const hasInvalidValues = items.some(
+      (item) =>
+        Number.isNaN(Number(item.price)) ||
+        Number.isNaN(Number(item.quantity)) ||
+        Number(item.price) <= 0 ||
+        Number(item.quantity) <= 0,
+    );
+
+    if (hasInvalidValues) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Preço e quantidade devem ser números válidos',
+      });
+    }
+
     const preferenceItems = items.map((item) => ({
       title: item.name,
       unit_price: Number(item.price),
@@ -46,7 +61,12 @@ export default async function handler(req, res) {
       category_id: 'food',
     }));
 
-    const baseUrl = process.env.VITE_APP_URL || 'https://vz-dolci.vercel.app';
+    const baseUrl =
+      process.env.APP_URL ||
+      process.env.VITE_APP_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000');
 
     const preferenceBody = {
       items: preferenceItems,

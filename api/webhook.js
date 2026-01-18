@@ -13,9 +13,10 @@ export default async function handler(req, res) {
     const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
 
     if (!accessToken) {
+      console.error('Webhook configuration error');
       return res.status(200).json({
         success: false,
-        error: 'MERCADO_PAGO_ACCESS_TOKEN não configurada',
+        error: 'Configuration error',
       });
     }
 
@@ -31,8 +32,7 @@ export default async function handler(req, res) {
 
     if (type === 'payment' && data?.id) {
       const paymentClient = new Payment(client);
-      const payment = await paymentClient.get({ id: data.id });
-      const paymentData = payment;
+      const paymentData = await paymentClient.get({ id: data.id });
 
       console.log('=== DETALHES DO PAGAMENTO ===');
       console.log('ID:', paymentData.id);
@@ -84,24 +84,29 @@ export default async function handler(req, res) {
   }
 }
 
-async function handleApprovedPayment() {
+async function handleApprovedPayment(paymentData) {
   console.log('📝 TODO (Fase 3): Salvar pedido aprovado no banco de dados');
   console.log('📧 TODO (Fase 3): Enviar email de confirmação');
   console.log('💬 TODO (Fase 3): Enviar mensagem WhatsApp');
+  console.log('Pagamento aprovado ID:', paymentData?.id);
 }
 
-async function handlePendingPayment() {
+async function handlePendingPayment(paymentData) {
   console.log('📝 TODO (Fase 3): Marcar pedido como pendente');
+  console.log('Pagamento pendente ID:', paymentData?.id);
 }
 
-async function handleProcessingPayment() {
+async function handleProcessingPayment(paymentData) {
   console.log('📝 TODO (Fase 3): Marcar pedido como em processamento');
+  console.log('Pagamento em processamento ID:', paymentData?.id);
 }
 
-async function handleRejectedPayment() {
+async function handleRejectedPayment(paymentData) {
   console.log('📝 TODO (Fase 3): Notificar cliente sobre recusa');
+  console.log('Pagamento recusado ID:', paymentData?.id);
 }
 
-async function handleCancelledPayment() {
+async function handleCancelledPayment(paymentData) {
   console.log('📝 TODO (Fase 3): Marcar pedido como cancelado');
+  console.log('Pagamento cancelado ID:', paymentData?.id);
 }
