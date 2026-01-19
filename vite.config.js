@@ -25,6 +25,7 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
+      external: ['mercadopago'],
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],

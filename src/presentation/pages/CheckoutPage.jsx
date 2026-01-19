@@ -1,19 +1,54 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../application/contexts/CartContext';
-import { PhoneInput } from 'react-international-phone';
+import { CreateOrderUseCase } from '../../domain/usecases/CreateOrderUseCase';
+import { ProcessPaymentUseCase } from '../../domain/usecases/ProcessPaymentUseCase';
+import { MercadoPagoGateway } from '../../infrastructure/gateways/MercadoPagoGateway';
+import { CheckoutSteps } from '../components/features/Checkout/CheckoutSteps';
+import { CustomerForm } from '../components/features/Checkout/CustomerForm';
 import { OptimizedImage } from '../components/common/OptimizedImage';
 import { SEO } from '../components/common/SEO';
-import 'react-international-phone/style.css';
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { MercadoPagoCheckoutButton } from '../components/features/Checkout/MercadoPagoCheckoutButton';
 import './CheckoutPage.css';
 
 // Environment variables
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '5511999999999';
+const TWO_DAYS_MS = 48 * 60 * 60 * 1000;
 const checkoutSeoProps = {
   title: 'Finalizar Pedido',
   description: 'Finalize seu pedido de doces artesanais premium da VZ Dolci.',
   canonical: 'https://vz-dolci.vercel.app/checkout',
   robots: 'noindex, follow'
+};
+
+/**
+ * Monta um payload de entrega provisório respeitando tempo mínimo
+ * e evitando finais de semana. Endereço definitivo é combinado após pagamento.
+ * 
+ * Note: This creates an Order with provisional/incomplete shipping information.
+ * The ShippingInfo value object will accept these values, but they are placeholders.
+ * Final address details should be collected and confirmed after payment.
+ */
+const buildShippingData = () => {
+  const deliveryDate = new Date();
+  deliveryDate.setTime(deliveryDate.getTime() + TWO_DAYS_MS);
+
+  while (deliveryDate.getDay() === 0 || deliveryDate.getDay() === 6) {
+    deliveryDate.setDate(deliveryDate.getDate() + 1);
+  }
+
+  return {
+    street: 'Endereço a combinar',
+    number: 'S/N',
+    district: 'Centro',
+    city: 'São Paulo',
+    state: 'SP',
+    postalCode: '01000000',
+    deliveryDate,
+    complement: '',
+    deliveryInstructions: 'Confirmaremos endereço e entrega após o pagamento'
+  };
 };
 
 /**
@@ -23,156 +58,481 @@ const checkoutSeoProps = {
 export function CheckoutPage() {
   const { cart, updateQuantity, removeFromCart, total, clearCart } = useCart();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState(null); // 'whatsapp' or 'pix'
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState(null);
   const [showPixForm, setShowPixForm] = useState(false);
+  const [showCheckoutPro, setShowCheckoutPro] = useState(false);
   const [pixQrCode, setPixQrCode] = useState(null);
+  const [pixQrCodeBase64, setPixQrCodeBase64] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [customerData, setCustomerData] = useState({ name: '', email: '', phone: '', cpf: '' });
+  const [isCustomerValid, setIsCustomerValid] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState(null);
+  const [gatewayError, setGatewayError] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [processPaymentUseCase, setProcessPaymentUseCase] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
+  const [orderId, setOrderId] = useState(null);
+  const [paymentId, setPaymentId] = useState(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const pollingIntervalRef = useRef(null);
+  const confirmationTimeoutRef = useRef(null);
+  const latestPaymentInfoRef = useRef(null);
+  const latestPixQrCodeRef = useRef(null);
+  const isPollingRequestInFlightRef = useRef(false);
+  const startPollingTimeoutRef = useRef(null);
 
-  // Memoize event handlers to prevent recreation on every render
+  const createOrderUseCase = useMemo(() => new CreateOrderUseCase(), []);
+
+  useEffect(() => {
+    try {
+      const gateway = new MercadoPagoGateway();
+      setProcessPaymentUseCase(new ProcessPaymentUseCase(gateway));
+      setGatewayError(null);
+    } catch (error) {
+      setGatewayError(error.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    if ((paymentInfo || pixQrCode) && !gatewayError && !isProcessingPayment) {
+      setCurrentStep(3);
+    } else if (showPixForm || paymentMethod) {
+      setCurrentStep(2);
+    } else {
+      setCurrentStep(1);
+    }
+  }, [paymentInfo, pixQrCode, showPixForm, paymentMethod, gatewayError, isProcessingPayment]);
+
+  const stopPolling = useCallback(() => {
+    setIsPolling(false);
+    if (startPollingTimeoutRef.current) {
+      clearTimeout(startPollingTimeoutRef.current);
+      startPollingTimeoutRef.current = null;
+    }
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    isPollingRequestInFlightRef.current = false;
+  }, []);
+
   const handleQuantityChange = useCallback((productId, newQuantity) => {
-    if (isProcessingPayment) return; // Prevent changes during payment
+    if (isProcessingPayment) return;
     if (newQuantity >= 1) {
       updateQuantity(productId, newQuantity);
     }
   }, [isProcessingPayment, updateQuantity]);
 
   const handleRemove = useCallback((productId) => {
-    if (isProcessingPayment) return; // Prevent changes during payment
+    if (isProcessingPayment) return;
     removeFromCart(productId);
   }, [isProcessingPayment, removeFromCart]);
 
-  // Memoize message generation to avoid recreation on every render
-  const generateWhatsAppMessage = useCallback((includeContactInfo = false) => {
-    let message = '*Pedido VZ Dolci*%0A%0A';
-    let total = 0;
+  const maskCpfForMessage = (cpf) => {
+    const digits = cpf?.replace(/\D/g, '') ?? '';
+    if (!digits) return '';
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.***`;
+    return `${digits.slice(0, 3)}.***.${digits.slice(-3)}`;
+  };
+
+  const generateWhatsAppMessage = useCallback((resolvedOrderId) => {
+    const shortOrderId = (resolvedOrderId ?? orderId ?? generateOrderId()).split('-')[0];
+    let message = `*🍰 Pedido VZ Dolci #${shortOrderId}*%0A%0A`;
+    let messageTotal = 0;
     
-    // Single iteration to build message and calculate total
     cart.forEach(item => {
       const itemTotal = item.getTotal();
-      total += itemTotal;
-      message += `${item.product.name} x${item.quantity} - R$ ${itemTotal.toFixed(2)}%0A`;
+      messageTotal += itemTotal;
+      message += `• ${item.product.name} x${item.quantity} - R$ ${itemTotal.toFixed(2)}%0A`;
     });
     
-    message += `%0A*Total: R$ ${total.toFixed(2)}*`;
+    message += `%0A*Total: R$ ${messageTotal.toFixed(2)}*`;
 
-    if (includeContactInfo && (email || phone)) {
-      message += `%0A%0A*Forma de Pagamento:* PIX`;
-      if (email) {
-        message += `%0A*Email:* ${email}`;
-      }
-      if (phone) {
-        message += `%0A*Telefone:* ${phone}`;
-      }
-    }
+    message += `%0A%0A*Dados do Cliente:*`;
+    if (customerData.name) message += `%0A*Nome:* ${customerData.name}`;
+    if (customerData.email) message += `%0A*Email:* ${customerData.email}`;
+    if (customerData.phone) message += `%0A*Telefone:* ${customerData.phone}`;
+    if (customerData.cpf) message += `%0A*CPF:* ${maskCpfForMessage(customerData.cpf)}`;
     
     return message;
-  }, [cart, total, email, phone]);
+  }, [cart, customerData, orderId]);
+
+  const isPopupBlocked = (popupWindow) => !popupWindow || popupWindow.closed || typeof popupWindow.closed === 'undefined';
+
+  const generateOrderId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    // Fallback: Use crypto.getRandomValues for better entropy if available
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const array = new Uint32Array(2);
+      crypto.getRandomValues(array);
+      return `ORDER-${Date.now()}-${array[0].toString(36)}${array[1].toString(36)}`;
+    }
+    // Last resort fallback for older browsers
+    return `ORDER-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  };
 
   const handleWhatsAppCheckout = () => {
+    setFeedbackMessage(null);
     if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
+      setFeedbackMessage('Seu carrinho está vazio!');
       return;
     }
 
-    setIsProcessingPayment(true);
+    if (!isCustomerValid) {
+      setFeedbackMessage('Complete os dados do cliente: nome completo e ao menos um contato (email ou telefone válido).');
+      return;
+    }
+
+    setShowCheckoutPro(false);
+    setShowPixForm(false);
     setPaymentMethod('whatsapp');
 
-    const message = generateWhatsAppMessage(false);
+    const resolvedOrderId = orderId ?? generateOrderId();
+    setOrderId(resolvedOrderId);
+    const message = generateWhatsAppMessage(resolvedOrderId);
     const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    window.open(whatsappLink, '_blank');
+    try {
+      const whatsappWindow = window.open(whatsappLink, '_blank');
+      if (isPopupBlocked(whatsappWindow)) {
+        setFeedbackMessage('Não foi possível abrir o WhatsApp. Verifique se o bloqueio de pop-ups está ativo.');
+        setPaymentMethod(null);
+        return;
+      }
+    } catch (error) {
+      console.error('Erro ao abrir WhatsApp:', error);
+      setFeedbackMessage('Ocorreu um erro ao abrir o WhatsApp. Tente novamente ou ajuste o bloqueio de pop-ups.');
+      setPaymentMethod(null);
+      return;
+    }
     
-    // Show confirmation modal
     setShowConfirmationModal(true);
   };
 
   const handlePixCheckout = () => {
+    setFeedbackMessage(null);
     if (cart.length === 0) {
-      alert('Seu carrinho está vazio!');
+      setFeedbackMessage('Seu carrinho está vazio!');
       return;
     }
 
-    setIsProcessingPayment(true);
+    if (!isCustomerValid) {
+      setFeedbackMessage('Complete os dados do cliente: nome completo e ao menos um contato (email ou telefone válido) antes de gerar o PIX.');
+      return;
+    }
+
+    if (gatewayError) {
+      setFeedbackMessage('Método de pagamento PIX indisponível no momento.');
+      return;
+    }
+
     setPaymentMethod('pix');
     setShowPixForm(true);
+    setShowCheckoutPro(false);
   };
 
-  const handlePixPaymentConfirm = () => {
-    // Validate that at least one contact method is provided
-    const hasEmail = email.trim().length > 0;
-    const phoneDigits = phone ? phone.replace(/\D/g, '') : '';
-    // Phone is valid if it has 10+ digits (br number is usually 11 digits with area code)
-    // Consider phone entered if there are more digits than just the country code
-    const hasPhone = phoneDigits.length >= 10;
-    
-    if (!hasEmail && !hasPhone) {
-      alert('Por favor, informe pelo menos um método de contato (email ou telefone)!');
+  const handleCheckoutProClick = () => {
+    setFeedbackMessage(null);
+    if (cart.length === 0) {
+      setFeedbackMessage('Seu carrinho está vazio! ');
       return;
     }
 
-    // Email validation if provided
-    if (hasEmail) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        alert('Por favor, informe um email válido!');
+    if (!isCustomerValid) {
+      setFeedbackMessage('Complete os dados do cliente antes de prosseguir com o pagamento.');
+      return;
+    }
+
+    setPaymentMethod('checkout-pro');
+    setShowPixForm(false);
+    setShowCheckoutPro(true);
+  };
+
+  const handlePreferenceCreated = (preferenceData) => {
+    if (preferenceData?.externalReference) {
+      setOrderId((prev) => prev ?? preferenceData.externalReference);
+    }
+  };
+
+  const handleCheckoutProError = (error) => {
+    console.error('Erro no Checkout PRO:', error);
+    setFeedbackMessage('Erro ao preparar pagamento. Tente novamente.');
+  };
+
+  const handlePixPaymentConfirm = async () => {
+    setFeedbackMessage(null);
+    setIsProcessingPayment(true);
+    const resolvedOrderId = orderId ?? generateOrderId();
+    setOrderId(resolvedOrderId);
+
+    let createdOrder;
+    try {
+      createdOrder = createOrderUseCase.execute({
+        id: resolvedOrderId,
+        items: cart,
+        customerData,
+        shippingData: buildShippingData()
+      });
+    } catch (error) {
+      setFeedbackMessage(error.message || 'Erro ao criar pedido');
+      setIsProcessingPayment(false);
+      return;
+    }
+
+    let payment = null;
+    if (processPaymentUseCase) {
+      try {
+        payment = await processPaymentUseCase.execute(createdOrder, {
+          paymentMethod: 'pix',
+          amount: total
+        });
+      } catch (error) {
+        console.warn('Erro ao processar pagamento', error);
+        const isRateLimited = error?.status === 429 || /aguarde 1 minuto/i.test(error?.message ?? '');
+        const retryAfterRaw = error?.details?.retryAfter;
+        const retryAfterNumber = Number(retryAfterRaw);
+        const retryAfter = Number.isFinite(retryAfterNumber) && retryAfterNumber > 0 && retryAfterNumber < 3600
+          ? Math.round(retryAfterNumber)
+          : null;
+        let errorMessage = 'Não foi possível processar o pagamento via PIX. Tente novamente ou escolha outra forma.';
+
+        if (isRateLimited) {
+          errorMessage = 'Muitas tentativas. Aguarde 1 minuto antes de gerar um novo pagamento.';
+        }
+
+        // Preserve orderId state for retry attempts
+        setOrderId(orderId ?? resolvedOrderId);
+
+        setFeedbackMessage(
+          <div className="error-with-fallback">
+            <p className="error-message">{errorMessage}</p>
+            {retryAfter && <p className="retry-hint">Tente novamente em aproximadamente {retryAfter} segundos.</p>}
+            <button
+              type="button"
+              className="btn whatsapp-fallback-btn"
+              onClick={handleWhatsAppCheckout}
+            >
+              Finalizar via WhatsApp
+            </button>
+          </div>
+        );
+        setIsProcessingPayment(false);
         return;
       }
     }
 
-    // Phone validation: if user started entering phone but incomplete
-    // Only validate if there are digits beyond 2 (country code like "55")
-    if (phoneDigits.length > 2 && phoneDigits.length < 10) {
-      alert('Por favor, informe um telefone válido!');
+    // Fallback QR code should only be used in development/testing
+    if ((!payment?.qrCode || payment.qrCode === '') && (!payment?.qrCodeBase64 || payment.qrCodeBase64 === '')) {
+      setFeedbackMessage('Erro ao gerar código PIX. Tente novamente ou escolha outra forma de pagamento.');
+      setIsProcessingPayment(false);
       return;
     }
+    
+    const pixCode = payment.qrCode || payment.qrCodeBase64;
 
-    // Generate a simple PIX QR Code (in a real scenario, this would be generated by a backend)
-    const pixCode = `00020126580014BR.GOV.BCB.PIX0136${Date.now()}520400005303986540${total.toFixed(2)}5802BR5913VZ Dolci6009SAO PAULO62070503***6304`;
     setPixQrCode(pixCode);
-
-    // Send WhatsApp message in the background (user doesn't see this)
-    const message = generateWhatsAppMessage(true);
-    const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
-    
-    // Open in a hidden/background way (we'll use a timeout and then close it)
-    const hiddenWindow = window.open(whatsappLink, '_blank');
-    setTimeout(() => {
-      if (hiddenWindow) {
-        hiddenWindow.close();
-      }
-    }, 1000);
-    
-    // Show confirmation modal
+    setPixQrCodeBase64(payment.qrCodeBase64 ?? null);
+    setPaymentId(payment.paymentId ?? payment.id ?? null);
+    setPaymentInfo(payment);
     setShowConfirmationModal(true);
+    setIsProcessingPayment(false);
   };
 
-  const handlePaymentConfirmation = (completed) => {
-    if (completed) {
-      // Payment completed - clear cart and reset state, but STAY on checkout page
-      clearCart();
-      setIsProcessingPayment(false);
-      setShowPixForm(false);
-      setPixQrCode(null);
-      setPaymentMethod(null);
-      setEmail('');
-      setPhone('');
-    } else {
-      // Payment not completed - reset state
-      setIsProcessingPayment(false);
-      setShowPixForm(false);
-      setPixQrCode(null);
-      setPaymentMethod(null);
-      setEmail('');
-      setPhone('');
+  const handlePaymentConfirmation = useCallback((completed) => {
+    stopPolling();
+    if (confirmationTimeoutRef.current) {
+      clearTimeout(confirmationTimeoutRef.current);
     }
+    if (completed) {
+      clearCart();
+      setFeedbackMessage('Pagamento confirmado! Obrigado pela compra.');
+    } else {
+      setFeedbackMessage('Pagamento não concluído. Você pode tentar novamente ou escolher outra forma.');
+    }
+    setIsProcessingPayment(false);
+    setShowPixForm(false);
+    setShowCheckoutPro(false);
+    setPixQrCode(null);
+    setPixQrCodeBase64(null);
+    setPaymentMethod(null);
+    setCustomerData({ name: '', email: '', phone: '', cpf: '' });
+    setPaymentInfo(null);
+    // Reset orderId to ensure fresh ID for next transaction
+    setOrderId(null);
+    setPaymentId(null);
     setShowConfirmationModal(false);
-  };
+  }, [clearCart, stopPolling]);
+
+  const maskedCpf = useMemo(() => {
+    const digits = customerData.cpf?.replace(/\D/g, '') ?? '';
+    if (digits.length < 3) return '';
+    return `***.***.${digits.slice(-3)}`;
+  }, [customerData.cpf]);
+
+  useEffect(() => {
+    latestPaymentInfoRef.current = paymentInfo;
+    latestPixQrCodeRef.current = pixQrCode;
+    const MAX_CONSECUTIVE_FAILURES = 5;
+    const POLL_INTERVAL_MS = 5000;
+    let consecutiveFailures = 0;
+
+    const shouldStopPolling = () => {
+      const currentPaymentInfo = latestPaymentInfoRef.current;
+      const currentPixQrCode = latestPixQrCodeRef.current;
+      return !currentPaymentInfo?.paymentId
+        || !currentPixQrCode
+        || currentPaymentInfo.status !== 'pending';
+    };
+
+    if (shouldStopPolling()) {
+      stopPolling();
+      return undefined;
+    }
+
+    setIsPolling(true);
+
+    const pollPaymentStatus = async () => {
+      if (shouldStopPolling()) {
+        stopPolling();
+        return;
+      }
+
+      if (isPollingRequestInFlightRef.current) return;
+      isPollingRequestInFlightRef.current = true;
+      try {
+        const response = await fetch(`/api/payment-status/${latestPaymentInfoRef.current.paymentId}`);
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && payload?.payment) {
+          consecutiveFailures = 0;
+          // Check shouldStopPolling again after async operation completes
+          if (!shouldStopPolling()) {
+            setPaymentInfo((prev) => ({ ...prev, ...payload.payment }));
+          }
+        } else {
+          consecutiveFailures += 1;
+        }
+      } catch (error) {
+        console.warn('Erro ao consultar status do pagamento', error);
+        consecutiveFailures += 1;
+      } finally {
+        isPollingRequestInFlightRef.current = false;
+      }
+
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES || shouldStopPolling()) {
+        stopPolling();
+        return;
+      }
+    };
+
+    startPollingTimeoutRef.current = setTimeout(() => {
+      pollingIntervalRef.current = setInterval(pollPaymentStatus, POLL_INTERVAL_MS);
+      pollPaymentStatus();
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      stopPolling();
+    };
+  }, [paymentInfo, pixQrCode, stopPolling]);
+
+  useEffect(() => {
+    if (!paymentInfo) return undefined;
+    if (paymentInfo.status === 'approved') {
+      stopPolling();
+      confirmationTimeoutRef.current = setTimeout(() => handlePaymentConfirmation(true), 3000);
+      return () => {
+        if (confirmationTimeoutRef.current) {
+          clearTimeout(confirmationTimeoutRef.current);
+        }
+      };
+    }
+
+    if (['rejected', 'cancelled', 'refunded', 'charged_back'].includes(paymentInfo.status)) {
+      stopPolling();
+      setFeedbackMessage('Pagamento não concluído. Você pode tentar novamente ou escolher outra forma.');
+       setPixQrCode(null);
+       setPixQrCodeBase64(null);
+       setPaymentInfo(null);
+       setTimeRemaining(null);
+       setPaymentId(null);
+    }
+
+    return undefined;
+  }, [handlePaymentConfirmation, paymentInfo, stopPolling]);
+
+  useEffect(() => {
+    if (!paymentInfo?.expiresAt) {
+      setTimeRemaining(null);
+      return undefined;
+    }
+
+    const EXPIRY_WARNING_THRESHOLD_MS = 5 * 60 * 1000;
+
+    const expiration = paymentInfo.expiresAt instanceof Date
+      ? paymentInfo.expiresAt
+      : new Date(paymentInfo.expiresAt);
+
+    if (Number.isNaN(expiration.getTime())) {
+      setTimeRemaining(null);
+      return undefined;
+    }
+
+    let intervalId;
+    const updateTime = () => {
+      const total = Math.max(0, expiration.getTime() - Date.now());
+      const minutes = Math.floor(total / 60000);
+      const seconds = Math.floor((total % 60000) / 1000);
+      setTimeRemaining({ total, minutes, seconds, warning: total <= EXPIRY_WARNING_THRESHOLD_MS });
+      if (total === 0) {
+        stopPolling();
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+      }
+    };
+
+    intervalId = setInterval(updateTime, 1000);
+    updateTime();
+    return () => clearInterval(intervalId);
+  }, [paymentInfo, stopPolling]);
+
+  useEffect(() => {
+    return () => {
+      if (confirmationTimeoutRef.current) {
+        clearTimeout(confirmationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
       <SEO {...checkoutSeoProps} />
+      {isProcessingPayment && (
+        <div className="payment-processing-overlay">
+          <div className="processing-card">
+            <div className="spinner"></div>
+            <h3>Aguardando Pagamento...</h3>
+            <p>Escaneie o QR Code ou cole o código PIX no app do seu banco</p>
+            <div className="processing-steps">
+              <div className="step active">
+                <span className="step-icon">✓</span>
+                <span>QR Code gerado</span>
+              </div>
+              <div className="step active">
+                <span className="step-icon">⏳</span>
+                <span>Aguardando pagamento</span>
+              </div>
+              <div className="step">
+                <span className="step-icon">⏱️</span>
+                <span>Confirmando...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {cart.length === 0 ? (
         <main id="main-content" tabIndex="-1">
           <section className="section checkout-section">
@@ -193,7 +553,9 @@ export function CheckoutPage() {
           <section className="section checkout-section">
             <div className="container">
               <h2 className="section-title">Finalizar Compra</h2>
-              <p className="section-subtitle">Revise seu pedido e escolha a forma de pagamento</p>
+              <p className="section-subtitle">Revise seu pedido, preencha seus dados e escolha a forma de pagamento</p>
+
+              <CheckoutSteps currentStep={currentStep} />
 
               <div className="checkout-container">
                 {/* Cart Items */}
@@ -260,14 +622,25 @@ export function CheckoutPage() {
 
                 {/* Payment Options */}
                 <div className="checkout-payment">
+                  <CustomerForm
+                    value={customerData}
+                    onChange={setCustomerData}
+                    onValidityChange={setIsCustomerValid}
+                  />
+
                   <h3>Forma de Pagamento</h3>
+                  {feedbackMessage && (
+                    typeof feedbackMessage === 'string'
+                      ? <p className="field-error" role="alert">{feedbackMessage}</p>
+                      : feedbackMessage
+                  )}
                   
                   {!showPixForm ? (
                     <div className="payment-options">
                       <button 
                         className="payment-option whatsapp-option"
                         onClick={handleWhatsAppCheckout}
-                        disabled={isProcessingPayment}
+                        disabled={isProcessingPayment || !isCustomerValid}
                       >
                         <span className="payment-icon">💬</span>
                         <div className="payment-option-content">
@@ -279,7 +652,7 @@ export function CheckoutPage() {
                       <button 
                         className="payment-option pix-option"
                         onClick={handlePixCheckout}
-                        disabled={isProcessingPayment}
+                        disabled={isProcessingPayment || !isCustomerValid || Boolean(gatewayError)}
                       >
                         <span className="payment-icon">💳</span>
                         <div className="payment-option-content">
@@ -287,45 +660,31 @@ export function CheckoutPage() {
                           <p>Pague agora com PIX e receba confirmação</p>
                         </div>
                       </button>
+
+                      <button 
+                        className="payment-option checkout-pro-option"
+                        onClick={handleCheckoutProClick}
+                        disabled={isProcessingPayment || !isCustomerValid}
+                      >
+                        <span className="payment-icon">🛒</span>
+                        <div className="payment-option-content">
+                          <h4>Cartão, PIX ou Boleto</h4>
+                          <p>Pague com Mercado Pago - todas as formas de pagamento</p>
+                        </div>
+                      </button>
+                      {gatewayError && (
+                        <p className="field-error" role="alert">{gatewayError}</p>
+                      )}
                     </div>
-                  ) : (
-                    <div className="pix-payment-section">
-                      {!pixQrCode ? (
-                        <form className="pix-form" onSubmit={(e) => {
-                          e.preventDefault();
-                          handlePixPaymentConfirm();
-                        }}>
-                          <h4>Informações de Contato</h4>
-                          <p id="contact-instructions">Informe pelo menos um método de contato (email ou telefone):</p>
-                          <label htmlFor="pix-email">
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            className="contact-input"
-                            placeholder="Email (exemplo@dominio.com)"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            autoComplete="email"
-                            id="pix-email"
-                            name="email"
-                            aria-describedby="contact-instructions"
-                          />
-                          <label htmlFor="pix-phone">
-                            Telefone
-                          </label>
-                          <PhoneInput
-                            defaultCountry="br"
-                            className="phone-input-container"
-                            placeholder="Telefone"
-                            value={phone}
-                            onChange={(phone) => setPhone(phone)}
-                            inputProps={{
-                              id: 'pix-phone',
-                              name: 'phone',
-                              'aria-describedby': 'contact-instructions'
-                            }}
-                          />
+                   ) : (
+                     <div className="pix-payment-section">
+                       {!pixQrCode ? (
+                        <div className="pix-form">
+                          <h4>Pagamento via PIX</h4>
+                          <p>Confirme os dados e gere o QR Code com o valor total do pedido.</p>
+                          {isProcessingPayment ? (
+                            <LoadingSpinner message="Gerando QR Code PIX... Aguarde" />
+                          ) : null}
                           <div className="pix-form-actions">
                             <button 
                               type="button"
@@ -333,36 +692,51 @@ export function CheckoutPage() {
                               onClick={() => {
                                 setShowPixForm(false);
                                 setPaymentMethod(null);
-                                setEmail('');
-                                setPhone('');
                               }}
+                              disabled={isProcessingPayment}
                             >
                               Voltar
                             </button>
                             <button 
-                              type="submit"
+                              type="button"
                               className="btn btn-primary"
+                              onClick={handlePixPaymentConfirm}
+                              disabled={isProcessingPayment}
                             >
-                              Gerar QR Code PIX
+                              {isProcessingPayment ? 'Gerando...' : 'Gerar QR Code PIX'}
                             </button>
                           </div>
-                        </form>
+                        </div>
                       ) : (
                         <div className="pix-qrcode-section">
                           <h4>QR Code PIX</h4>
-                          <div className="qrcode-placeholder">
-                            <div className="qrcode-box">
-                              {/* Simple visual representation - in production, use a library like qrcode.react */}
-                              <div className="qrcode-pattern">
-                                <div></div><div></div><div></div>
-                                <div></div><div></div><div></div>
-                                <div></div><div></div><div></div>
-                              </div>
-                              <p className="qrcode-label">QR CODE PIX</p>
+                          {pixQrCodeBase64 || paymentInfo?.qrCodeBase64 ? (
+                            <div className="qrcode-container">
+                              <img
+                                src={pixQrCodeBase64 || paymentInfo?.qrCodeBase64}
+                                alt="QR Code PIX para pagamento"
+                                className="qrcode-image"
+                                onLoad={() => setFeedbackMessage(null)}
+                                onError={() => {
+                                  setFeedbackMessage('Falha ao carregar o QR Code PIX. Gere novamente.');
+                                  setPixQrCodeBase64(null);
+                                }}
+                              />
                             </div>
-                          </div>
+                          ) : (
+                            <div className="qrcode-placeholder">
+                              <div className="qrcode-box">
+                                <div className="qrcode-pattern">
+                                  <div></div><div></div><div></div>
+                                  <div></div><div></div><div></div>
+                                  <div></div><div></div><div></div>
+                                </div>
+                                <p className="qrcode-label">QR CODE PIX</p>
+                              </div>
+                            </div>
+                          )}
                           <div className="pix-code-copy">
-                            <p>Código PIX:</p>
+                            <p>Código PIX (PIX Copie e Cole):</p>
                             <div className="code-box">
                               <code>{pixQrCode.substring(0, 50)}...</code>
                               <button 
@@ -372,7 +746,7 @@ export function CheckoutPage() {
                                   alert('Código PIX copiado!');
                                 }}
                               >
-                                📋 Copiar
+                                📋 Copiar código completo
                               </button>
                             </div>
                           </div>
@@ -386,12 +760,91 @@ export function CheckoutPage() {
                             </ol>
                             <p className="contact-confirmation">
                               ✅ Você receberá confirmação quando seu pedido estiver pronto!
-                              <br /><strong>Email:</strong> {email}
-                              <br /><strong>Telefone:</strong> {phone}
+                              <br /><strong>Nome:</strong> {customerData.name}
+                              <br /><strong>Email:</strong> {customerData.email}
+                              <br /><strong>Telefone:</strong> {customerData.phone}
+                              <br /><strong>CPF:</strong> {maskedCpf}
+                            </p>
+                            <p className="payment-monitoring">
+                              ⏳ Aguardando confirmação do pagamento...
                             </p>
                           </div>
-                        </div>
-                      )}
+                          <div className="payment-status-indicator">
+                            {isPolling && paymentInfo?.status === 'pending' && (
+                              <div className="status-waiting">
+                                <div className="status-pulse"></div>
+                                <p>Aguardando pagamento...</p>
+                                <small>Atualizando automaticamente</small>
+                                {paymentId && (
+                                  <small>ID do pagamento: {paymentId}</small>
+                                )}
+                              </div>
+                            )}
+                            {paymentInfo?.status === 'approved' && (
+                              <p className="status-success">Pagamento confirmado! Fechando em instantes...</p>
+                            )}
+                          </div>
+                          {timeRemaining && timeRemaining.total > 0 && (
+                            <div className={`qr-code-timer ${timeRemaining.warning ? 'timer-warning' : ''}`}>
+                              <p>
+                                ⏱️ Tempo restante:{' '}
+                                <strong>
+                                  {String(timeRemaining.minutes).padStart(2, '0')}:
+                                  {String(timeRemaining.seconds).padStart(2, '0')}
+                                </strong>
+                              </p>
+                              {timeRemaining.warning && (
+                                <small>QR Code expirando em breve!</small>
+                              )}
+                            </div>
+                          )}
+                          {timeRemaining && timeRemaining.total === 0 && (
+                            <div className="qr-code-expired">
+                              <p>QR Code expirado. Gere um novo para continuar.</p>
+                              <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={() => {
+                                  stopPolling();
+                                  setPixQrCode(null);
+                                  setPixQrCodeBase64(null);
+                                  setPaymentInfo(null);
+                                  setTimeRemaining(null);
+                                  setPaymentId(null);
+                                  setIsProcessingPayment(false);
+                                }}
+                              >
+                                Gerar novo QR Code
+                              </button>
+                            </div>
+                          )}
+                       </div>
+                     )}
+                   </div>
+                  )}
+                  {showCheckoutPro && (
+                    <div className="checkout-pro-section">
+                      <h4>Finalizar com Mercado Pago</h4>
+                      <p>Escolha sua forma de pagamento preferida</p>
+                      
+                      <MercadoPagoCheckoutButton
+                        items={cart}
+                        customerData={customerData}
+                        onPreferenceCreated={handlePreferenceCreated}
+                        onError={handleCheckoutProError}
+                        disabled={!isCustomerValid}
+                      />
+                      
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setShowCheckoutPro(false);
+                          setPaymentMethod(null);
+                        }}
+                      >
+                        Voltar
+                      </button>
                     </div>
                   )}
                 </div>
@@ -411,7 +864,9 @@ export function CheckoutPage() {
                 <p>
                   {paymentMethod === 'whatsapp' 
                     ? 'Você finalizou a compra via WhatsApp?' 
-                    : 'Você concluiu o pagamento via PIX?'}
+                    : paymentMethod === 'checkout-pro'
+                      ? 'Você concluiu o pagamento pelo Mercado Pago?'
+                      : 'Você concluiu o pagamento via PIX?'}
                 </p>
                 <div className="modal-actions">
                   <button 
