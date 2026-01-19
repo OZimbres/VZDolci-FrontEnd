@@ -110,7 +110,7 @@ export class Order {
     if (this.#payments.length === 0) {
       return null;
     }
-    return [...this.#payments].sort((a, b) => b.dateCreated - a.dateCreated)[0];
+    return [...this.#payments].sort((a, b) => b.dateCreated.getTime() - a.dateCreated.getTime())[0];
   }
 
   getPaymentStatus() {
@@ -144,10 +144,7 @@ export class Order {
       items: data.items,
       customer: data.customer,
       status: data.status,
-      payments:
-        data.payments?.map(payment =>
-          payment instanceof Payment ? payment : Payment.fromJSON(payment)
-        ) || [],
+      payments: data.payments || [],
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       notes: data.notes

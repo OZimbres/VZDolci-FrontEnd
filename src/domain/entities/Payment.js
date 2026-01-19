@@ -7,6 +7,7 @@
 import { PaymentStatus } from '../value-objects/PaymentStatus.js';
 import { PaymentMethod } from '../value-objects/PaymentMethod.js';
 
+// Taxas de exemplo (baseadas em tabelas públicas do Mercado Pago em 2025); revise periodicamente.
 const PAYMENT_PROCESSING_FEE_RATES = {
   [PaymentMethod.CREDIT_CARD.id]: 0.0499,
   [PaymentMethod.DEBIT_CARD.id]: 0.0349,
@@ -170,15 +171,23 @@ export class Payment {
     const targetStatus =
       newStatus instanceof PaymentStatus ? newStatus : PaymentStatus.fromCode(newStatus);
 
-    const isAuthorizedToApproved =
+    if (this.#status.equals(targetStatus)) {
+      return;
+    }
+
+    const isAuthorizedToApprovedTransition =
       this.#status.equals(PaymentStatus.AUTHORIZED) && targetStatus.equals(PaymentStatus.APPROVED);
 
-    if (isAuthorizedToApproved) {
+    if (isAuthorizedToApprovedTransition) {
       this.#status = targetStatus;
       if (!this.#dateApproved) {
         this.#dateApproved = new Date();
       }
       return;
+    }
+
+    if (this.#status.isReversed()) {
+      throw new Error('Não é possível alterar status de pagamento reembolsado ou estornado');
     }
 
     if (this.#status.isSuccessful() && !targetStatus.isReversed()) {
@@ -189,6 +198,10 @@ export class Payment {
 
     if (this.#status.isFailed() && targetStatus.isSuccessful()) {
       throw new Error('Não é possível aprovar pagamento que foi rejeitado');
+    }
+
+    if (this.#status.isFailed() && targetStatus.isPending()) {
+      throw new Error('Não é possível reabrir pagamento rejeitado ou cancelado');
     }
 
     this.#status = targetStatus;
